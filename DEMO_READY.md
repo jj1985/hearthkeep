@@ -46,9 +46,40 @@ The user piled an extraordinary amount of scope into this single autonomous sess
 - **Asset hygiene** — README documents the strict CC0/CC-BY-only policy; current art is procedural CSG primitives + StandardMaterial3D (zero third-party assets, zero IP risk).  When real CC0 packs (Kenney, Quaternius, ambientCG) are imported, every entry lands in `art/ASSET_MANIFEST.csv`.
 - **Tests** — system test harness + 12+ unit tests are roadmap.  Demo-level hand-validation is what's been done.
 
-## Android APK
+## Android APK — status: pipeline configured, not yet built
 
-In progress.  This session installs JDK + Android cmdline-tools in background.  See `INSTALL_APK.md` for install/sideload steps once the APK builds.  If the export templates fail to download (network constrained), the APK will need to be exported from Godot Editor's manual export menu — `INSTALL_APK.md` documents that path too.
+This session got the pipeline 60% of the way.  **Done:**
+
+- ✅ JDK 17 installed via Homebrew (`/opt/homebrew/opt/openjdk@17/`)
+- ✅ Android cmdline-tools installed (`/opt/homebrew/share/android-commandlinetools/`)
+- ✅ `export_presets.cfg` configured for Android (arm64-v8a, mobile renderer, debug-signed for sideload, `com.hearthkeep.demo`)
+- ✅ `Makefile` has `make apk` target
+
+**Not done (3 commands you'll need to run):**
+
+```bash
+# 1. Accept Android SDK licenses (one-time, interactive; just hit 'y' to each)
+export JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
+export ANDROID_HOME=/opt/homebrew/share/android-commandlinetools
+export PATH=$JAVA_HOME/bin:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
+yes | sdkmanager --sdk_root=$ANDROID_HOME --licenses
+sdkmanager --sdk_root=$ANDROID_HOME "platform-tools" "build-tools;34.0.0" "platforms;android-34"
+
+# 2. Open Godot once and let it download the matching Android export templates
+#    (Editor → Manage Export Templates → Download — ~1GB, takes a few minutes)
+open -a /Applications/Godot.app /Users/user/norrath-roguelike
+
+# 3. Once templates land, build the APK
+cd /Users/user/norrath-roguelike
+make apk
+# APK lands at build/HearthkeepDemo-v0.0.1.apk
+```
+
+Then sideload per `INSTALL_APK.md`.
+
+**Why this stopped here:** the SDK license/install command would not produce output in this autonomous session's process supervisor (issue with `yes |` piping in the background-task harness).  The export-templates download is a ~1GB blob from godotengine.org that the Godot Editor downloads via its UI; I didn't want to silently churn on it for an unbounded duration.
+
+You're 3 short commands away from the APK.
 
 ## Known issues
 
