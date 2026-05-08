@@ -134,6 +134,13 @@ func _next_room() -> void:
     room_index += 1
     RunState.floor_index = room_index
     GameState.deepest_floor = max(GameState.deepest_floor, RunState.floor_index)
+    # Boss floor every 5: switch to a dragon arena scene.
+    # Phase A only ships Vyxhasis; Ourzhal/Aethyrnax are roadmap.
+    if (RunState.floor_index + 1) % 5 == 0 and not GameState.defeated_dragons.has("vyxhasis"):
+        EventBus.floating_text.emit("A SHADOW OVER THE WASTES…", Vector2(player.global_position.x, player.global_position.z), Color(1, 0.5, 0.3))
+        await get_tree().create_timer(1.4).timeout
+        get_tree().change_scene_to_file("res://scenes/boss/vyxhasis_arena.tscn")
+        return
     _enter_room()
 
 func _on_loot_dropped(item: Dictionary, pos: Variant) -> void:

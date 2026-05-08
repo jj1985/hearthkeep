@@ -14,6 +14,7 @@ const SCENES := {
     "hud": "res://scenes/ui/hud.tscn",
     "chest_view": "res://scenes/ui/chest_view.tscn",
     "perk_picker": "res://scenes/ui/perk_picker.tscn",
+    "vyxhasis_arena": "res://scenes/boss/vyxhasis_arena.tscn",
 }
 
 func test_scenes_load_as_packed_scenes() -> void:
