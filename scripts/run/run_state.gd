@@ -7,6 +7,8 @@ signal level_up_pending(level)
 var active: bool = false
 var seed: int = 0
 var floor_index: int = 0
+var class_primary: String = "warrior"
+var class_secondary: String = ""
 var run_time: float = 0.0
 var player_level: int = 1
 var xp: float = 0.0
@@ -96,3 +98,19 @@ func has_tag(tag: String) -> bool:
 func enemy_scaling() -> float:
     # Smooth crescendo curve: at 0 floor -> 1.0, at floor 5 -> ~2.5
     return 1.0 + 0.30 * float(floor_index) + 0.05 * float(player_level)
+
+func set_classes(primary: String, secondary: String) -> bool:
+    if not Classes.CLASSES.has(primary):
+        return false
+    if secondary != "" and not Classes.CLASSES.has(secondary):
+        return false
+    if secondary == primary:
+        secondary = ""
+    class_primary = primary
+    class_secondary = secondary
+    return true
+
+func hybrid_prestige() -> Dictionary:
+    if class_secondary == "":
+        return {}
+    return Classes.hybrid_for(class_primary, class_secondary)

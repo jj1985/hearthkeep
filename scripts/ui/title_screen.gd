@@ -20,7 +20,7 @@ func _process(delta: float) -> void:
     logo.modulate.a = 0.85 + 0.15 * sin(blink_t * 1.6)
 
 func _on_start() -> void:
-    get_tree().change_scene_to_file("res://scenes/run.tscn")
+    get_tree().change_scene_to_file("res://scenes/ui/class_select.tscn")
 
 func _on_villa() -> void:
     get_tree().change_scene_to_file("res://scenes/villa/villa.tscn")

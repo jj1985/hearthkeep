@@ -37,16 +37,16 @@ func _ready() -> void:
     add_to_group("player")
 
 func _apply_class_base() -> void:
-    var c := ClassDB.get_class_def(class_primary)
-    if c.is_empty():
+    if Classes.get_class_def(class_primary).is_empty():
         return
-    stats.max_hp = float(c["base_hp"]) * RunState.max_hp_mult
+    var res: Dictionary = Classes.combined_resources(class_primary, class_secondary)
+    stats.max_hp = float(res["hp"]) * RunState.max_hp_mult
     stats.hp = stats.max_hp
-    stats.max_mp = float(c["base_mp"])
+    stats.max_mp = float(res["mp"])
     stats.mp = stats.max_mp
-    stats.armor = float(c["base_armor"])
+    stats.armor = float(res["armor"])
     stats.move_speed = 6.0
-    var profile: Dictionary = c["stat_profile"]
+    var profile: Dictionary = Classes.combined_stat_profile(class_primary, class_secondary)
     stats.damage = 6.0 + float(profile.get("str", 5)) * 0.5 + float(profile.get("int", 5)) * 0.4
     stats.crit_chance = 0.05 + float(profile.get("agi", 5)) * 0.005
 
@@ -193,9 +193,9 @@ func gain_xp(amount: float) -> void:
 
 func _on_perk_chosen(_id: String) -> void:
     var new_max: float = stats.max_hp
-    var c := ClassDB.get_class_def(class_primary)
-    if not c.is_empty():
-        new_max = float(c["base_hp"]) * RunState.max_hp_mult
+    if not Classes.get_class_def(class_primary).is_empty():
+        var res: Dictionary = Classes.combined_resources(class_primary, class_secondary)
+        new_max = float(res["hp"]) * RunState.max_hp_mult
     var hp_ratio: float = stats.hp / max(1.0, stats.max_hp)
     stats.max_hp = new_max
     stats.hp = clamp(new_max * hp_ratio, 0.0, new_max)

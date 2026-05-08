@@ -7,7 +7,7 @@ run:
 	$(GODOT) --path $(PROJECT_PATH)
 
 test:
-	$(GODOT) --headless --path $(PROJECT_PATH) -s tests/run_tests.gd
+	$(GODOT) --headless --path $(PROJECT_PATH) -s addons/gut/gut_cmdln.gd -gdir=res://tests -gexit
 
 apk:
 	mkdir -p build

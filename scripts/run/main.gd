@@ -65,8 +65,8 @@ func _process(delta: float) -> void:
             camera.h_offset = 0.0
             camera.v_offset = 0.0
     if player != null and is_instance_valid(player):
-        var lookahead := player.move_dir.normalized() * 1.6
-        var target := player.global_position + Vector3(lookahead.x, 0, lookahead.z)
+        var lookahead: Vector3 = (player.move_dir as Vector3).normalized() * 1.6
+        var target: Vector3 = player.global_position + Vector3(lookahead.x, 0, lookahead.z)
         camera.position = camera.position.lerp(target + Vector3(8.0, 12.0, 8.0), 0.07)
         camera.look_at(target + Vector3.UP, Vector3.UP)
     spawn_pacing_timer -= delta
@@ -78,9 +78,13 @@ func _process(delta: float) -> void:
 
 func _spawn_player() -> void:
     player = PlayerScene.instantiate()
-    player.class_primary = "warrior"
+    player.class_primary = RunState.class_primary
+    player.class_secondary = RunState.class_secondary
     player.position = Vector3(0, 0, 0)
     player_layer.add_child(player)
+    var hybrid: Dictionary = RunState.hybrid_prestige()
+    if not hybrid.is_empty():
+        EventBus.floating_text.emit("✦ %s ✦" % hybrid.get("name", ""), Vector2(0, 0), Color(1, 0.7, 0.3))
 
 func _enter_room() -> void:
     floor_kill_target = 10 + RunState.floor_index * 4
@@ -96,7 +100,7 @@ func _maybe_spawn_wave() -> void:
     var cap: int = 8 + RunState.floor_index * 3 + RunState.player_level
     if alive >= cap:
         return
-    var n := clamp(2 + RunState.floor_index, 1, 6)
+    var n: int = int(clamp(2 + RunState.floor_index, 1, 6))
     for i in range(n):
         var roll: int = randi() % 100
         var v: int = 0

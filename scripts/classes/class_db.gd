@@ -122,3 +122,35 @@ func combined_tags(primary: String, secondary: String = "") -> Array:
         for t in CLASSES.get(secondary, {}).get("tags", []):
             if not tags.has(t): tags.append(t)
     return tags
+
+# Multiclass stat profile blend: 60/40 weighted toward primary class.
+# Single-class call (or empty secondary) passes through the primary profile.
+const _PRIMARY_WEIGHT := 0.6
+const _SECONDARY_WEIGHT := 0.4
+
+func combined_stat_profile(primary: String, secondary: String = "") -> Dictionary:
+    var pp: Dictionary = CLASSES.get(primary, {}).get("stat_profile", {})
+    if secondary == "" or not CLASSES.has(secondary):
+        return pp.duplicate()
+    var sp: Dictionary = CLASSES[secondary]["stat_profile"]
+    var out: Dictionary = {}
+    for k in pp.keys():
+        var blended: float = float(pp[k]) * _PRIMARY_WEIGHT + float(sp.get(k, pp[k])) * _SECONDARY_WEIGHT
+        out[k] = int(round(blended))
+    return out
+
+func combined_resources(primary: String, secondary: String = "") -> Dictionary:
+    var p: Dictionary = CLASSES.get(primary, {})
+    if p.is_empty():
+        return {}
+    if secondary == "" or not CLASSES.has(secondary):
+        return {"hp": float(p["base_hp"]), "mp": float(p["base_mp"]), "armor": float(p["base_armor"])}
+    var s: Dictionary = CLASSES[secondary]
+    return {
+        "hp": float(p["base_hp"]) * _PRIMARY_WEIGHT + float(s["base_hp"]) * _SECONDARY_WEIGHT,
+        "mp": float(p["base_mp"]) * _PRIMARY_WEIGHT + float(s["base_mp"]) * _SECONDARY_WEIGHT,
+        "armor": float(p["base_armor"]) * _PRIMARY_WEIGHT + float(s["base_armor"]) * _SECONDARY_WEIGHT,
+    }
+
+func has_tag(primary: String, secondary: String, tag: String) -> bool:
+    return combined_tags(primary, secondary).has(tag)

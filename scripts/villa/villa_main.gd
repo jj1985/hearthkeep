@@ -33,8 +33,8 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
     if player != null and is_instance_valid(player):
-        var lookahead := player.move_dir.normalized() * 1.6
-        var target := player.global_position + Vector3(lookahead.x, 0, lookahead.z)
+        var lookahead: Vector3 = (player.move_dir as Vector3).normalized() * 1.6
+        var target: Vector3 = player.global_position + Vector3(lookahead.x, 0, lookahead.z)
         camera.position = camera.position.lerp(target + Vector3(8.0, 12.0, 8.0), 0.07)
         camera.look_at(target + Vector3.UP, Vector3.UP)
     _update_proximity_prompt()

@@ -1,5 +1,24 @@
 # HEARTHKEEP — Changelog
 
+## v0.1.0 — Multiclass core + test harness (in progress)
+
+### Added
+- **Character creator scene** (`scenes/ui/class_select.tscn`) — primary class + optional secondary; live blurb, hybrid-prestige preview when a recognized pair is selected
+- `RunState.class_primary` / `class_secondary` persist selection across title→run; `set_classes()` validates against `Classes.CLASSES`; `hybrid_prestige()` resolves the named hybrid
+- `Classes.combined_stat_profile()` and `Classes.combined_resources()` — 60/40 weighted blend toward primary; rounded integer stat profile
+- `Classes.has_tag()` — synergy gate for skill triggers
+- Player `_apply_class_base()` now consumes the multiclass-aware combined profile + resources
+- Hybrid-prestige floater on run start when a named hybrid is active (e.g. "✦ Death Knight ✦")
+
+### Engineering
+- **GUT 9.6.0** vendored at `addons/gut/`; Makefile `test` target wired (`make test`)
+- 28 tests across 4 suites: smoke (autoloads + ClassDB shape), class_db (multiclass math), class_selection_flow (RunState contract), scene_loading (every load-bearing scene parses + instantiates clean)
+- Renamed autoload `ClassDB` → `Classes` to avoid shadowing Godot's built-in `ClassDB` global
+
+### Fixed
+- **Critical:** `ChestManager` and `TrophyManager` were referenced by `run/main.gd`, `villa/villa_main.gd`, `ui/chest_view.gd` but missing from `[autoload]` in `project.godot` — would crash on player death and on Villa entry. Both registered.
+- Type-inference warnings in `run/main.gd` and `villa/villa_main.gd` (Variant inference on `move_dir.normalized()` and `clamp` result) — now explicitly typed
+
 ## v0.0.1 — Playable Demo (in progress)
 
 ### Added
