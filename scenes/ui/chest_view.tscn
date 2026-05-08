@@ -1,0 +1,52 @@
+[gd_scene load_steps=2 format=3 uid="uid://hk_chest_view"]
+
+[ext_resource type="Script" path="res://scripts/ui/chest_view.gd" id="1"]
+
+[node name="Root" type="Control"]
+script = ExtResource("1")
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Dim" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 0.65)
+
+[node name="Panel" type="PanelContainer" parent="."]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -480.0
+offset_top = -300.0
+offset_right = 480.0
+offset_bottom = 300.0
+
+[node name="V" type="VBoxContainer" parent="Panel"]
+
+[node name="Title" type="Label" parent="Panel/V"]
+text = "Chest"
+theme_override_font_sizes/font_size = 24
+
+[node name="Header" type="HBoxContainer" parent="Panel/V"]
+
+[node name="SortBtn" type="OptionButton" parent="Panel/V/Header"]
+custom_minimum_size = Vector2(180, 32)
+
+[node name="SearchEdit" type="LineEdit" parent="Panel/V/Header"]
+custom_minimum_size = Vector2(240, 32)
+placeholder_text = "Search..."
+
+[node name="Scroll" type="ScrollContainer" parent="Panel/V"]
+custom_minimum_size = Vector2(940, 460)
+
+[node name="Grid" type="GridContainer" parent="Panel/V/Scroll"]
+columns = 4
+
+[node name="Footer" type="HBoxContainer" parent="Panel/V"]
+
+[node name="SellAllBtn" type="Button" parent="Panel/V/Footer"]
+text = "Sell All Junk"
+
+[node name="CloseBtn" type="Button" parent="Panel/V/Footer"]
+text = "Close"
