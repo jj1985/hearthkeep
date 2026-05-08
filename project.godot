@@ -52,11 +52,13 @@ Settings="*res://scripts/settings.gd"
 
 [display]
 
-window/size/viewport_width=1280
-window/size/viewport_height=720
+window/size/viewport_width=720
+window/size/viewport_height=1280
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
-window/handheld/orientation=6
+window/stretch/scale_mode="fractional"
+window/handheld/orientation=1
+window/handheld/display_cutout=2
 
 [input]
 
@@ -157,6 +159,7 @@ bond_stone={
 [rendering]
 
 textures/vram_compression/import_etc2_astc=true
+textures/canvas_textures/default_texture_filter=1
 anti_aliasing/quality/msaa_3d=2
 environment/defaults/default_clear_color=Color(0.04, 0.03, 0.06, 1)
 environment/glow/enabled=true
