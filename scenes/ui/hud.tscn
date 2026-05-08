@@ -1,4 +1,4 @@
-[gd_scene load_steps=4 format=3 uid="uid://b1norrath_hud"]
+[gd_scene load_steps=3 format=3 uid="uid://b1norrath_hud"]
 
 [ext_resource type="Script" path="res://scripts/ui/hud.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/ui/virtual_stick.gd" id="2"]
@@ -9,73 +9,198 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
 
-[node name="TopLeft" type="VBoxContainer" parent="."]
-offset_left = 20.0
-offset_top = 20.0
-offset_right = 240.0
-offset_bottom = 100.0
+; ---- Top-left cluster: HP / MP / XP / lvl / floor ----
+
+[node name="TopLeft" type="Control" parent="."]
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 280.0
+offset_bottom = 120.0
 mouse_filter = 2
 
-[node name="HPBar" type="ProgressBar" parent="TopLeft"]
-custom_minimum_size = Vector2(220, 16)
-max_value = 100.0
-value = 100.0
-show_percentage = false
-
-[node name="MPBar" type="ProgressBar" parent="TopLeft"]
-custom_minimum_size = Vector2(220, 12)
-max_value = 100.0
-value = 100.0
-show_percentage = false
-
-[node name="TopBar" type="HBoxContainer" parent="."]
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -200.0
-offset_top = 18.0
-offset_right = 200.0
-offset_bottom = 56.0
-mouse_filter = 2
-
-[node name="LevelLabel" type="Label" parent="TopBar"]
-text = "Lv 1"
-custom_minimum_size = Vector2(64, 24)
-
-[node name="XPBar" type="ProgressBar" parent="TopBar"]
-custom_minimum_size = Vector2(240, 16)
-max_value = 100.0
-show_percentage = false
-
-[node name="FloorLabel" type="Label" parent="TopBar"]
-text = "Floor 1"
-custom_minimum_size = Vector2(80, 24)
-
-[node name="TopRight" type="VBoxContainer" parent="."]
-anchor_left = 1.0
+[node name="Bars" type="VBoxContainer" parent="TopLeft"]
 anchor_right = 1.0
-offset_left = -240.0
-offset_top = 20.0
-offset_right = -20.0
-offset_bottom = 80.0
-mouse_filter = 2
+anchor_bottom = 1.0
+theme_override_constants/separation = 4
 
-[node name="GoldLabel" type="Label" parent="TopRight"]
-text = "Gold: 0"
+[node name="Header" type="HBoxContainer" parent="TopLeft/Bars"]
+theme_override_constants/separation = 8
+
+[node name="LevelLabel" type="Label" parent="TopLeft/Bars/Header"]
+text = "Lv 1"
+
+[node name="FloorLabel" type="Label" parent="TopLeft/Bars/Header"]
+text = "F1"
+size_flags_horizontal = 3
 horizontal_alignment = 2
 
-[node name="BottomLeft" type="VBoxContainer" parent="."]
-anchor_top = 1.0
-anchor_bottom = 1.0
-offset_left = 20.0
-offset_top = -120.0
-offset_right = 360.0
-offset_bottom = -20.0
+[node name="HPBar" type="ProgressBar" parent="TopLeft/Bars"]
+custom_minimum_size = Vector2(0, 14)
+max_value = 100.0
+value = 100.0
+show_percentage = false
+
+[node name="MPBar" type="ProgressBar" parent="TopLeft/Bars"]
+custom_minimum_size = Vector2(0, 10)
+max_value = 100.0
+value = 100.0
+show_percentage = false
+
+[node name="XPBar" type="ProgressBar" parent="TopLeft/Bars"]
+custom_minimum_size = Vector2(0, 6)
+max_value = 100.0
+value = 0.0
+show_percentage = false
+
+; ---- Top-right: minimap stub + gold + pause ----
+
+[node name="TopRight" type="Control" parent="."]
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -160.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = 184.0
 mouse_filter = 2
 
-[node name="PerkStrip" type="HBoxContainer" parent="BottomLeft"]
+[node name="Minimap" type="PanelContainer" parent="TopRight"]
+anchor_right = 1.0
+custom_minimum_size = Vector2(128, 128)
+
+[node name="GoldLabel" type="Label" parent="TopRight"]
+anchor_top = 0.0
+anchor_left = 0.0
+anchor_right = 1.0
+offset_top = 132.0
+offset_bottom = 156.0
+text = "0 g"
+horizontal_alignment = 2
+
+[node name="PauseButton" type="Button" parent="TopRight"]
+anchor_top = 0.0
+offset_left = 0.0
+offset_top = -52.0
+offset_right = 48.0
+offset_bottom = -4.0
+custom_minimum_size = Vector2(48, 48)
+text = "II"
+
+; ---- Buff row ----
+
+[node name="BuffRow" type="Control" parent="."]
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 1.0
+offset_left = 16.0
+offset_top = 132.0
+offset_right = -160.0
+offset_bottom = 168.0
+mouse_filter = 2
+
+[node name="Strip" type="HBoxContainer" parent="BuffRow"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/separation = 6
+
+; ---- Virtual stick (bottom-left) ----
 
 [node name="VirtualStick" type="Control" parent="."]
 script = ExtResource("2")
 anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
+
+; ---- Skill cluster (bottom-right diamond) ----
+
+[node name="SkillCluster" type="Control" parent="."]
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -240.0
+offset_top = -240.0
+offset_right = -16.0
+offset_bottom = -16.0
+mouse_filter = 2
+
+[node name="Primary" type="Button" parent="SkillCluster"]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -44.0
+offset_top = -44.0
+offset_right = 44.0
+offset_bottom = 44.0
+text = "ATK"
+
+[node name="S2" type="Button" parent="SkillCluster"]
+offset_left = -8.0
+offset_top = -8.0
+offset_right = 64.0
+offset_bottom = 64.0
+text = "Q"
+
+[node name="S3" type="Button" parent="SkillCluster"]
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -64.0
+offset_top = -8.0
+offset_right = 8.0
+offset_bottom = 64.0
+text = "E"
+
+[node name="S4" type="Button" parent="SkillCluster"]
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = -8.0
+offset_top = -64.0
+offset_right = 64.0
+offset_bottom = 8.0
+text = "R"
+
+[node name="S5" type="Button" parent="SkillCluster"]
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -64.0
+offset_top = -64.0
+offset_right = 8.0
+offset_bottom = 8.0
+text = "F"
+
+; ---- Potion shortcuts (centered between stick and skills) ----
+
+[node name="Potions" type="HBoxContainer" parent="."]
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -64.0
+offset_top = -72.0
+offset_right = 64.0
+offset_bottom = -16.0
+theme_override_constants/separation = 12
+
+[node name="PotionHP" type="Button" parent="Potions"]
+custom_minimum_size = Vector2(56, 56)
+text = "♥"
+
+[node name="PotionMP" type="Button" parent="Potions"]
+custom_minimum_size = Vector2(56, 56)
+text = "✦"
+
+; ---- Dodge button (bottom-right corner) ----
+
+[node name="Dodge" type="Button" parent="."]
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -88.0
+offset_top = -316.0
+offset_right = -16.0
+offset_bottom = -244.0
+custom_minimum_size = Vector2(72, 72)
+text = "↻"
