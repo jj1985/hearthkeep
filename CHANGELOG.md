@@ -18,6 +18,10 @@
 ### Fixed
 - **Critical:** `ChestManager` and `TrophyManager` were referenced by `run/main.gd`, `villa/villa_main.gd`, `ui/chest_view.gd` but missing from `[autoload]` in `project.godot` — would crash on player death and on Villa entry. Both registered.
 - Type-inference warnings in `run/main.gd` and `villa/villa_main.gd` (Variant inference on `move_dir.normalized()` and `clamp` result) — now explicitly typed
+- Android export was failing with a generic "configuration errors" message; root cause was the missing `rendering/textures/vram_compression/import_etc2_astc=true` flag in `project.godot`. Added.
+
+### Pipeline
+- **First Android APK shipped:** `build/HearthkeepDemo-v0.0.1.apk` (28MB, signed with debug keystore, arm64-v8a, mobile renderer, `com.hearthkeep.demo`). Sideloadable via `adb install -r`.
 
 ## v0.0.1 — Playable Demo (in progress)
 
