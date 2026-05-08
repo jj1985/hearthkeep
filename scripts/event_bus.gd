@@ -1,0 +1,17 @@
+extends Node
+
+signal damage_dealt(source, target, amount, is_crit)
+signal entity_killed(entity, killer)
+signal loot_dropped(item, position)
+signal item_picked_up(item)
+signal player_leveled_up(new_level)
+signal perk_chosen(perk_id)
+signal weapon_evolved(from_id, to_id)
+signal screen_shake(strength, duration)
+signal hit_stop(duration)
+signal floating_text(text, position, color)
+signal potion_used(kind)
+signal player_died()
+signal boss_defeated(boss_id)
+signal room_cleared(room_id)
+signal currency_changed(kind, amount, total)

@@ -1,0 +1,34 @@
+# Godot
+.godot/
+.import/
+export.cfg
+export_presets.cfg
+*.translation
+.DS_Store
+
+# Mono / .NET
+.mono/
+data_*/
+
+# Imported assets
+*.import
+
+# Build / export output
+builds/
+exports/
+*.apk
+*.aab
+*.ipa
+*.exe
+*.dmg
+*.zip
+
+# Editor
+*.swp
+*.tmp
+*~
+.idea/
+.vscode/
+
+# Logs
+*.log
