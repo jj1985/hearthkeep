@@ -140,7 +140,7 @@ func _on_villa() -> void:
     get_tree().change_scene_to_file("res://scenes/villa/villa.tscn")
 
 func _on_codex() -> void:
-    EventBus.floating_text.emit("Codex coming soon", Vector2.ZERO, T.ON_SURFACE_MUTED)
+    get_tree().change_scene_to_file("res://scenes/ui/journal.tscn")
 
 func _on_settings() -> void:
     EventBus.floating_text.emit("Settings coming soon", Vector2.ZERO, T.ON_SURFACE_MUTED)

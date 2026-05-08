@@ -1,0 +1,83 @@
+[gd_scene load_steps=3 format=3 uid="uid://hk_journal"]
+
+[ext_resource type="Script" path="res://scripts/ui/journal.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/ui/safe_area_margin.gd" id="2"]
+
+[node name="Journal" type="Control"]
+script = ExtResource("1")
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Bg" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="SafeArea" type="MarginContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("2")
+
+[node name="V" type="VBoxContainer" parent="SafeArea"]
+theme_override_constants/separation = 12
+
+[node name="Headline" type="Label" parent="SafeArea/V"]
+text = "JOURNAL"
+horizontal_alignment = 1
+
+[node name="Tabs" type="HBoxContainer" parent="SafeArea/V"]
+theme_override_constants/separation = 8
+
+[node name="Quests" type="Button" parent="SafeArea/V/Tabs"]
+custom_minimum_size = Vector2(0, 48)
+text = "QUESTS"
+size_flags_horizontal = 3
+
+[node name="Codex" type="Button" parent="SafeArea/V/Tabs"]
+custom_minimum_size = Vector2(0, 48)
+text = "CODEX"
+size_flags_horizontal = 3
+
+; ---- Quests pane ----
+
+[node name="QuestsPane" type="ScrollContainer" parent="SafeArea/V"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="List" type="VBoxContainer" parent="SafeArea/V/QuestsPane"]
+theme_override_constants/separation = 12
+size_flags_horizontal = 3
+
+; ---- Codex pane (split: categories left, entries right) ----
+
+[node name="CodexPane" type="HBoxContainer" parent="SafeArea/V"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+visible = false
+
+[node name="Categories" type="ScrollContainer" parent="SafeArea/V/CodexPane"]
+custom_minimum_size = Vector2(160, 0)
+horizontal_scroll_mode = 0
+
+[node name="Inner" type="VBoxContainer" parent="SafeArea/V/CodexPane/Categories"]
+theme_override_constants/separation = 6
+size_flags_horizontal = 3
+
+[node name="Detail" type="ScrollContainer" parent="SafeArea/V/CodexPane"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Entries" type="VBoxContainer" parent="SafeArea/V/CodexPane/Detail"]
+theme_override_constants/separation = 12
+size_flags_horizontal = 3
+
+; ---- Footer ----
+
+[node name="Footer" type="HBoxContainer" parent="SafeArea/V"]
+alignment = 1
+
+[node name="Close" type="Button" parent="SafeArea/V/Footer"]
+custom_minimum_size = Vector2(220, 56)
+text = "CLOSE"
