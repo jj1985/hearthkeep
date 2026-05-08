@@ -1,58 +1,74 @@
-extends Node2D
+extends Node3D
 
-# Top-level runner: spawns player, manages camera, dispatches HUD signals,
-# loads dungeon rooms, hosts the level-up perk picker.
+# 3D run runner: spawns player + goblins, manages camera, dispatches HUD.
 
 const PlayerScene := preload("res://scenes/player/player.tscn")
 const GoblinScene := preload("res://scenes/enemies/goblin.tscn")
 const LootScene := preload("res://scenes/fx/loot_drop.tscn")
 
-@onready var player_layer: Node2D = $World/PlayerLayer
-@onready var enemy_layer: Node2D = $World/EnemyLayer
-@onready var loot_layer: Node2D = $World/LootLayer
-@onready var fx_layer: Node2D = $World/FxLayer
-@onready var room_layer: Node2D = $World/RoomLayer
-@onready var camera: Camera2D = $World/Camera
-@onready var hud: CanvasLayer = $HUD
-@onready var hud_script: Control = $HUD/Root
+@onready var player_layer: Node3D = $World/PlayerLayer
+@onready var enemy_layer: Node3D = $World/EnemyLayer
+@onready var loot_layer: Node3D = $World/LootLayer
+@onready var camera: Camera3D = $World/Cam
+@onready var sun: DirectionalLight3D = $World/Sun
+@onready var torch_left: OmniLight3D = $World/TorchL
+@onready var torch_right: OmniLight3D = $World/TorchR
+@onready var hud_layer: CanvasLayer = $HUD
 @onready var perk_overlay: CanvasLayer = $PerkOverlay
 @onready var perk_root: Control = $PerkOverlay/Root
-@onready var floating_text_layer: CanvasLayer = $FloatingText
 
-var player: CharacterBody2D
+var player: CharacterBody3D
 var room_index: int = 0
-var current_room_seed: int = 0
 var camera_shake_t: float = 0.0
 var camera_shake_strength: float = 0.0
 var spawn_pacing_timer: float = 0.0
 var floor_kill_target: int = 12
-var pending_perk_offer: bool = false
 var pause_for_levelup: bool = false
 
 func _ready() -> void:
     SaveSystem.load_save()
+    Settings.load_settings()
     RunState.start_run(randi())
+    BuffSystem.clear_run_buffs()
+    Inventory.reset_for_run()
+    WorldSim.enter_run()
     EventBus.player_died.connect(_on_player_died)
     EventBus.loot_dropped.connect(_on_loot_dropped)
     EventBus.screen_shake.connect(_on_screen_shake)
     EventBus.hit_stop.connect(_on_hit_stop)
-    EventBus.floating_text.connect(_on_floating_text)
+    EventBus.day_night_phase_changed.connect(_on_phase_changed)
     RunState.level_up_pending.connect(_on_level_up_pending)
+    QuestSystem.start("main_ch1_iron_tide")
     _spawn_player()
     _enter_room()
-    _on_level_up_pending(1)   # offer first perk immediately to teach the loop
+    MusicDirector.set_layer(MusicDirector.Layer.EXPLORATION)
+    # First-30-seconds hook: dragon roar + flyover-shadow-implied via SFX,
+    # then a goblin charges. Real cinematic comes in a polish pass.
+    SfxBus.play("dragon_roar", -4.0)
+    EventBus.floating_text.emit("Dragon shadow over the keep!", Vector2(0, 0), Color(1, 0.6, 0.3))
+    await get_tree().create_timer(1.5).timeout
+    _spawn_goblin(_random_spawn_pos(), VariantType_SKIRMISHER)
+    # Offer first perk shortly so the level-up loop teaches itself.
+    await get_tree().create_timer(2.0).timeout
+    if not pause_for_levelup:
+        _on_level_up_pending(1)
+
+const VariantType_SKIRMISHER := 0  # mirror of goblin VariantType.SKIRMISHER
 
 func _process(delta: float) -> void:
     RunState.run_time += delta
     if camera_shake_t > 0.0:
         camera_shake_t = max(0.0, camera_shake_t - delta)
-        camera.offset = Vector2(
-            randf_range(-camera_shake_strength, camera_shake_strength),
-            randf_range(-camera_shake_strength, camera_shake_strength))
+        camera.h_offset = randf_range(-camera_shake_strength, camera_shake_strength) * 0.04
+        camera.v_offset = randf_range(-camera_shake_strength, camera_shake_strength) * 0.04
         if camera_shake_t == 0.0:
-            camera.offset = Vector2.ZERO
+            camera.h_offset = 0.0
+            camera.v_offset = 0.0
     if player != null and is_instance_valid(player):
-        camera.position = player.global_position
+        var lookahead := player.move_dir.normalized() * 1.6
+        var target := player.global_position + Vector3(lookahead.x, 0, lookahead.z)
+        camera.position = camera.position.lerp(target + Vector3(8.0, 12.0, 8.0), 0.07)
+        camera.look_at(target + Vector3.UP, Vector3.UP)
     spawn_pacing_timer -= delta
     if spawn_pacing_timer <= 0.0:
         spawn_pacing_timer = 1.6
@@ -63,30 +79,13 @@ func _process(delta: float) -> void:
 func _spawn_player() -> void:
     player = PlayerScene.instantiate()
     player.class_primary = "warrior"
-    player.position = Vector2(640, 360)
+    player.position = Vector3(0, 0, 0)
     player_layer.add_child(player)
 
 func _enter_room() -> void:
-    for c in room_layer.get_children():
-        c.queue_free()
-    for e in enemy_layer.get_children():
-        e.queue_free()
-    var bg := ColorRect.new()
-    bg.size = Vector2(1600, 1000)
-    bg.position = Vector2(-160, -140)
-    bg.color = Color(0.10 + 0.02 * RunState.floor_index, 0.08, 0.14, 1.0)
-    room_layer.add_child(bg)
-    # Walls
-    for i in range(8):
-        var t := ColorRect.new()
-        t.size = Vector2(64, 64)
-        t.position = Vector2(120 + i * 160.0, 80)
-        t.color = Color(0.20, 0.16, 0.22)
-        room_layer.add_child(t)
     floor_kill_target = 10 + RunState.floor_index * 4
-    _spawn_starter_pack()
-
-func _spawn_starter_pack() -> void:
+    if RunState.floor_index > 0:
+        EventBus.floating_text.emit("FLOOR " + str(RunState.floor_index + 1), Vector2(player.global_position.x, player.global_position.z), Color(1, 0.8, 0.3))
     for i in range(5 + RunState.floor_index):
         _spawn_goblin(_random_spawn_pos(), randi() % 3)
 
@@ -97,47 +96,48 @@ func _maybe_spawn_wave() -> void:
     var cap: int = 8 + RunState.floor_index * 3 + RunState.player_level
     if alive >= cap:
         return
-    var to_spawn: int = clamp(2 + RunState.floor_index, 1, 6)
-    for i in range(to_spawn):
+    var n := clamp(2 + RunState.floor_index, 1, 6)
+    for i in range(n):
         var roll: int = randi() % 100
         var v: int = 0
         if roll > 95 and RunState.floor_index >= 2:
-            v = 3              # warchief mini-boss
+            v = 3
         elif roll > 78:
-            v = 2              # shaman
+            v = 2
         elif roll > 55:
-            v = 1              # sapper
+            v = 1
         else:
-            v = 0              # skirmisher
+            v = 0
         _spawn_goblin(_random_spawn_pos(), v)
+    if MusicDirector.current_layer < MusicDirector.Layer.COMBAT:
+        MusicDirector.cue_combat(true)
 
-func _spawn_goblin(pos: Vector2, variant: int) -> void:
+func _spawn_goblin(pos: Vector3, v: int) -> void:
     var g = GoblinScene.instantiate()
     g.position = pos
-    g.variant = variant
+    g.variant = v
     g.stats_scale = RunState.enemy_scaling()
     enemy_layer.add_child(g)
 
-func _random_spawn_pos() -> Vector2:
+func _random_spawn_pos() -> Vector3:
     if player == null or not is_instance_valid(player):
-        return Vector2(640, 360)
+        return Vector3(6, 0, 0)
     var ang: float = randf() * TAU
-    var r: float = randf_range(360.0, 520.0)
-    return player.global_position + Vector2(cos(ang), sin(ang)) * r
+    var r: float = randf_range(8.0, 14.0)
+    return player.global_position + Vector3(cos(ang) * r, 0, sin(ang) * r)
 
 func _next_room() -> void:
     room_index += 1
     RunState.floor_index = room_index
     GameState.deepest_floor = max(GameState.deepest_floor, RunState.floor_index)
-    EventBus.floating_text.emit("FLOOR " + str(room_index + 1), player.global_position + Vector2(0, -64), Color(1, 0.8, 0.3))
     _enter_room()
 
-func _on_loot_dropped(item: Dictionary, pos: Vector2) -> void:
+func _on_loot_dropped(item: Dictionary, pos: Variant) -> void:
     var l = LootScene.instantiate()
-    l.position = pos
+    var p2: Vector2 = pos as Vector2
+    l.position = Vector3(p2.x, 0, p2.y)
     l.item = item
     loot_layer.add_child(l)
-    VFX.spawn_coin_spray(pos, 6 + item.get("rarity", 0) * 4)
 
 func _on_screen_shake(strength: float, duration: float) -> void:
     camera_shake_strength = max(camera_shake_strength, strength)
@@ -148,18 +148,10 @@ func _on_hit_stop(duration: float) -> void:
     await get_tree().create_timer(duration, true, false, true).timeout
     Engine.time_scale = 1.0
 
-func _on_floating_text(text: String, pos: Vector2, color: Color) -> void:
-    var lbl := Label.new()
-    lbl.text = text
-    lbl.modulate = color
-    lbl.position = pos - Vector2(20, 0)
-    lbl.z_index = 100
-    lbl.add_theme_font_size_override("font_size", 18)
-    fx_layer.add_child(lbl)
-    var tween := lbl.create_tween()
-    tween.tween_property(lbl, "position:y", pos.y - 64.0, 0.7)
-    tween.parallel().tween_property(lbl, "modulate:a", 0.0, 0.7)
-    tween.tween_callback(lbl.queue_free)
+func _on_phase_changed(phase: int) -> void:
+    var c: Color = WorldSim.phase_color()
+    sun.light_color = c
+    sun.light_energy = 0.4 if phase == WorldSim.Phase.NIGHT else 1.0
 
 func _on_level_up_pending(_lvl: int) -> void:
     if pause_for_levelup:
@@ -169,7 +161,7 @@ func _on_level_up_pending(_lvl: int) -> void:
     perk_overlay.visible = true
     SfxBus.play("levelup")
     if player != null:
-        VFX.spawn_levelup_flare(player.global_position)
+        VFX.spawn_levelup_flare_3d(player.global_position)
     var ws_tags: Array = []
     if player != null:
         ws_tags = player.equipped_weapon_tags()
@@ -187,8 +179,13 @@ func _on_perk_picked(perk: Dictionary) -> void:
             _on_level_up_pending(RunState.player_level)
 
 func _on_player_died() -> void:
-    EventBus.floating_text.emit("YOU DIED", player.global_position, Color(1, 0.2, 0.2))
+    EventBus.floating_text.emit("YOU DIED", Vector2(player.global_position.x, player.global_position.z), Color(1, 0.2, 0.2))
     GameState.run_count += 1
+    var run_loot: Array = Inventory.bag.duplicate()
+    if Settings.run_end_auto_return:
+        ChestManager.auto_stow(run_loot)
+        Inventory.bag.clear()
     SaveSystem.save()
+    WorldSim.exit_run()
     await get_tree().create_timer(1.5).timeout
-    get_tree().reload_current_scene()
+    get_tree().change_scene_to_file("res://scenes/title.tscn")

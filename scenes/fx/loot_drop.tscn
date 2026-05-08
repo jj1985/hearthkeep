@@ -1,29 +1,31 @@
-[gd_scene load_steps=3 format=3 uid="uid://b1norrath_loot"]
+[gd_scene load_steps=4 format=3 uid="uid://aerathis_loot3d"]
 
 [ext_resource type="Script" path="res://scripts/loot/loot_drop.gd" id="1"]
 
-[sub_resource type="CircleShape2D" id="CS_l"]
-radius = 18.0
+[sub_resource type="SphereShape3D" id="CS_loot"]
+radius = 0.8
 
-[node name="LootDrop" type="Area2D"]
+[sub_resource type="BoxMesh" id="BM_loot"]
+size = Vector3(0.35, 0.35, 0.35)
+
+[sub_resource type="StandardMaterial3D" id="M_loot"]
+albedo_color = Color(1, 1, 1, 1)
+metallic = 0.4
+roughness = 0.3
+emission_enabled = true
+emission = Color(1, 1, 1, 1)
+emission_energy_multiplier = 1.0
+
+[node name="LootDrop" type="Area3D"]
 script = ExtResource("1")
-collision_layer = 32
+collision_layer = 16
 collision_mask = 2
 
-[node name="Shape" type="CollisionShape2D" parent="."]
-shape = SubResource("CS_l")
+[node name="Shape" type="CollisionShape3D" parent="."]
+shape = SubResource("CS_loot")
+position = Vector3(0, 0.6, 0)
 
-[node name="Aura" type="Polygon2D" parent="."]
-polygon = PackedVector2Array(-22,0, 0,-22, 22,0, 0,22)
-color = Color(1, 1, 1, 0.18)
-
-[node name="Sprite" type="Polygon2D" parent="."]
-polygon = PackedVector2Array(-7,-7, 7,-7, 7,7, -7,7)
-color = Color(1, 1, 1, 1)
-
-[node name="Label" type="Label" parent="."]
-offset_left = -60.0
-offset_top = 14.0
-offset_right = 60.0
-offset_bottom = 30.0
-horizontal_alignment = 1
+[node name="Mesh" type="MeshInstance3D" parent="."]
+mesh = SubResource("BM_loot")
+position = Vector3(0, 0.6, 0)
+material_override = SubResource("M_loot")

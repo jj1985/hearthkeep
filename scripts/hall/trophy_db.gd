@@ -13,11 +13,11 @@ const TROPHIES := [
      "buff":{"crit_chance_vs_goblin":0.05},"buff_label":"+5% crit chance vs goblins"},
 
     # Dragon set
-    {"id":"torath_horn","name":"Horn of Torath","slot_kind":"wall_mount","set":"dragonsworn_sanctum",
+    {"id":"vyxhasis_horn","name":"Horn of Vyxhasis","slot_kind":"wall_mount","set":"dragonsworn_sanctum",
      "buff":{"fire_resist":0.05},"buff_label":"+5% fire resistance"},
-    {"id":"cinderwyrm_scale","name":"Cinderwyrm Scale","slot_kind":"pedestal","set":"dragonsworn_sanctum",
-     "buff":{"fire_dmg":0.05},"buff_label":"+5% fire damage"},
-    {"id":"old_storm_fang","name":"Fang of Old Storm","slot_kind":"pedestal","set":"dragonsworn_sanctum",
+    {"id":"ourzhal_scale","name":"Ourzhal's Stormscale","slot_kind":"pedestal","set":"dragonsworn_sanctum",
+     "buff":{"lightning_dmg":0.05},"buff_label":"+5% lightning damage"},
+    {"id":"aethyrnax_fang","name":"Fang of Aethyrnax","slot_kind":"pedestal","set":"dragonsworn_sanctum",
      "buff":{"frost_resist":0.05},"buff_label":"+5% frost resistance"},
     {"id":"dragon_eye_pendant","name":"Dragon-Eye Pendant","slot_kind":"case","set":"dragonsworn_sanctum",
      "buff":{"crit_dmg":0.10},"buff_label":"+10% crit damage"},
@@ -25,13 +25,13 @@ const TROPHIES := [
      "buff":{"move_speed":0.04},"buff_label":"+4% move speed"},
 
     # Faction banners
-    {"id":"valehome_banner","name":"Valehome Crown Banner","slot_kind":"banner","set":"diplomats_keep",
-     "buff":{"rep_gain_valehome":0.15},"buff_label":"+15% Valehome reputation gain"},
-    {"id":"duskport_banner","name":"Duskport Consortium Banner","slot_kind":"banner","set":"diplomats_keep",
+    {"id":"coastreach_banner","name":"Coastreach Crown Banner","slot_kind":"banner","set":"diplomats_keep",
+     "buff":{"rep_gain_coastreach":0.15},"buff_label":"+15% Coastreach reputation gain"},
+    {"id":"bastion_banner","name":"Black Bastion Banner","slot_kind":"banner","set":"diplomats_keep",
      "buff":{"vendor_buyback_discount":0.10},"buff_label":"-10% buyback price"},
-    {"id":"thalanore_banner","name":"Thalanore Council Banner","slot_kind":"banner","set":"diplomats_keep",
-     "buff":{"rep_gain_thalanore":0.15},"buff_label":"+15% Thalanore reputation gain"},
-    {"id":"graymarrow_banner","name":"Graymarrow Clans Banner","slot_kind":"banner","set":"diplomats_keep",
+    {"id":"canopyhall_banner","name":"Canopyhall Council Banner","slot_kind":"banner","set":"diplomats_keep",
+     "buff":{"rep_gain_canopyhall":0.15},"buff_label":"+15% Canopyhall reputation gain"},
+    {"id":"kaeldur_banner","name":"Kaeldur Clans Banner","slot_kind":"banner","set":"diplomats_keep",
      "buff":{"forge_discount":0.10},"buff_label":"-10% forge cost"},
 
     # Tomes / journals
@@ -61,13 +61,13 @@ const SETS := {
     },
     "dragonsworn_sanctum": {
         "name":"Dragonsworn Sanctum",
-        "members":["torath_horn","cinderwyrm_scale","old_storm_fang","dragon_eye_pendant","primal_wing"],
+        "members":["vyxhasis_horn","ourzhal_scale","aethyrnax_fang","dragon_eye_pendant","primal_wing"],
         "set_buff":{"fire_resist":0.08,"frost_resist":0.08,"lightning_resist":0.08,"once_per_run_lethal_save":1},
         "set_buff_label":"+8% all elemental resists; once per run, negate a fatal blow",
     },
     "diplomats_keep": {
         "name":"Diplomat's Keep",
-        "members":["valehome_banner","duskport_banner","thalanore_banner","graymarrow_banner"],
+        "members":["coastreach_banner","bastion_banner","canopyhall_banner","kaeldur_banner"],
         "set_buff":{"rep_gain_all":0.25},
         "set_buff_label":"+25% reputation gain across all factions",
     },

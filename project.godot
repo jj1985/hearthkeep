@@ -1,12 +1,13 @@
-; Aerathis Roguelike — 3D ARPG (formerly Norrath; renamed for IP distance)
+; HEARTHKEEP — 3D ARPG roguelike (working title locked)
+; Original setting; not affiliated with any existing fantasy IP.
 ; Godot 4.6.x
 
 config_version=5
 
 [application]
 
-config/name="Aerathis Roguelike"
-config/description="3D ARPG roguelike, isometric Diablo-lineage camera, deep multiclassing, base building, dragons, goblins, gambling, dyes, Megabonk-style perk loop."
+config/name="Hearthkeep"
+config/description="HEARTHKEEP — 3D ARPG roguelike. Isometric Diablo-lineage camera, deep multiclassing, the player's Villa with Treasury chests + Trophy Hall set buffs, dragons (Vyxhasis, Ourzhal, Aethyrnax), goblin warbands, in-world gambling, armor dyes, Megabonk-style level-up perk cards, weapon evolutions, and a living-world simulation."
 run/main_scene="res://scenes/title.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"

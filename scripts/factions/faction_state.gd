@@ -3,26 +3,26 @@ extends Node
 # Faction reputation, power, and tokens. Persisted via SaveSystem.
 
 var rep: Dictionary = {
-    "valehome_crown": 0,
-    "duskport_consortium": 0,
-    "thalanore_council": 0,
-    "graymarrow_clans": 0,
+    "coastreach_crown": 0,
+    "bastion_consortium": 0,
+    "canopyhall_council": 0,
+    "kaeldur_clans": 0,
     "free_companies": 0,
 }
 
 var power: Dictionary = {
-    "valehome_crown": 50,
-    "duskport_consortium": 50,
-    "thalanore_council": 50,
-    "graymarrow_clans": 50,
+    "coastreach_crown": 50,
+    "bastion_consortium": 50,
+    "canopyhall_council": 50,
+    "kaeldur_clans": 50,
     "free_companies": 50,
 }
 
 var tokens_dict: Dictionary = {
-    "valehome_crown": 0,
-    "duskport_consortium": 0,
-    "thalanore_council": 0,
-    "graymarrow_clans": 0,
+    "coastreach_crown": 0,
+    "bastion_consortium": 0,
+    "canopyhall_council": 0,
+    "kaeldur_clans": 0,
     "free_companies": 0,
 }
 

@@ -27,7 +27,7 @@ func _seed_quests() -> void:
             {"id":"defend","kind":"event","event_id":"goblin_raid","needed":1,"current":0,
              "label":"Survive a Goblin Warband Raid"},
         ],
-        "reward": {"gold": 500, "tokens": {"valehome_crown": 25}},
+        "reward": {"gold": 500, "tokens": {"coastreach_crown": 25}},
     })
     register({
         "id": "class_warrior_oath",
@@ -36,7 +36,7 @@ func _seed_quests() -> void:
         "class_id": "warrior",
         "blurb": "Stand at the broken keep where Sir Alric fell. Take up his blade.",
         "objectives": [
-            {"id":"reach","kind":"reach","location":"valehome","needed":1,"current":0,"label":"Reach Valehome"},
+            {"id":"reach","kind":"reach","location":"coastreach","needed":1,"current":0,"label":"Reach the Coastreach"},
             {"id":"fell_warchief","kind":"kill","target_id":"goblin_warchief","needed":1,"current":0,"label":"Slay a Goblin Warchief"},
         ],
         "reward": {"gold": 200, "skill_unlock":"oath_break", "cosmetic":"alric_helm"},
@@ -69,7 +69,7 @@ func _seed_quests() -> void:
         "kind":"class","class_id":"necromancer",
         "objectives":[
             {"id":"corpses","kind":"kill","target_id":"goblin","needed":20,"current":0,"label":"Provide 20 corpses"},
-            {"id":"shrine","kind":"reach","location":"fearhollow","needed":1,"current":0,"label":"Visit Fearhollow Shrine"},
+            {"id":"shrine","kind":"reach","location":"veiled_plane","needed":1,"current":0,"label":"Visit a Veiled Plane shrine"},
         ],
         "reward":{"gold":200,"skill_unlock":"bone_throne","cosmetic":"hollow_sash"},
     })
@@ -84,17 +84,17 @@ func _seed_quests() -> void:
         "reward":{"gold":200,"skill_unlock":"final_chord","cosmetic":"seven_strings_cape"},
     })
     register({
-        "id":"dragon_hunt_torath",
-        "title":"Dragon Hunt: Torath the Unburned",
+        "id":"dragon_hunt_vyxhasis",
+        "title":"Dragon Hunt: Vyxhasis the Unburned",
         "kind":"dragon_hunt",
         "blurb":"A wing-shadow that does not move with the wind. The first hunt begins.",
         "chapters": [
             {"id":"gather_lore","label":"Read 3 dragon lore entries","needed":3,"current":0,"kind":"lore"},
             {"id":"forge_key","label":"Forge the Drake Key (gather 3 Drake Scales)","needed":3,"current":0,"kind":"item","item_id":"drake_scale"},
             {"id":"flyover_witness","label":"Witness the Dragon Flyover","needed":1,"current":0,"kind":"event","event_id":"dragon_flyover"},
-            {"id":"confront","label":"Defeat Torath","needed":1,"current":0,"kind":"boss","target_id":"torath"},
+            {"id":"confront","label":"Defeat Vyxhasis","needed":1,"current":0,"kind":"boss","target_id":"vyxhasis"},
         ],
-        "reward":{"gold":2000,"dragon_shards":50,"cosmetic":"torath_horn"},
+        "reward":{"gold":2000,"dragon_shards":50,"cosmetic":"vyxhasis_horn"},
     })
 
 func register(q: Dictionary) -> void:

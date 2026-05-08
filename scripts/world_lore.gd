@@ -1,64 +1,73 @@
 extends Node
 
-# IP-distance pass: renamed from "Norrath" (Daybreak Game Co. trademark).
-# This world is "Aerathis — the Sundered Realms" — original setting.
-# All in-game text, dialogue, lore, and place names use this naming.
+# HEARTHKEEP world bible (originally drafted with EQ-proximity terms; this
+# revision scrubs all near-trademark vocabulary in line with the IP-distance
+# mandate). Region IDs from the user-supplied GDD vocab where applicable.
 
-const WORLD_NAME := "Aerathis"
-const WORLD_SUBTITLE := "the Sundered Realms"
+const GAME_TITLE := "HEARTHKEEP"
+const WORLD_NAME := "the Sundered Realms"
+const WORLD_SUBTITLE := "of the Sundered Realms"
 const TAGLINE := "An age of fractures. A world remade by dragonfire and goblin tide."
 
 const REGIONS := {
-    "valehome": {
-        "name": "Valehome",
-        "blurb": "Coastal trading kingdom. Banners of trade-houses snap on stone keep walls. Kelp markets and lighthouse spires.",
+    "coastreach": {
+        "name": "the Coastreach",
+        "blurb": "Coastal trading kingdom. Banners of trade-houses snap on stone keep walls. Kelp markets and lighthouse spires. Home of the player's Hearthkeep villa.",
         "vibe": "warm coastal medieval",
-        "music_track": "valehome_theme",
+        "music_track": "coastreach_theme",
         "lighting_tint": Color(1.05, 0.97, 0.85),
     },
-    "duskport": {
-        "name": "Duskport",
+    "black_bastion": {
+        "name": "the Black Bastion",
         "blurb": "Dark city-state of locked guild halls and gallows-shadow alleys. Coin still rules — the question is whose coin.",
         "vibe": "shadow noir medieval",
-        "music_track": "duskport_theme",
+        "music_track": "bastion_theme",
         "lighting_tint": Color(0.7, 0.7, 0.95),
     },
-    "thalanore": {
-        "name": "Thalanore Canopy",
+    "canopyhall": {
+        "name": "Canopyhall",
         "blurb": "Treetop city of the high-wood elves. Walkways braided with living vine, leaf-light filtered through gold.",
         "vibe": "elven canopy",
-        "music_track": "thalanore_theme",
+        "music_track": "canopyhall_theme",
         "lighting_tint": Color(0.85, 1.05, 0.85),
     },
-    "graymarrow": {
-        "name": "Graymarrow Hold",
+    "kaeldur": {
+        "name": "Kaeldur",
         "blurb": "Dwarven mountain stronghold. Forge-glow on basalt, runes pulsing along iron-banded gates.",
         "vibe": "dwarven mountain",
-        "music_track": "graymarrow_theme",
+        "music_track": "kaeldur_theme",
         "lighting_tint": Color(1.05, 0.85, 0.6),
     },
-    "ashfen": {
-        "name": "Ashfen Caldera",
-        "blurb": "Volcanic waste. Black glass underfoot and hot wind that smells of iron and dragon.",
+    "cinderwastes": {
+        "name": "the Cinderwastes",
+        "blurb": "Volcanic waste. Black glass underfoot and hot wind that smells of iron and dragon. Where the elder wyrm Vyxhasis stalks.",
         "vibe": "volcanic dragon-touched",
-        "music_track": "ashfen_theme",
+        "music_track": "cinderwastes_theme",
         "lighting_tint": Color(1.2, 0.55, 0.4),
     },
-    "fearhollow": {
-        "name": "Fearhollow",
+    "veiled_plane": {
+        "name": "the Veiled Plane",
         "blurb": "A wound between worlds. Where waking dreams crawl out at moonless tide.",
         "vibe": "planar fear realm",
-        "music_track": "fearhollow_theme",
+        "music_track": "veiled_theme",
         "lighting_tint": Color(0.55, 1.10, 0.65),
     },
     "ruinmarch": {
         "name": "The Ruinmarch",
-        "blurb": "Goblin warband front. Burned villages. Iron-banded oak doors splintered. Smoke against the sky.",
+        "blurb": "Goblin warband front, where Krrik III's tribe pushes west each season. Burned villages. Smoke against the sky.",
         "vibe": "burned wilderness",
         "music_track": "ruinmarch_theme",
         "lighting_tint": Color(1.0, 0.75, 0.55),
     },
 }
+
+const DRAGONS := {
+    "vyxhasis": {"name":"Vyxhasis the Unburned","region":"cinderwastes","element":"fire"},
+    "ourzhal":  {"name":"Ourzhal of the Storm","region":"kaeldur","element":"lightning"},
+    "aethyrnax":{"name":"Aethyrnax the Frost-Wyrm","region":"veiled_plane","element":"frost"},
+}
+
+const GOBLIN_KING := {"id":"krrik_iii","name":"Krrik the Third"}
 
 const PANTHEON := [
     {"id":"thaen","name":"Thaen the Forge","domain":"craft, oath, hearth"},
@@ -77,9 +86,9 @@ const PANTHEON := [
 # or die richer.
 
 const FACTIONS := {
-    "valehome_crown": {"name":"Valehome Crown","blurb":"Trade-house knights and crown coin."},
-    "duskport_consortium": {"name":"Duskport Consortium","blurb":"Guildmasters who lend a price for everything."},
-    "thalanore_council": {"name":"Thalanore Council","blurb":"Elven keepers of the canopy and the long memory."},
-    "graymarrow_clans": {"name":"Graymarrow Clans","blurb":"Dwarven smiths and rune-wardens of the deep stone."},
+    "coastreach_crown": {"name":"Coastreach Crown","blurb":"Trade-house knights and crown coin."},
+    "bastion_consortium": {"name":"Black Bastion Consortium","blurb":"Guildmasters who lend a price for everything."},
+    "canopyhall_council": {"name":"Canopyhall Council","blurb":"Elven keepers of the canopy and the long memory."},
+    "kaeldur_clans": {"name":"Kaeldur Clans","blurb":"Dwarven smiths and rune-wardens of the deep stone."},
     "free_companies": {"name":"Free Companies","blurb":"Mercenary warbands. Gold first; questions later."},
 }
