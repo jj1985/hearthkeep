@@ -1,4 +1,4 @@
-.PHONY: run test apk apk-clean assets-audit balance-sim clean
+.PHONY: run test apk apk-clean apk-bump assets-audit balance-sim clean
 
 GODOT ?= $(HOME)/bin/godot
 PROJECT_PATH ?= .
@@ -9,7 +9,12 @@ run:
 test:
 	$(GODOT) --headless --path $(PROJECT_PATH) -s addons/gut/gut_cmdln.gd -gdir=res://tests -gexit
 
-apk:
+# Bumps Android versionCode in export_presets.cfg by +1.
+# Required before every APK build so Android treats it as a real upgrade.
+apk-bump:
+	python3 tools/bump_version.py
+
+apk: apk-bump
 	mkdir -p build
 	$(GODOT) --headless --path $(PROJECT_PATH) --export-debug "Android" build/HearthkeepDemo-v0.0.1.apk
 
