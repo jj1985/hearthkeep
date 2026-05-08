@@ -1,52 +1,90 @@
-[gd_scene load_steps=2 format=3 uid="uid://hk_chest_view"]
+[gd_scene load_steps=3 format=3 uid="uid://hk_chest_view"]
 
 [ext_resource type="Script" path="res://scripts/ui/chest_view.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/ui/safe_area_margin.gd" id="2"]
 
 [node name="Root" type="Control"]
 script = ExtResource("1")
 anchor_right = 1.0
 anchor_bottom = 1.0
 
-[node name="Dim" type="ColorRect" parent="."]
+[node name="Bg" type="ColorRect" parent="."]
 anchor_right = 1.0
 anchor_bottom = 1.0
-color = Color(0, 0, 0, 0.65)
 
-[node name="Panel" type="PanelContainer" parent="."]
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -480.0
-offset_top = -300.0
-offset_right = 480.0
-offset_bottom = 300.0
+[node name="SafeArea" type="MarginContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("2")
 
-[node name="V" type="VBoxContainer" parent="Panel"]
+[node name="V" type="VBoxContainer" parent="SafeArea"]
+theme_override_constants/separation = 12
 
-[node name="Title" type="Label" parent="Panel/V"]
-text = "Chest"
-theme_override_font_sizes/font_size = 24
+; ---- Header (title + count) ----
 
-[node name="Header" type="HBoxContainer" parent="Panel/V"]
+[node name="Header" type="HBoxContainer" parent="SafeArea/V"]
+theme_override_constants/separation = 12
 
-[node name="SortBtn" type="OptionButton" parent="Panel/V/Header"]
-custom_minimum_size = Vector2(180, 32)
+[node name="Title" type="Label" parent="SafeArea/V/Header"]
+text = "TREASURY"
+size_flags_horizontal = 3
 
-[node name="SearchEdit" type="LineEdit" parent="Panel/V/Header"]
-custom_minimum_size = Vector2(240, 32)
-placeholder_text = "Search..."
+[node name="Count" type="Label" parent="SafeArea/V/Header"]
+text = "0 items"
+horizontal_alignment = 2
 
-[node name="Scroll" type="ScrollContainer" parent="Panel/V"]
-custom_minimum_size = Vector2(940, 460)
+; ---- Filters (sort dropdown + rarity chips, scrollable) ----
 
-[node name="Grid" type="GridContainer" parent="Panel/V/Scroll"]
-columns = 4
+[node name="Filters" type="HBoxContainer" parent="SafeArea/V"]
+theme_override_constants/separation = 8
 
-[node name="Footer" type="HBoxContainer" parent="Panel/V"]
+[node name="SortBtn" type="OptionButton" parent="SafeArea/V/Filters"]
+custom_minimum_size = Vector2(160, 40)
 
-[node name="SellAllBtn" type="Button" parent="Panel/V/Footer"]
-text = "Sell All Junk"
+[node name="ChipsScroll" type="ScrollContainer" parent="SafeArea/V/Filters"]
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0, 40)
+horizontal_scroll_mode = 2
+vertical_scroll_mode = 0
 
-[node name="CloseBtn" type="Button" parent="Panel/V/Footer"]
-text = "Close"
+[node name="Chips" type="HBoxContainer" parent="SafeArea/V/Filters/ChipsScroll"]
+theme_override_constants/separation = 6
+
+; ---- Search bar ----
+
+[node name="SearchBar" type="LineEdit" parent="SafeArea/V"]
+custom_minimum_size = Vector2(0, 48)
+placeholder_text = "Search by name…"
+
+; ---- Grid (scrollable) ----
+
+[node name="Scroll" type="ScrollContainer" parent="SafeArea/V"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Grid" type="GridContainer" parent="SafeArea/V/Scroll"]
+columns = 5
+size_flags_horizontal = 3
+
+; ---- Empty state ----
+
+[node name="EmptyState" type="Label" parent="SafeArea/V"]
+text = ""
+horizontal_alignment = 1
+visible = false
+
+; ---- Footer ----
+
+[node name="Footer" type="HBoxContainer" parent="SafeArea/V"]
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="SellAllBtn" type="Button" parent="SafeArea/V/Footer"]
+custom_minimum_size = Vector2(220, 56)
+text = "SELL ALL JUNK"
+visible = false
+
+[node name="CloseBtn" type="Button" parent="SafeArea/V/Footer"]
+custom_minimum_size = Vector2(160, 56)
+text = "CLOSE"
