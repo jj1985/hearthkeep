@@ -30,10 +30,10 @@ func test_class_select_instantiates_clean() -> void:
     assert_not_null(inst, "class_select failed to instantiate")
     add_child_autofree(inst)
     await get_tree().process_frame
-    # ClassSelect controller creates 7 primary + 7 secondary buttons in _ready
-    var primary_row: Node = inst.get_node_or_null("Scroll/Panel/Margin/V/PrimaryRow")
-    assert_not_null(primary_row, "PrimaryRow node missing")
-    assert_eq(primary_row.get_child_count(), 7, "Expected 7 primary class buttons")
+    # ClassSelect controller populates the class list in _ready (7 rows).
+    var class_list: Node = inst.get_node_or_null("SafeArea/V/Scroll/List")
+    assert_not_null(class_list, "Class list node missing")
+    assert_eq(class_list.get_child_count(), 7, "Expected 7 class rows populated")
 
 func test_villa_instantiates_after_autoload_fix() -> void:
     # Pre-fix, this would have crashed because ChestManager autoload didn't exist.

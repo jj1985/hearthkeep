@@ -6,45 +6,36 @@
 script = ExtResource("1")
 anchor_right = 1.0
 anchor_bottom = 1.0
-mouse_filter = 0
 
 [node name="Dim" type="ColorRect" parent="."]
 anchor_right = 1.0
 anchor_bottom = 1.0
-color = Color(0, 0, 0, 0.55)
 mouse_filter = 1
 
-[node name="BottomPanel" type="PanelContainer" parent="."]
+[node name="BottomSheet" type="PanelContainer" parent="."]
 anchor_left = 0.0
-anchor_top = 0.55
+anchor_top = 0.50
 anchor_right = 1.0
 anchor_bottom = 1.0
 
-[node name="Margin" type="MarginContainer" parent="BottomPanel"]
+[node name="Margin" type="MarginContainer" parent="BottomSheet"]
 theme_override_constants/margin_left = 16
 theme_override_constants/margin_right = 16
-theme_override_constants/margin_top = 12
-theme_override_constants/margin_bottom = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_bottom = 32
 
-[node name="V" type="VBoxContainer" parent="BottomPanel/Margin"]
-theme_override_constants/separation = 10
+[node name="V" type="VBoxContainer" parent="BottomSheet/Margin"]
+theme_override_constants/separation = 16
 
-[node name="Title" type="Label" parent="BottomPanel/Margin/V"]
+[node name="Title" type="Label" parent="BottomSheet/Margin/V"]
 text = "LEVEL UP — CHOOSE A PERK"
 horizontal_alignment = 1
-theme_override_font_sizes/font_size = 24
-modulate = Color(1, 0.85, 0.4, 1)
 
-[node name="Scroll" type="ScrollContainer" parent="BottomPanel/Margin/V"]
+[node name="Scroll" type="ScrollContainer" parent="BottomSheet/Margin/V"]
 size_flags_horizontal = 3
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
-[node name="Panel" type="VBoxContainer" parent="BottomPanel/Margin/V/Scroll"]
-size_flags_horizontal = 3
-
-[node name="Grid" type="HFlowContainer" parent="BottomPanel/Margin/V/Scroll/Panel"]
-alignment = 1
-theme_override_constants/h_separation = 10
-theme_override_constants/v_separation = 10
+[node name="Grid" type="GridContainer" parent="BottomSheet/Margin/V/Scroll"]
+columns = 2
 size_flags_horizontal = 3
