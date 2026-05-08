@@ -111,7 +111,7 @@ func draw_offer(class_primary: String, class_secondary: String, count: int = 4, 
             continue
         if not RunState.has_perk(ev["perk_id"]):
             continue
-        var entry := ev.duplicate(true)
+        var entry: Dictionary = (ev as Dictionary).duplicate(true)
         entry["evolution"] = true
         pool.append(entry)
 

@@ -88,11 +88,11 @@ const TREES := {
     },
 }
 
-func get_tree(id: String) -> Dictionary:
+func get_tree_def(id: String) -> Dictionary:
     return TREES.get(id, {"nodes":[], "edges":[]})
 
-func get_node(tree_id: String, node_id: String) -> Dictionary:
-    var t := get_tree(tree_id)
+func get_talent_node(tree_id: String, node_id: String) -> Dictionary:
+    var t := get_tree_def(tree_id)
     for n in t.get("nodes", []):
         if n["id"] == node_id:
             return n

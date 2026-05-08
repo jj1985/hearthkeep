@@ -101,7 +101,7 @@ const HYBRID_PRESTIGES := [
      "perk":"Arrows leave poison clouds. Corpses spawn poison wisps that seek enemies."},
 ]
 
-func get_class(id: String) -> Dictionary:
+func get_class_def(id: String) -> Dictionary:
     return CLASSES.get(id, {})
 
 func names() -> Array:

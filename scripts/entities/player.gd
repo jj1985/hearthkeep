@@ -38,7 +38,7 @@ func _ready() -> void:
     z_index = 5
 
 func _apply_class_base() -> void:
-    var c := ClassDB.get_class(class_primary)
+    var c := ClassDB.get_class_def(class_primary)
     if c.is_empty():
         return
     stats.max_hp = float(c["base_hp"]) * RunState.max_hp_mult
@@ -177,7 +177,7 @@ func gain_xp(amount: float) -> void:
 
 func _on_perk_chosen(_id: String) -> void:
     var new_max: float = stats.max_hp
-    var c := ClassDB.get_class(class_primary)
+    var c := ClassDB.get_class_def(class_primary)
     if not c.is_empty():
         new_max = float(c["base_hp"]) * RunState.max_hp_mult
     var hp_ratio: float = stats.hp / max(1.0, stats.max_hp)
