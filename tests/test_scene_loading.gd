@@ -31,7 +31,7 @@ func test_class_select_instantiates_clean() -> void:
     add_child_autofree(inst)
     await get_tree().process_frame
     # ClassSelect controller creates 7 primary + 7 secondary buttons in _ready
-    var primary_row: Node = inst.get_node_or_null("Panel/Margin/V/PrimaryRow")
+    var primary_row: Node = inst.get_node_or_null("Scroll/Panel/Margin/V/PrimaryRow")
     assert_not_null(primary_row, "PrimaryRow node missing")
     assert_eq(primary_row.get_child_count(), 7, "Expected 7 primary class buttons")
 

@@ -12,69 +12,70 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 color = Color(0.05, 0.04, 0.07, 1)
 
-[node name="Panel" type="PanelContainer" parent="."]
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -540.0
-offset_top = -300.0
-offset_right = 540.0
-offset_bottom = 300.0
+[node name="Scroll" type="ScrollContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+horizontal_scroll_mode = 0
 
-[node name="Margin" type="MarginContainer" parent="Panel"]
+[node name="Panel" type="PanelContainer" parent="Scroll"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Margin" type="MarginContainer" parent="Scroll/Panel"]
 theme_override_constants/margin_left = 24
 theme_override_constants/margin_right = 24
 theme_override_constants/margin_top = 20
 theme_override_constants/margin_bottom = 20
 
-[node name="V" type="VBoxContainer" parent="Panel/Margin"]
+[node name="V" type="VBoxContainer" parent="Scroll/Panel/Margin"]
 theme_override_constants/separation = 12
 
-[node name="Title" type="Label" parent="Panel/Margin/V"]
+[node name="Title" type="Label" parent="Scroll/Panel/Margin/V"]
 text = "FORGE YOUR LEGEND"
 horizontal_alignment = 1
 theme_override_font_sizes/font_size = 36
 modulate = Color(1, 0.85, 0.45, 1)
 
-[node name="PrimaryHeader" type="Label" parent="Panel/Margin/V"]
+[node name="PrimaryHeader" type="Label" parent="Scroll/Panel/Margin/V"]
 text = "Primary class"
 theme_override_font_sizes/font_size = 18
 modulate = Color(0.85, 0.8, 0.6, 1)
 
-[node name="PrimaryRow" type="HBoxContainer" parent="Panel/Margin/V"]
-theme_override_constants/separation = 6
+[node name="PrimaryRow" type="HFlowContainer" parent="Scroll/Panel/Margin/V"]
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 8
 
-[node name="SecondaryHeader" type="Label" parent="Panel/Margin/V"]
+[node name="SecondaryHeader" type="Label" parent="Scroll/Panel/Margin/V"]
 text = "Secondary class (optional — multiclass)"
 theme_override_font_sizes/font_size = 18
 modulate = Color(0.85, 0.7, 0.85, 1)
 
-[node name="SecondaryRow" type="HBoxContainer" parent="Panel/Margin/V"]
-theme_override_constants/separation = 6
+[node name="SecondaryRow" type="HFlowContainer" parent="Scroll/Panel/Margin/V"]
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 8
 
-[node name="Blurb" type="Label" parent="Panel/Margin/V"]
+[node name="Blurb" type="Label" parent="Scroll/Panel/Margin/V"]
 custom_minimum_size = Vector2(0, 80)
 autowrap_mode = 3
 horizontal_alignment = 1
 theme_override_font_sizes/font_size = 14
 modulate = Color(0.85, 0.85, 0.8, 1)
 
-[node name="HybridLabel" type="Label" parent="Panel/Margin/V"]
+[node name="HybridLabel" type="Label" parent="Scroll/Panel/Margin/V"]
 custom_minimum_size = Vector2(0, 60)
 autowrap_mode = 3
 horizontal_alignment = 1
 theme_override_font_sizes/font_size = 16
 text = ""
 
-[node name="BottomRow" type="HBoxContainer" parent="Panel/Margin/V"]
+[node name="BottomRow" type="HBoxContainer" parent="Scroll/Panel/Margin/V"]
 theme_override_constants/separation = 12
 alignment = 1
 
-[node name="BackButton" type="Button" parent="Panel/Margin/V/BottomRow"]
-custom_minimum_size = Vector2(180, 48)
+[node name="BackButton" type="Button" parent="Scroll/Panel/Margin/V/BottomRow"]
+custom_minimum_size = Vector2(180, 56)
 text = "Back"
 
-[node name="BeginButton" type="Button" parent="Panel/Margin/V/BottomRow"]
-custom_minimum_size = Vector2(220, 48)
+[node name="BeginButton" type="Button" parent="Scroll/Panel/Margin/V/BottomRow"]
+custom_minimum_size = Vector2(220, 56)
 text = "BEGIN"

@@ -5,12 +5,12 @@ extends Control
 
 const CLASS_ORDER := ["warrior", "rogue", "wizard", "necromancer", "bard", "paladin", "ranger"]
 
-@onready var primary_row: HBoxContainer = $Panel/Margin/V/PrimaryRow
-@onready var secondary_row: HBoxContainer = $Panel/Margin/V/SecondaryRow
-@onready var blurb: Label = $Panel/Margin/V/Blurb
-@onready var hybrid_label: Label = $Panel/Margin/V/HybridLabel
-@onready var begin_btn: Button = $Panel/Margin/V/BottomRow/BeginButton
-@onready var back_btn: Button = $Panel/Margin/V/BottomRow/BackButton
+@onready var primary_row: HFlowContainer = $Scroll/Panel/Margin/V/PrimaryRow
+@onready var secondary_row: HFlowContainer = $Scroll/Panel/Margin/V/SecondaryRow
+@onready var blurb: Label = $Scroll/Panel/Margin/V/Blurb
+@onready var hybrid_label: Label = $Scroll/Panel/Margin/V/HybridLabel
+@onready var begin_btn: Button = $Scroll/Panel/Margin/V/BottomRow/BeginButton
+@onready var back_btn: Button = $Scroll/Panel/Margin/V/BottomRow/BackButton
 
 var primary_buttons: Array[Button] = []
 var secondary_buttons: Array[Button] = []
@@ -25,12 +25,12 @@ func _ready() -> void:
     back_btn.pressed.connect(_on_back)
     _refresh()
 
-func _make_class_button(parent: HBoxContainer, id: String, cb: Callable) -> Button:
+func _make_class_button(parent: HFlowContainer, id: String, cb: Callable) -> Button:
     var b := Button.new()
     var def: Dictionary = Classes.get_class_def(id)
     b.text = def.get("name", id.capitalize())
     b.set_meta("class_id", id)
-    b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    b.custom_minimum_size = Vector2(140, 56)
     b.pressed.connect(cb.bind(id))
     parent.add_child(b)
     return b

@@ -2,8 +2,8 @@ extends Control
 
 # Megabonk-style perk card overlay. Pause-the-world, pick 1 of N cards.
 
-@onready var grid: HBoxContainer = $Panel/Grid
-@onready var title: Label = $Panel/Title
+@onready var grid: HFlowContainer = $Margin/Scroll/Panel/Grid
+@onready var title: Label = $Margin/Scroll/Panel/Title
 
 var on_pick: Callable
 
