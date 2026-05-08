@@ -12,6 +12,7 @@ extends Control
 
 const T := preload("res://scripts/ui/ui_tokens.gd")
 const UiStyle_ := preload("res://scripts/ui/ui_style.gd")
+const UiAnim_ := preload("res://scripts/ui/ui_anim.gd")
 
 @onready var hp_bar: ProgressBar = $TopLeft/Bars/HPBar
 @onready var mp_bar: ProgressBar = $TopLeft/Bars/MPBar
@@ -56,6 +57,8 @@ func _ready() -> void:
     _wire_skill_button(potion_mp_btn, "potion_mp")
     _wire_skill_button(dodge_btn, "dodge")
     pause_btn.pressed.connect(_on_pause)
+    for b in [skill_primary, skill_2, skill_3, skill_4, skill_5, potion_hp_btn, potion_mp_btn, dodge_btn, pause_btn]:
+        UiAnim_.bind_press_feedback(b, 0.92)
 
 func _style_bars() -> void:
     _style_progress(hp_bar, T.ERROR, T.SURFACE_DIM)

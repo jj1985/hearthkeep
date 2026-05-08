@@ -6,6 +6,7 @@ extends Control
 
 const T := preload("res://scripts/ui/ui_tokens.gd")
 const UiStyle_ := preload("res://scripts/ui/ui_style.gd")
+const UiAnim_ := preload("res://scripts/ui/ui_anim.gd")
 
 const CLASS_ORDER := ["warrior", "rogue", "wizard", "necromancer", "bard", "paladin", "ranger"]
 
@@ -66,6 +67,8 @@ func _wire_chrome() -> void:
     tab_primary_btn.pressed.connect(_select_tab.bind("primary"))
     tab_secondary_btn.pressed.connect(_select_tab.bind("secondary"))
     begin_btn.pressed.connect(_on_begin)
+    for b in [tab_primary_btn, tab_secondary_btn, begin_btn]:
+        UiAnim_.bind_press_feedback(b)
 
 func _populate_list() -> void:
     for c in class_list.get_children():
@@ -86,6 +89,7 @@ func _make_class_row(id: String) -> Button:
     UiStyle_.apply_secondary(b)
     b.add_theme_font_size_override("font_size", T.FS_TITLE_LG)
     b.pressed.connect(_on_row_pressed.bind(id))
+    UiAnim_.bind_press_feedback(b)
     return b
 
 func _on_row_pressed(id: String) -> void:

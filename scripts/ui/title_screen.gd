@@ -5,6 +5,7 @@ extends Control
 
 const T := preload("res://scripts/ui/ui_tokens.gd")
 const UiStyle_ := preload("res://scripts/ui/ui_style.gd")
+const UiAnim_ := preload("res://scripts/ui/ui_anim.gd")
 
 enum State { SPLASH, TITLE, MENU }
 
@@ -50,6 +51,8 @@ func _wire_buttons() -> void:
     btn_codex.pressed.connect(_on_codex)
     btn_settings.pressed.connect(_on_settings)
     btn_continue.visible = _has_save()
+    for b in [btn_new_run, btn_continue, btn_villa, btn_codex, btn_settings]:
+        UiAnim_.bind_press_feedback(b)
 
 func _apply_typography() -> void:
     splash_logo.add_theme_font_size_override("font_size", T.FS_DISPLAY_LG)

@@ -10,6 +10,7 @@ extends Control
 
 const T := preload("res://scripts/ui/ui_tokens.gd")
 const UiStyle_ := preload("res://scripts/ui/ui_style.gd")
+const UiAnim_ := preload("res://scripts/ui/ui_anim.gd")
 
 @onready var dim: ColorRect = $Dim
 @onready var sheet: PanelContainer = $BottomSheet
@@ -116,6 +117,7 @@ func _make_card(offer: Dictionary) -> Control:
     btn.text = "TAKE"
     btn.custom_minimum_size = Vector2(0, 48)
     UiStyle_.apply_primary(btn)
+    UiAnim_.bind_press_feedback(btn)
     btn.pressed.connect(func(): _take(offer, card))
     v.add_child(btn)
 
