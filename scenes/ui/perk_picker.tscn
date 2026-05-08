@@ -11,33 +11,40 @@ mouse_filter = 0
 [node name="Dim" type="ColorRect" parent="."]
 anchor_right = 1.0
 anchor_bottom = 1.0
-color = Color(0, 0, 0, 0.7)
+color = Color(0, 0, 0, 0.55)
 mouse_filter = 1
 
-[node name="Margin" type="MarginContainer" parent="."]
+[node name="BottomPanel" type="PanelContainer" parent="."]
+anchor_left = 0.0
+anchor_top = 0.55
 anchor_right = 1.0
 anchor_bottom = 1.0
-theme_override_constants/margin_left = 24
-theme_override_constants/margin_right = 24
-theme_override_constants/margin_top = 32
-theme_override_constants/margin_bottom = 32
 
-[node name="Scroll" type="ScrollContainer" parent="Margin"]
-horizontal_scroll_mode = 0
+[node name="Margin" type="MarginContainer" parent="BottomPanel"]
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_bottom = 16
 
-[node name="Panel" type="VBoxContainer" parent="Margin/Scroll"]
-size_flags_horizontal = 3
-size_flags_vertical = 3
-theme_override_constants/separation = 16
+[node name="V" type="VBoxContainer" parent="BottomPanel/Margin"]
+theme_override_constants/separation = 10
 
-[node name="Title" type="Label" parent="Margin/Scroll/Panel"]
+[node name="Title" type="Label" parent="BottomPanel/Margin/V"]
 text = "LEVEL UP — CHOOSE A PERK"
 horizontal_alignment = 1
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 24
 modulate = Color(1, 0.85, 0.4, 1)
 
-[node name="Grid" type="HFlowContainer" parent="Margin/Scroll/Panel"]
+[node name="Scroll" type="ScrollContainer" parent="BottomPanel/Margin/V"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Panel" type="VBoxContainer" parent="BottomPanel/Margin/V/Scroll"]
+size_flags_horizontal = 3
+
+[node name="Grid" type="HFlowContainer" parent="BottomPanel/Margin/V/Scroll/Panel"]
 alignment = 1
-theme_override_constants/h_separation = 12
-theme_override_constants/v_separation = 12
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 10
 size_flags_horizontal = 3
