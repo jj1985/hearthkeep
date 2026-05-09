@@ -37,9 +37,34 @@ func _ready() -> void:
     _animate_in()
 
 func _populate_stats() -> void:
-    stats_label.text = "Floors cleared:  %d\nKills:  %d\nGold:  %d\nLegendaries:  %d" % [
+    var t: float = RunState.run_time
+    var mins: int = int(t) / 60
+    var secs: int = int(t) % 60
+    var class_line: String = _class_line()
+    var perks_line: String = "%d perk%s · %d evolution%s" % [
+        RunState.perks_taken.size(), "" if RunState.perks_taken.size() == 1 else "s",
+        RunState.weapon_evolutions.size(), "" if RunState.weapon_evolutions.size() == 1 else "s",
+    ]
+    stats_label.text = "%s\n%s\nLevel %d  ·  %d:%02d on the clock\nFloors cleared:  %d\nKills:  %d  ·  Gold:  %d  ·  Legendaries:  %d" % [
+        class_line, perks_line,
+        RunState.player_level, mins, secs,
         floors_cleared, kills, gold_earned, legendaries,
     ]
+
+func _class_line() -> String:
+    var parts: Array = []
+    for cid in [RunState.class_primary, RunState.class_secondary, RunState.class_tertiary]:
+        if cid == "":
+            continue
+        parts.append(String(Classes.get_class_def(cid).get("name", cid)))
+    var line: String = " / ".join(parts)
+    var hybs: Array = RunState.all_hybrid_prestiges()
+    if hybs.is_empty():
+        return line
+    var names: Array = []
+    for h in hybs:
+        names.append(String(h.get("name", "")))
+    return "%s  ·  %s" % [line, " + ".join(names)]
 
 func _animate_in() -> void:
     # Phase 1: desaturate world (proxy via black scrim ramp)
