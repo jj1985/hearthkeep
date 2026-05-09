@@ -1,5 +1,36 @@
 # HEARTHKEEP — Changelog
 
+## v0.2.3 — All 7 crafting stations + Architect + Towns + audio
+
+### New
+- **Workbench** crafting station + wizard UI: 4 mounts × 5 stones × 5
+  inscriptions for rings, amulets, charms, belts. (3rd station UI)
+- **Atelier** data layer: 3 forms × 5 sigils × 3 inks for scrolls /
+  runes / foci. Outputs items carrying matching BuffSystem buff_ids.
+- **Loom** data layer: 5 pieces × 5 fabrics × 4 trims for cloth armor
+  and capes. Trim adds stat + bumps rarity.
+- **Cooking** data layer: 4 dishes × 3 staples × 4 spices for food
+  buffs. Dish maps to BuffSystem buff_id for runtime application.
+- **Engraving** data layer: takes existing items, adds engraving label
+  + cosmetic stat tweak (cinder / frost / holy / shadow / draconic).
+  Costs gold, refuses when broke. Bumps rarity 1 tier on tweak.
+- **Architect** upgrade panel — full Villa building upgrade flow with
+  current tier + next-tier cost + benefit blurbs for 7 buildings.
+- **Town Visit** dialogue UI — tap-to-talk with the 3 seeded towns'
+  named NPCs. Pulls rumors from RumorPool with per-role flavor-line
+  fallbacks.
+- **Trophy buffs apply** — TrophyManager.aggregate_buffs now actually
+  routes into player stats / RunState on spawn (16 stat keys mapped,
+  including set bonuses).
+
+### Polish
+- Settings sliders drive AudioServer bus volumes via linear_to_db
+  conversion. Music / SFX / Ambient sliders now actually do something.
+
+### Engineering
+- 121 tests across 14 suites: 6 workbench + 11 remaining-stations added.
+- Total of 102 completed iteration-tasks since the autonomous run began.
+
 ## v0.2.2 — Live HUD + Alchemy + bounties
 
 ### New
