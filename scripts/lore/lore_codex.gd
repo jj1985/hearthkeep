@@ -79,7 +79,20 @@ const ENTRIES := [
 ]
 
 func _ready() -> void:
-    pass
+    EventBus.boss_defeated.connect(_on_boss_defeated)
+
+func _on_boss_defeated(_boss_id: String) -> void:
+    # Unlock a fresh dragon-category lore entry on each dragon kill.
+    # Players naturally rotate through the lore as they progress.
+    var unlocked_id: String = unlock_random_dragon()
+    if unlocked_id != "":
+        EventBus.floating_text.emit("LORE: %s" % _entry_title(unlocked_id), Vector2.ZERO, Color(0.8, 0.7, 1.0))
+
+func _entry_title(id: String) -> String:
+    for e in ENTRIES:
+        if String((e as Dictionary).get("id", "")) == id:
+            return String((e as Dictionary).get("title", id))
+    return id
 
 func unlock_entry(entry_id: String) -> bool:
     if unlocked.has(entry_id):
