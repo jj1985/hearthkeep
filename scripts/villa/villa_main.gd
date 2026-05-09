@@ -37,6 +37,7 @@ const BUILDINGS := [
     {"id":"atelier",     "label":"Arcane Atelier",    "scene":"res://scenes/crafting/atelier_ui.tscn", "pos":Vector3(-14, 0,   2), "color":Color(0.65, 0.55, 0.95)},
     {"id":"loom",        "label":"Tailoring Loom",    "scene":"res://scenes/crafting/loom_ui.tscn",    "pos":Vector3( 14, 0,   6), "color":Color(0.95, 0.85, 0.65)},
     {"id":"cooking",     "label":"Cooking Hearth",    "scene":"res://scenes/crafting/cooking_ui.tscn", "pos":Vector3(-14, 0,   6), "color":Color(0.95, 0.55, 0.35)},
+    {"id":"engraving",   "label":"Engraving Bench",   "scene":"res://scenes/crafting/engraving_ui.tscn","pos":Vector3(  8, 0, -12), "color":Color(0.85, 0.75, 0.55)},
 ]
 
 func _ready() -> void:

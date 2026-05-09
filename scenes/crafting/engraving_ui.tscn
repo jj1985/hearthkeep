@@ -1,0 +1,68 @@
+[gd_scene load_steps=3 format=3 uid="uid://hk_engraving_ui"]
+
+[ext_resource type="Script" path="res://scripts/crafting/engraving_ui.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/ui/safe_area_margin.gd" id="2"]
+
+[node name="EngravingUI" type="Control"]
+script = ExtResource("1")
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Bg" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="SafeArea" type="MarginContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("2")
+
+[node name="V" type="VBoxContainer" parent="SafeArea"]
+theme_override_constants/separation = 12
+
+[node name="Headline" type="Label" parent="SafeArea/V"]
+horizontal_alignment = 1
+
+[node name="Balance" type="Label" parent="SafeArea/V"]
+horizontal_alignment = 1
+
+[node name="ItemPicker" type="VBoxContainer" parent="SafeArea/V"]
+
+[node name="ItemScrollLabel" type="Label" parent="SafeArea/V/ItemPicker"]
+text = "PICK AN ITEM TO ENGRAVE"
+
+[node name="ItemScroll" type="ScrollContainer" parent="SafeArea/V/ItemPicker"]
+custom_minimum_size = Vector2(0, 200)
+horizontal_scroll_mode = 0
+size_flags_horizontal = 3
+
+[node name="List" type="VBoxContainer" parent="SafeArea/V/ItemPicker/ItemScroll"]
+theme_override_constants/separation = 6
+size_flags_horizontal = 3
+
+[node name="ScriptLabel" type="Label" parent="SafeArea/V"]
+text = "PICK A SCRIPT"
+
+[node name="ScriptRow" type="HFlowContainer" parent="SafeArea/V"]
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 8
+
+[node name="LabelInput" type="LineEdit" parent="SafeArea/V"]
+placeholder_text = "Engraving label (optional)…"
+custom_minimum_size = Vector2(0, 48)
+
+[node name="Preview" type="Label" parent="SafeArea/V"]
+custom_minimum_size = Vector2(0, 80)
+autowrap_mode = 3
+
+[node name="Footer" type="HBoxContainer" parent="SafeArea/V"]
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="Engrave" type="Button" parent="SafeArea/V/Footer"]
+custom_minimum_size = Vector2(220, 56)
+text = "ENGRAVE"
+
+[node name="Close" type="Button" parent="SafeArea/V/Footer"]
+custom_minimum_size = Vector2(160, 56)
+text = "CLOSE"
