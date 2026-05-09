@@ -23,6 +23,7 @@ const LootScene := preload("res://scenes/fx/loot_drop.tscn")
 var player: CharacterBody3D
 var room_index: int = 0
 var camera_shake_t: float = 0.0
+var camera_shake_initial_t: float = 0.0
 var camera_shake_strength: float = 0.0
 var spawn_pacing_timer: float = 0.0
 var floor_kill_target: int = 12
@@ -82,11 +83,22 @@ func _process(delta: float) -> void:
         return
     if camera_shake_t > 0.0:
         camera_shake_t = max(0.0, camera_shake_t - delta)
-        camera.h_offset = randf_range(-camera_shake_strength, camera_shake_strength) * 0.04
-        camera.v_offset = randf_range(-camera_shake_strength, camera_shake_strength) * 0.04
+        # Decay strength over the shake's lifespan so big crit shakes
+        # taper instead of cutting off at full intensity. Holds at peak
+        # for first 30% of duration, then linear decay to zero.
+        var taper: float = 1.0
+        if camera_shake_initial_t > 0.0:
+            var elapsed: float = camera_shake_initial_t - camera_shake_t
+            var pct: float = clampf(elapsed / camera_shake_initial_t, 0.0, 1.0)
+            taper = 1.0 if pct < 0.3 else (1.0 - (pct - 0.3) / 0.7)
+        var amp: float = camera_shake_strength * taper * 0.04
+        camera.h_offset = randf_range(-amp, amp)
+        camera.v_offset = randf_range(-amp, amp)
         if camera_shake_t == 0.0:
             camera.h_offset = 0.0
             camera.v_offset = 0.0
+            camera_shake_strength = 0.0
+            camera_shake_initial_t = 0.0
     if player != null and is_instance_valid(player):
         var lookahead: Vector3 = (player.move_dir as Vector3).normalized() * 1.6
         var target: Vector3 = player.global_position + Vector3(lookahead.x, 0, lookahead.z)
@@ -240,8 +252,16 @@ func _on_loot_dropped(item: Dictionary, pos: Variant) -> void:
     loot_layer.add_child(l)
 
 func _on_screen_shake(strength: float, duration: float) -> void:
-    camera_shake_strength = max(camera_shake_strength, strength)
-    camera_shake_t = max(camera_shake_t, duration)
+    # New shake: stack additively up to a 4.0 cap so a crit landing
+    # mid-existing-shake feels heavier rather than getting clamped out.
+    # Track the max-of-current-and-new for both strength + remaining
+    # duration; reset initial_t to refresh the taper window.
+    camera_shake_strength = clampf(camera_shake_strength + strength * 0.6, 0.0, 4.0)
+    if duration > camera_shake_t:
+        camera_shake_t = duration
+        camera_shake_initial_t = duration
+    else:
+        camera_shake_initial_t = max(camera_shake_initial_t, duration)
 
 func _on_hit_stop(duration: float) -> void:
     Engine.time_scale = 0.05

@@ -106,8 +106,11 @@ func has_tag(tag: String) -> bool:
     return elemental_tags.has(tag)
 
 func enemy_scaling() -> float:
-    # Smooth crescendo curve: at 0 floor -> 1.0, at floor 5 -> ~2.5
-    return 1.0 + 0.30 * float(floor_index) + 0.05 * float(player_level)
+    # Smooth crescendo curve: at 0 floor -> 1.0, at floor 5 -> ~2.5,
+    # at floor 10 -> ~4.75. Floor contribution flattens past 10 so runs
+    # remain playable long after the third dragon.
+    var floor_contribution: float = 0.30 * float(min(floor_index, 10)) + 0.15 * float(max(0, floor_index - 10))
+    return 1.0 + floor_contribution + 0.05 * float(player_level)
 
 func set_classes(primary: String, secondary: String) -> bool:
     if not Classes.CLASSES.has(primary):
