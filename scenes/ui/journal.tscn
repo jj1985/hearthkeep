@@ -42,6 +42,11 @@ custom_minimum_size = Vector2(0, 48)
 text = "REALM"
 size_flags_horizontal = 3
 
+[node name="Stats" type="Button" parent="SafeArea/V/Tabs"]
+custom_minimum_size = Vector2(0, 48)
+text = "STATS"
+size_flags_horizontal = 3
+
 ; ---- Quests pane ----
 
 [node name="QuestsPane" type="ScrollContainer" parent="SafeArea/V"]
@@ -88,6 +93,18 @@ visible = false
 
 [node name="List" type="VBoxContainer" parent="SafeArea/V/RealmPane"]
 theme_override_constants/separation = 12
+size_flags_horizontal = 3
+
+; ---- Stats pane ----
+
+[node name="StatsPane" type="ScrollContainer" parent="SafeArea/V"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+visible = false
+
+[node name="List" type="VBoxContainer" parent="SafeArea/V/StatsPane"]
+theme_override_constants/separation = 8
 size_flags_horizontal = 3
 
 ; ---- Footer ----

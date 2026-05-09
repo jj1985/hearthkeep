@@ -22,6 +22,9 @@ const CATEGORY_ORDER := ["region", "dragons", "creatures", "pantheon", "history"
 @onready var codex_entries: VBoxContainer = $SafeArea/V/CodexPane/Detail/Entries
 @onready var realm_pane: ScrollContainer = $SafeArea/V/RealmPane
 @onready var realm_list: VBoxContainer = $SafeArea/V/RealmPane/List
+@onready var tab_stats: Button = $SafeArea/V/Tabs/Stats
+@onready var stats_pane: ScrollContainer = $SafeArea/V/StatsPane
+@onready var stats_list: VBoxContainer = $SafeArea/V/StatsPane/List
 @onready var close_btn: Button = $SafeArea/V/Footer/Close
 
 var current_tab: String = "quests"
@@ -35,13 +38,16 @@ func _ready() -> void:
     UiStyle_.apply_secondary(tab_quests)
     UiStyle_.apply_secondary(tab_codex)
     UiStyle_.apply_secondary(tab_realm)
+    UiStyle_.apply_secondary(tab_stats)
     UiAnim_.bind_press_feedback(close_btn)
     UiAnim_.bind_press_feedback(tab_quests)
     UiAnim_.bind_press_feedback(tab_codex)
     UiAnim_.bind_press_feedback(tab_realm)
+    UiAnim_.bind_press_feedback(tab_stats)
     tab_quests.pressed.connect(_select_tab.bind("quests"))
     tab_codex.pressed.connect(_select_tab.bind("codex"))
     tab_realm.pressed.connect(_select_tab.bind("realm"))
+    tab_stats.pressed.connect(_select_tab.bind("stats"))
     close_btn.pressed.connect(_on_close)
     _select_tab(current_tab)
     _populate_codex_categories()
@@ -51,9 +57,11 @@ func _select_tab(tab: String) -> void:
     UiStyle_.apply_secondary(tab_quests)
     UiStyle_.apply_secondary(tab_codex)
     UiStyle_.apply_secondary(tab_realm)
+    UiStyle_.apply_secondary(tab_stats)
     quests_pane.visible = false
     codex_pane.visible = false
     realm_pane.visible = false
+    stats_pane.visible = false
     if tab == "quests":
         UiStyle_.apply_primary(tab_quests)
         quests_pane.visible = true
@@ -61,10 +69,52 @@ func _select_tab(tab: String) -> void:
     elif tab == "codex":
         UiStyle_.apply_primary(tab_codex)
         codex_pane.visible = true
-    else:
+    elif tab == "realm":
         UiStyle_.apply_primary(tab_realm)
         realm_pane.visible = true
         _populate_realm()
+    else:
+        UiStyle_.apply_primary(tab_stats)
+        stats_pane.visible = true
+        _populate_stats()
+
+func _populate_stats() -> void:
+    for c in stats_list.get_children():
+        c.queue_free()
+    var rows := [
+        ["Runs played",        str(GameState.run_count)],
+        ["Lifetime kills",     str(GameState.lifetime_kills)],
+        ["Lifetime legendaries", str(GameState.lifetime_legendaries)],
+        ["Deepest floor",      str(GameState.deepest_floor)],
+        ["Dragons defeated",   "%d / 3 (%s)" % [GameState.defeated_dragons.size(), ", ".join(GameState.defeated_dragons)]],
+        ["Trophies collected", str(TrophyManager.collected.size())],
+        ["Active trophy buffs","%d / %d" % [TrophyManager.active_buff_ids.size(), TrophyManager.active_cap]],
+        ["Talent points",      str(RunState.talent_points)],
+        ["Talents allocated",  str(RunState.allocated_talents.size())],
+        ["Gold",               str(GameState.gold)],
+        ["Dye colors unlocked",str(GameState.unlocked_dye_colors.size())],
+    ]
+    for row in rows:
+        stats_list.add_child(_stat_row(row[0], row[1]))
+
+func _stat_row(label: String, value: String) -> Control:
+    var panel := PanelContainer.new()
+    panel.add_theme_stylebox_override("panel", UiStyle_.card_resting())
+    var h := HBoxContainer.new()
+    h.add_theme_constant_override("separation", 12)
+    panel.add_child(h)
+    var l := Label.new()
+    l.text = label
+    l.add_theme_color_override("font_color", T.ON_SURFACE)
+    l.add_theme_font_size_override("font_size", T.FS_BODY_LG)
+    l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    h.add_child(l)
+    var v := Label.new()
+    v.text = value
+    v.add_theme_color_override("font_color", T.PRIMARY)
+    v.add_theme_font_size_override("font_size", T.FS_TITLE_MD)
+    h.add_child(v)
+    return panel
 
 func _populate_realm() -> void:
     for c in realm_list.get_children():
