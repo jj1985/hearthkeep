@@ -62,6 +62,10 @@ func _ready() -> void:
     # then a goblin charges. Real cinematic comes in a polish pass.
     SfxBus.play("dragon_roar", -4.0)
     EventBus.floating_text.emit("Dragon shadow over the keep!", Vector2(0, 0), Color(1, 0.6, 0.3))
+    if RunState.wager_multiplier > 1.001:
+        await get_tree().create_timer(0.6).timeout
+        EventBus.floating_text.emit("WAGER ACTIVE  ×%.2f" % RunState.wager_multiplier,
+            Vector2.ZERO, Color(0.9, 0.85, 0.35))
     await get_tree().create_timer(1.5).timeout
     _spawn_goblin(_random_spawn_pos(), VariantType_SKIRMISHER)
     # Offer first perk shortly so the level-up loop teaches itself.
@@ -376,6 +380,7 @@ func _on_player_died() -> void:
     if Settings.run_end_auto_return:
         ChestManager.auto_stow(run_loot)
         Inventory.bag.clear()
+    RunState.end_run()
     SaveSystem.save()
     WorldSim.exit_run()
     var ps: PackedScene = load("res://scenes/ui/game_over.tscn")

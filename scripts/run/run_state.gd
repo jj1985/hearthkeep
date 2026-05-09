@@ -67,6 +67,12 @@ func start_run(s: int) -> void:
     run_kills = 0
     run_gold = 0
     run_legendaries = 0
+    # NOTE: wager_multiplier is NOT reset here — Snikkit's wager-the-run
+    # is set OUT-of-run and must survive into the run. It's reset on
+    # run end (death or villa return) via end_run().
+
+func end_run() -> void:
+    active = false
     wager_multiplier = 1.0
 
 func add_xp(amount: float) -> void:
