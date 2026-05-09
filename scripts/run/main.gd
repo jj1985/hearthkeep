@@ -189,6 +189,49 @@ func _on_phase_changed(phase: int) -> void:
     var c: Color = WorldSim.phase_color()
     sun.light_color = c
     sun.light_energy = 0.4 if phase == WorldSim.Phase.NIGHT else 1.0
+    # Sky + fog tint per phase + weather. Pulls the WorldEnv from the run scene.
+    var world_env: WorldEnvironment = $World/WorldEnv if has_node("World/WorldEnv") else null
+    if world_env == null or world_env.environment == null:
+        return
+    var env: Environment = world_env.environment
+    var sky_top: Color
+    var sky_horizon: Color
+    var fog: Color
+    match phase:
+        WorldSim.Phase.DAWN:
+            sky_top = Color(0.30, 0.20, 0.30)
+            sky_horizon = Color(0.95, 0.55, 0.40)
+            fog = Color(0.80, 0.50, 0.40)
+        WorldSim.Phase.DUSK:
+            sky_top = Color(0.20, 0.15, 0.25)
+            sky_horizon = Color(0.75, 0.30, 0.20)
+            fog = Color(0.55, 0.20, 0.18)
+        WorldSim.Phase.NIGHT:
+            sky_top = Color(0.04, 0.03, 0.10)
+            sky_horizon = Color(0.10, 0.08, 0.18)
+            fog = Color(0.12, 0.10, 0.20)
+        _:    # DAY
+            sky_top = Color(0.20, 0.30, 0.50)
+            sky_horizon = Color(0.55, 0.65, 0.85)
+            fog = Color(0.35, 0.30, 0.40)
+    # Weather modifiers — fog density bumps in fog/storm/rain
+    var fog_density: float = 0.012
+    if Engine.has_singleton("WeatherSystem"):
+        match WeatherSystem.current:
+            WeatherSystem.Weather.FOG:    fog_density = 0.040
+            WeatherSystem.Weather.STORM:  fog_density = 0.028
+            WeatherSystem.Weather.RAIN:   fog_density = 0.020
+            WeatherSystem.Weather.ASHFALL:
+                fog_density = 0.035
+                fog = fog.lerp(Color(0.30, 0.18, 0.12), 0.6)
+            _: pass
+    env.fog_density = fog_density
+    env.fog_light_color = fog
+    var sky_mat: Resource = env.sky.sky_material if env.sky != null else null
+    if sky_mat is ProceduralSkyMaterial:
+        var pm: ProceduralSkyMaterial = sky_mat
+        pm.sky_top_color = sky_top
+        pm.sky_horizon_color = sky_horizon
 
 func _on_level_up_pending(_lvl: int) -> void:
     if pause_for_levelup:
