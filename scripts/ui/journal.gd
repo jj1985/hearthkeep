@@ -103,6 +103,18 @@ func _populate_stats() -> void:
         ["Active trophy buffs",     "%d / %d" % [TrophyManager.active_buff_ids.size(), TrophyManager.active_cap]],
         ["Dye colors unlocked",     _fmt(GameState.unlocked_dye_colors.size())],
     ])
+    if RunState.active:
+        var classes_line: String = _run_classes_line()
+        var hyb_line: String = _run_hybrids_line()
+        var run_rows: Array = [
+            ["Classes", classes_line],
+            ["Level", _fmt(RunState.player_level)],
+            ["Floor", _fmt(RunState.floor_index)],
+            ["Perks taken", _fmt(RunState.perks_taken.size())],
+        ]
+        if hyb_line != "":
+            run_rows.append(["Hybrid prestige", hyb_line])
+        _add_stats_section("CURRENT RUN", run_rows)
     if not GameState.lifetime_kills_by_type.is_empty():
         _add_stats_section_header("KILLS BY TYPE")
         var sorted_keys := GameState.lifetime_kills_by_type.keys()
@@ -111,6 +123,23 @@ func _populate_stats() -> void:
         for k in sorted_keys:
             var n: int = int(GameState.lifetime_kills_by_type[k])
             stats_list.add_child(_stat_row(String(k).replace("_", " ").capitalize(), _fmt(n)))
+
+func _run_classes_line() -> String:
+    var parts: Array = []
+    for cid in [RunState.class_primary, RunState.class_secondary, RunState.class_tertiary]:
+        if cid == "":
+            continue
+        parts.append(String(Classes.get_class_def(cid).get("name", cid)))
+    return " / ".join(parts)
+
+func _run_hybrids_line() -> String:
+    var hs: Array = RunState.all_hybrid_prestiges()
+    if hs.is_empty():
+        return ""
+    var names: Array = []
+    for h in hs:
+        names.append(String(h.get("name", "")))
+    return " + ".join(names)
 
 func _add_stats_section(title: String, rows: Array) -> void:
     _add_stats_section_header(title)
