@@ -357,7 +357,7 @@ func _on_level_up_pending(_lvl: int) -> void:
     var ws_tags: Array = []
     if player != null:
         ws_tags = player.equipped_weapon_tags()
-    var offers: Array = PerkPool.draw_offer(player.class_primary, player.class_secondary, 4, ws_tags)
+    var offers: Array = PerkPool.draw_offer(player.class_primary, player.class_secondary, 4, ws_tags, player.class_tertiary)
     perk_root.show_offers(offers, _on_perk_picked)
 
 func _on_perk_picked(perk: Dictionary) -> void:

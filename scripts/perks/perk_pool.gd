@@ -87,13 +87,15 @@ var rng := RandomNumberGenerator.new()
 func _ready() -> void:
     rng.randomize()
 
-func draw_offer(class_primary: String, class_secondary: String, count: int = 4, equipped_weapon_tags: Array = []) -> Array:
+func draw_offer(class_primary: String, class_secondary: String, count: int = 4, equipped_weapon_tags: Array = [], class_tertiary: String = "") -> Array:
     var pool: Array = []
     pool.append_array(UNIVERSAL)
     if CLASS_PERKS.has(class_primary):
         pool.append_array(CLASS_PERKS[class_primary])
     if class_secondary != "" and CLASS_PERKS.has(class_secondary):
         pool.append_array(CLASS_PERKS[class_secondary])
+    if class_tertiary != "" and CLASS_PERKS.has(class_tertiary):
+        pool.append_array(CLASS_PERKS[class_tertiary])
 
     # Filter perks at max stacks already
     var perk_count := {}
