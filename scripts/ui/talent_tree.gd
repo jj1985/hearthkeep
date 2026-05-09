@@ -19,6 +19,7 @@ const UiAnim_ := preload("res://scripts/ui/ui_anim.gd")
 var class_id: String = ""
 var tree_id: String = ""
 var prereqs: Dictionary = {}   # node_id -> array of prereq node ids
+var tiers: Dictionary = {}     # node_id -> tier int (BFS depth from a root)
 
 func _ready() -> void:
     bg.color = T.SURFACE_DIM
@@ -39,20 +40,53 @@ func _ready() -> void:
 func _populate_prereqs() -> void:
     var def: Dictionary = TalentDB.get_tree_def(tree_id)
     prereqs.clear()
+    tiers.clear()
     for edge in def.get("edges", []):
         var from_id: String = String(edge[0])
         var to_id: String = String(edge[1])
         if not prereqs.has(to_id):
             prereqs[to_id] = []
         prereqs[to_id].append(from_id)
+    # Compute tier (BFS depth) per node so the renderer can group + label
+    var nodes: Array = def.get("nodes", [])
+    for n in nodes:
+        var nid: String = String(n["id"])
+        tiers[nid] = _compute_tier(nid)
+
+func _compute_tier(node_id: String) -> int:
+    if not prereqs.has(node_id):
+        return 0
+    var max_t: int = 0
+    for pid in prereqs[node_id]:
+        var pt: int = _compute_tier(String(pid))
+        if pt + 1 > max_t:
+            max_t = pt + 1
+    return max_t
 
 func _refresh() -> void:
     for c in node_list.get_children():
         c.queue_free()
     var def: Dictionary = TalentDB.get_tree_def(tree_id)
     subhead.text = "Spend  %d  talent points" % RunState.talent_points
+    # Group nodes by tier (BFS depth from root) and render with a
+    # tier header before each group so prereq layers are visible.
+    var by_tier: Dictionary = {}
     for n in def.get("nodes", []):
-        node_list.add_child(_make_node_card(n))
+        var nid: String = String(n["id"])
+        var t: int = int(tiers.get(nid, 0))
+        if not by_tier.has(t):
+            by_tier[t] = []
+        by_tier[t].append(n)
+    var sorted_tiers: Array = by_tier.keys()
+    sorted_tiers.sort()
+    for t in sorted_tiers:
+        var hdr := Label.new()
+        hdr.text = "TIER %d" % (int(t) + 1)
+        hdr.add_theme_font_size_override("font_size", T.FS_HEADLINE_SM)
+        hdr.add_theme_color_override("font_color", T.SECONDARY)
+        node_list.add_child(hdr)
+        for n in by_tier[t]:
+            node_list.add_child(_make_node_card(n))
 
 func _make_node_card(node: Dictionary) -> Control:
     var nid: String = String(node["id"])
