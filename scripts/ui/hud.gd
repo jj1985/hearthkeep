@@ -123,8 +123,24 @@ func _wire_skill_button(b: Button, action: String) -> void:
     b.button_down.connect(func(): Input.action_press(action))
     b.button_up.connect(func(): Input.action_release(action))
 
+var _pause_menu: Node = null
+
 func _on_pause() -> void:
-    get_tree().paused = not get_tree().paused
+    if _pause_menu != null and is_instance_valid(_pause_menu):
+        return
+    var ps: PackedScene = load("res://scenes/ui/pause_menu.tscn")
+    if ps == null: return
+    _pause_menu = ps.instantiate()
+    var layer := CanvasLayer.new()
+    layer.layer = 80
+    layer.add_child(_pause_menu)
+    get_tree().current_scene.add_child(layer)
+    _pause_menu.resumed.connect(func():
+        get_tree().paused = false
+        if is_instance_valid(layer):
+            layer.queue_free()
+        _pause_menu = null)
+    get_tree().paused = true
 
 func _process(delta: float) -> void:
     if player == null:

@@ -1,0 +1,49 @@
+[gd_scene load_steps=2 format=3 uid="uid://hk_pause_menu"]
+
+[ext_resource type="Script" path="res://scripts/ui/pause_menu.gd" id="1"]
+
+[node name="PauseMenu" type="Control"]
+script = ExtResource("1")
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Dim" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 1
+
+[node name="Card" type="PanelContainer" parent="."]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -220.0
+offset_right = 200.0
+offset_bottom = 220.0
+
+[node name="Margin" type="MarginContainer" parent="Card"]
+
+[node name="V" type="VBoxContainer" parent="Card/Margin"]
+theme_override_constants/separation = 14
+alignment = 1
+
+[node name="Title" type="Label" parent="Card/Margin/V"]
+text = "PAUSED"
+horizontal_alignment = 1
+
+[node name="Resume" type="Button" parent="Card/Margin/V"]
+custom_minimum_size = Vector2(0, 56)
+text = "RESUME"
+
+[node name="Villa" type="Button" parent="Card/Margin/V"]
+custom_minimum_size = Vector2(0, 56)
+text = "RETURN TO VILLA"
+
+[node name="Title2" type="Button" parent="Card/Margin/V"]
+custom_minimum_size = Vector2(0, 56)
+text = "ABANDON RUN"
+
+[node name="Quit" type="Button" parent="Card/Margin/V"]
+custom_minimum_size = Vector2(0, 56)
+text = "QUIT TO DESKTOP"
