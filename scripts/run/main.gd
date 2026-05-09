@@ -57,6 +57,9 @@ const VariantType_SKIRMISHER := 0  # mirror of goblin VariantType.SKIRMISHER
 
 func _process(delta: float) -> void:
     RunState.run_time += delta
+    if Input.is_action_just_pressed("quest_log"):
+        _open_journal_overlay()
+        return
     if camera_shake_t > 0.0:
         camera_shake_t = max(0.0, camera_shake_t - delta)
         camera.h_offset = randf_range(-camera_shake_strength, camera_shake_strength) * 0.04
@@ -188,6 +191,31 @@ func _on_perk_picked(perk: Dictionary) -> void:
         RunState.pending_level_ups -= 1
         if RunState.pending_level_ups > 0:
             _on_level_up_pending(RunState.player_level)
+
+var _journal_overlay: Node = null
+
+func _open_journal_overlay() -> void:
+    if _journal_overlay != null and is_instance_valid(_journal_overlay):
+        return
+    var ps: PackedScene = load("res://scenes/ui/journal.tscn")
+    if ps == null:
+        return
+    _journal_overlay = ps.instantiate()
+    _journal_overlay.process_mode = Node.PROCESS_MODE_ALWAYS    # tick while paused
+    var close_btn := _journal_overlay.get_node_or_null("SafeArea/V/Footer/Close")
+    if close_btn != null:
+        # Disconnect default _on_close (scene-change) and replace with overlay-close.
+        for c in (close_btn as Button).pressed.get_connections():
+            (close_btn as Button).pressed.disconnect(c["callable"])
+        (close_btn as Button).pressed.connect(_close_journal_overlay)
+    add_child(_journal_overlay)
+    get_tree().paused = true
+
+func _close_journal_overlay() -> void:
+    if _journal_overlay != null and is_instance_valid(_journal_overlay):
+        _journal_overlay.queue_free()
+    _journal_overlay = null
+    get_tree().paused = false
 
 func _on_player_died() -> void:
     EventBus.floating_text.emit("YOU DIED", Vector2(player.global_position.x, player.global_position.z), Color(1, 0.2, 0.2))
