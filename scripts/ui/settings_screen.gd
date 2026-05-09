@@ -45,10 +45,21 @@ func _ready() -> void:
     sfx_slider.value = Settings.sfx_volume
     ambient_slider.value = Settings.ambient_volume
     shake_slider.value = Settings.screen_shake_scale
-    music_slider.value_changed.connect(func(v): _refresh_label(music_label, "Music", v); Settings.music_volume = v)
-    sfx_slider.value_changed.connect(func(v): _refresh_label(sfx_label, "SFX", v); Settings.sfx_volume = v)
-    ambient_slider.value_changed.connect(func(v): _refresh_label(ambient_label, "Ambient", v); Settings.ambient_volume = v)
-    shake_slider.value_changed.connect(func(v): _refresh_label(shake_label, "Screen shake", v); Settings.screen_shake_scale = v)
+    music_slider.value_changed.connect(func(v):
+        _refresh_label(music_label, "Music", v)
+        Settings.music_volume = v
+        Settings.apply_audio_buses())
+    sfx_slider.value_changed.connect(func(v):
+        _refresh_label(sfx_label, "SFX", v)
+        Settings.sfx_volume = v
+        Settings.apply_audio_buses())
+    ambient_slider.value_changed.connect(func(v):
+        _refresh_label(ambient_label, "Ambient", v)
+        Settings.ambient_volume = v
+        Settings.apply_audio_buses())
+    shake_slider.value_changed.connect(func(v):
+        _refresh_label(shake_label, "Screen shake", v)
+        Settings.screen_shake_scale = v)
     _refresh_label(music_label, "Music", Settings.music_volume)
     _refresh_label(sfx_label, "SFX", Settings.sfx_volume)
     _refresh_label(ambient_label, "Ambient", Settings.ambient_volume)

@@ -69,3 +69,17 @@ func load_settings() -> void:
 
 func _ready() -> void:
     load_settings()
+    apply_audio_buses()
+
+# Drives the AudioServer bus volumes from the persisted slider values.
+# Called on _ready and from settings_screen on every slider change.
+func apply_audio_buses() -> void:
+    for kind in [["Music", music_volume], ["SFX", sfx_volume], ["Ambient", ambient_volume]]:
+        var idx: int = AudioServer.get_bus_index(String(kind[0]))
+        if idx >= 0:
+            AudioServer.set_bus_volume_db(idx, _to_db(float(kind[1])))
+
+func _to_db(v: float) -> float:
+    if v <= 0.001:
+        return -80.0
+    return clampf(linear_to_db(v), -80.0, 6.0)
