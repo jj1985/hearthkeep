@@ -105,10 +105,37 @@ func _spawn_player() -> void:
     if not hybrid.is_empty():
         EventBus.floating_text.emit("✦ %s ✦" % hybrid.get("name", ""), Vector2(0, 0), Color(1, 0.7, 0.3))
 
+const FLOOR_REGIONS := [
+    {"id":"coastreach",  "name":"the Coastreach",   "sun":Color(1.05, 0.85, 0.7), "amb":Color(0.30, 0.40, 0.55),"fog":Color(0.45, 0.45, 0.55),"torch":Color(1.0, 0.7, 0.3)},
+    {"id":"ruinmarch",   "name":"the Ruinmarch",    "sun":Color(0.90, 0.70, 0.55),"amb":Color(0.45, 0.35, 0.30),"fog":Color(0.35, 0.25, 0.22),"torch":Color(1.0, 0.5, 0.18)},
+    {"id":"thalanore",   "name":"Thalanore Canopy", "sun":Color(0.80, 0.95, 0.65),"amb":Color(0.30, 0.50, 0.30),"fog":Color(0.20, 0.35, 0.25),"torch":Color(0.7, 0.95, 0.5)},
+    {"id":"graymarrow",  "name":"Graymarrow Hold",  "sun":Color(0.65, 0.70, 0.85),"amb":Color(0.35, 0.35, 0.45),"fog":Color(0.30, 0.30, 0.40),"torch":Color(0.5, 0.7, 1.0)},
+    {"id":"ashfen",      "name":"Ashfen Caldera",   "sun":Color(1.0, 0.55, 0.30), "amb":Color(0.55, 0.30, 0.25),"fog":Color(0.40, 0.20, 0.15),"torch":Color(1.0, 0.4, 0.1)},
+]
+
+func _floor_region(idx: int) -> Dictionary:
+    return FLOOR_REGIONS[idx % FLOOR_REGIONS.size()]
+
+func _apply_floor_region() -> void:
+    var region: Dictionary = _floor_region(RunState.floor_index)
+    if has_node("World/Sun"):
+        ($World/Sun as DirectionalLight3D).light_color = region["sun"]
+    if has_node("World/TorchL"):
+        ($World/TorchL as OmniLight3D).light_color = region["torch"]
+    if has_node("World/TorchR"):
+        ($World/TorchR as OmniLight3D).light_color = region["torch"]
+    var world_env: WorldEnvironment = $World/WorldEnv if has_node("World/WorldEnv") else null
+    if world_env != null and world_env.environment != null:
+        world_env.environment.fog_light_color = region["fog"]
+        world_env.environment.ambient_light_color = region["amb"]
+
 func _enter_room() -> void:
     floor_kill_target = 10 + RunState.floor_index * 4
+    _apply_floor_region()
     if RunState.floor_index > 0:
-        EventBus.floating_text.emit("FLOOR " + str(RunState.floor_index + 1), Vector2(player.global_position.x, player.global_position.z), Color(1, 0.8, 0.3))
+        var region: Dictionary = _floor_region(RunState.floor_index)
+        EventBus.floating_text.emit("FLOOR %d  ·  %s" % [RunState.floor_index + 1, String(region["name"])],
+            Vector2(player.global_position.x, player.global_position.z), Color(1, 0.8, 0.3))
     for i in range(5 + RunState.floor_index):
         _spawn_goblin(_random_spawn_pos(), randi() % 3)
     # Drake elite on floors 3 and 4 (the ones leading into a dragon at floor 5)
