@@ -10,6 +10,8 @@ const UiAnim_ := preload("res://scripts/ui/ui_anim.gd")
 enum State { SPLASH, TITLE, MENU }
 
 @onready var bg: ColorRect = $Bg
+@onready var ember_rain: CPUParticles2D = $EmberRain
+@onready var dragon_shadow: ColorRect = $DragonShadow
 @onready var safe_area: MarginContainer = $SafeArea
 @onready var splash: Control = $SafeArea/Splash
 @onready var splash_logo: Label = $SafeArea/Splash/V/Logo
@@ -118,6 +120,27 @@ func _enter_title() -> void:
     menu.visible = false
     var tw := create_tween()
     tw.tween_property(title_pane, "modulate:a", 1.0, 0.32).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+    _start_dragon_shadow_loop()
+
+func _start_dragon_shadow_loop() -> void:
+    if dragon_shadow == null:
+        return
+    var screen_w: float = get_viewport_rect().size.x
+    var sweep := func():
+        if state != State.TITLE and state != State.MENU:
+            return
+        dragon_shadow.visible = true
+        dragon_shadow.position.x = -200
+        var tw := create_tween()
+        tw.tween_property(dragon_shadow, "position:x", screen_w + 100, 2.4).set_trans(Tween.TRANS_LINEAR)
+        tw.tween_callback(func():
+            dragon_shadow.visible = false)
+    sweep.call()
+    var loop_t := Timer.new()
+    loop_t.wait_time = 12.0
+    loop_t.autostart = true
+    add_child(loop_t)
+    loop_t.timeout.connect(sweep)
 
 func _enter_menu() -> void:
     state = State.MENU
