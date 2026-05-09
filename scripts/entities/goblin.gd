@@ -37,6 +37,9 @@ var rallied: bool = false
 var bark_cooldown: float = 0.0
 var environmental_oil: bool = false  # SAPPERs leave oil patches
 var monster_id_value: String = "goblin"
+var shaman_heal_cd: float = 0.0
+var sapper_fuse_t: float = 0.0    # > 0 while fuse is lit but not yet detonated
+var warchief_reinforced: bool = false
 
 @onready var body_mesh: MeshInstance3D = $Body
 @onready var head_mesh: MeshInstance3D = $Body/Head
@@ -148,15 +151,33 @@ func _physics_process(delta: float) -> void:
     elif fleeing and hp_pct > 0.45:
         fleeing = false
 
-    # Shaman heals nearby allies and rallies fleeing ones.
+    # Shaman: rallies fleeing allies AND heals wounded allies on a cooldown.
     if variant == VariantType.SHAMAN:
+        shaman_heal_cd = max(0.0, shaman_heal_cd - delta)
         for e in get_tree().get_nodes_in_group("enemy"):
             if e == self or not is_instance_valid(e): continue
             var n: Node3D = e as Node3D
             if n == null: continue
-            if global_position.distance_to(n.global_position) < 5.0:
+            if global_position.distance_to(n.global_position) < 6.0:
                 if (e as Object).has_method("rally"):
                     (e as Object).call("rally")
+                if shaman_heal_cd <= 0.0:
+                    var ally_stats: Variant = (e as Object).get("stats")
+                    if ally_stats != null and float(ally_stats.hp) < float(ally_stats.max_hp):
+                        ally_stats.hp = min(float(ally_stats.max_hp), float(ally_stats.hp) + 12.0)
+                        EventBus.floating_text.emit("+12", n.global_position, Color(0.55, 0.85, 0.55))
+                        shaman_heal_cd = 4.0
+        # Heal self last
+        if shaman_heal_cd <= 0.0 and stats.hp < stats.max_hp:
+            stats.hp = min(stats.max_hp, stats.hp + 8.0)
+            EventBus.floating_text.emit("+8", global_position, Color(0.55, 0.85, 0.55))
+            shaman_heal_cd = 4.0
+
+    # Warchief: at <50% HP, calls reinforcements once.
+    if variant == VariantType.WARCHIEF and not warchief_reinforced:
+        if stats.hp < stats.max_hp * 0.5:
+            _warchief_call_reinforcements()
+            warchief_reinforced = true
 
     var move_speed: float = stats.move_speed * (0.5 if slow_timer > 0.0 else 1.0)
     if fleeing:
@@ -172,8 +193,22 @@ func _physics_process(delta: float) -> void:
             _shaman_cast(player); attack_cooldown = 2.4
     elif variant == VariantType.SAPPER:
         velocity = to_player.normalized() * move_speed
-        if dist < attack_range and attack_cooldown <= 0.0:
-            _explode(player)
+        # Visible fuse telegraph: when player is in detonation range,
+        # start a 1.0s fuse that visually blinks before _explode fires.
+        if dist < attack_range + 0.6 and sapper_fuse_t <= 0.0 and attack_cooldown <= 0.0:
+            sapper_fuse_t = 1.0
+            EventBus.floating_text.emit("FUSE!", global_position, Color(1, 0.5, 0))
+        if sapper_fuse_t > 0.0:
+            sapper_fuse_t -= delta
+            # Blink the body's emission as the fuse counts down
+            if body_mesh != null and body_mesh.material_override != null:
+                var blink: float = 0.5 + 0.5 * sin(sapper_fuse_t * 32.0)
+                var m := body_mesh.material_override as StandardMaterial3D
+                m.emission_enabled = true
+                m.emission = Color(1.0, 0.5 * blink, 0.1)
+                m.emission_energy_multiplier = 1.5 + 2.0 * (1.0 - sapper_fuse_t)
+            if sapper_fuse_t <= 0.0:
+                _explode(player)
     else:
         if dist > attack_range * 0.85:
             velocity = to_player.normalized() * move_speed
@@ -220,6 +255,23 @@ func _shaman_cast(player) -> void:
     if global_position.distance_to(player.global_position) < 10.0:
         if player.has_method("take_damage"):
             player.take_damage(stats.damage * 0.9, self)
+
+func _warchief_call_reinforcements() -> void:
+    EventBus.floating_text.emit("REINFORCE!", global_position, Color(1, 0.4, 0.3))
+    SfxBus.play("dragon_roar", -8.0)
+    var spawned := 0
+    for arr in [VariantType.SKIRMISHER, VariantType.SAPPER, VariantType.SKIRMISHER]:
+        var ang: float = randf() * TAU
+        var spawn_pos: Vector3 = global_position + Vector3(cos(ang) * 6.0, 0, sin(ang) * 6.0)
+        var g := load("res://scenes/enemies/goblin.tscn") as PackedScene
+        if g == null: break
+        var inst := g.instantiate()
+        inst.position = spawn_pos
+        inst.variant = arr
+        inst.stats_scale = stats_scale
+        get_parent().add_child(inst)
+        spawned += 1
+    EventBus.floating_text.emit("+%d  reinforcements" % spawned, global_position, Color(1, 0.6, 0.3))
 
 func _explode(player) -> void:
     EventBus.floating_text.emit("BOOM", Vector2(global_position.x, global_position.z), Color(1, 0.5, 0))
