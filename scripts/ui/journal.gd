@@ -14,11 +14,14 @@ const CATEGORY_ORDER := ["region", "dragons", "creatures", "pantheon", "history"
 @onready var headline: Label = $SafeArea/V/Headline
 @onready var tab_quests: Button = $SafeArea/V/Tabs/Quests
 @onready var tab_codex: Button = $SafeArea/V/Tabs/Codex
+@onready var tab_realm: Button = $SafeArea/V/Tabs/Realm
 @onready var quests_pane: ScrollContainer = $SafeArea/V/QuestsPane
 @onready var quests_list: VBoxContainer = $SafeArea/V/QuestsPane/List
 @onready var codex_pane: HBoxContainer = $SafeArea/V/CodexPane
 @onready var codex_categories: VBoxContainer = $SafeArea/V/CodexPane/Categories/Inner
 @onready var codex_entries: VBoxContainer = $SafeArea/V/CodexPane/Detail/Entries
+@onready var realm_pane: ScrollContainer = $SafeArea/V/RealmPane
+@onready var realm_list: VBoxContainer = $SafeArea/V/RealmPane/List
 @onready var close_btn: Button = $SafeArea/V/Footer/Close
 
 var current_tab: String = "quests"
@@ -31,28 +34,75 @@ func _ready() -> void:
     UiStyle_.apply_secondary(close_btn)
     UiStyle_.apply_secondary(tab_quests)
     UiStyle_.apply_secondary(tab_codex)
+    UiStyle_.apply_secondary(tab_realm)
     UiAnim_.bind_press_feedback(close_btn)
     UiAnim_.bind_press_feedback(tab_quests)
     UiAnim_.bind_press_feedback(tab_codex)
+    UiAnim_.bind_press_feedback(tab_realm)
     tab_quests.pressed.connect(_select_tab.bind("quests"))
     tab_codex.pressed.connect(_select_tab.bind("codex"))
+    tab_realm.pressed.connect(_select_tab.bind("realm"))
     close_btn.pressed.connect(_on_close)
     _select_tab(current_tab)
     _populate_codex_categories()
 
 func _select_tab(tab: String) -> void:
     current_tab = tab
+    UiStyle_.apply_secondary(tab_quests)
+    UiStyle_.apply_secondary(tab_codex)
+    UiStyle_.apply_secondary(tab_realm)
+    quests_pane.visible = false
+    codex_pane.visible = false
+    realm_pane.visible = false
     if tab == "quests":
         UiStyle_.apply_primary(tab_quests)
-        UiStyle_.apply_secondary(tab_codex)
         quests_pane.visible = true
-        codex_pane.visible = false
         _populate_quests()
-    else:
-        UiStyle_.apply_secondary(tab_quests)
+    elif tab == "codex":
         UiStyle_.apply_primary(tab_codex)
-        quests_pane.visible = false
         codex_pane.visible = true
+    else:
+        UiStyle_.apply_primary(tab_realm)
+        realm_pane.visible = true
+        _populate_realm()
+
+func _populate_realm() -> void:
+    for c in realm_list.get_children():
+        c.queue_free()
+    var towns: Array = Towns.all_towns()
+    for t in towns:
+        realm_list.add_child(_town_card(t))
+
+func _town_card(town) -> Control:
+    var s: Dictionary = town.summary()
+    var panel := PanelContainer.new()
+    panel.add_theme_stylebox_override("panel", UiStyle_.card_resting())
+    var v := VBoxContainer.new()
+    v.add_theme_constant_override("separation", 6)
+    panel.add_child(v)
+    var name_label := Label.new()
+    name_label.text = "%s  ·  %s" % [String(s["name"]), String(s["region"])]
+    name_label.add_theme_font_size_override("font_size", T.FS_TITLE_LG)
+    name_label.add_theme_color_override("font_color", T.PRIMARY)
+    v.add_child(name_label)
+    var ruler := Label.new()
+    ruler.text = "%s, %s" % [String(s["ruler_name"]), String(s["ruler_title"])]
+    ruler.add_theme_color_override("font_color", T.ON_SURFACE)
+    ruler.add_theme_font_size_override("font_size", T.FS_BODY_MD)
+    v.add_child(ruler)
+    var stats := Label.new()
+    stats.text = "Population %d  ·  Mood: %s  ·  Lean: %s" % [int(s["population"]), String(s["mood_label"]), String(s["faction_lean"])]
+    stats.add_theme_color_override("font_color", T.ON_SURFACE_MUTED)
+    stats.add_theme_font_size_override("font_size", T.FS_BODY_SM)
+    v.add_child(stats)
+    if String(s.get("recent_event", "")) != "":
+        var evt := Label.new()
+        evt.text = "—  %s" % String(s["recent_event"])
+        evt.add_theme_color_override("font_color", T.SECONDARY)
+        evt.add_theme_font_size_override("font_size", T.FS_BODY_SM)
+        evt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+        v.add_child(evt)
+    return panel
 
 # ---- Quest log ----
 

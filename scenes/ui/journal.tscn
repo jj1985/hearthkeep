@@ -37,6 +37,11 @@ custom_minimum_size = Vector2(0, 48)
 text = "CODEX"
 size_flags_horizontal = 3
 
+[node name="Realm" type="Button" parent="SafeArea/V/Tabs"]
+custom_minimum_size = Vector2(0, 48)
+text = "REALM"
+size_flags_horizontal = 3
+
 ; ---- Quests pane ----
 
 [node name="QuestsPane" type="ScrollContainer" parent="SafeArea/V"]
@@ -70,6 +75,18 @@ size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
 [node name="Entries" type="VBoxContainer" parent="SafeArea/V/CodexPane/Detail"]
+theme_override_constants/separation = 12
+size_flags_horizontal = 3
+
+; ---- Realm pane ----
+
+[node name="RealmPane" type="ScrollContainer" parent="SafeArea/V"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+visible = false
+
+[node name="List" type="VBoxContainer" parent="SafeArea/V/RealmPane"]
 theme_override_constants/separation = 12
 size_flags_horizontal = 3
 
