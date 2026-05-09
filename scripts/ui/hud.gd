@@ -29,7 +29,11 @@ const UiAnim_ := preload("res://scripts/ui/ui_anim.gd")
 @onready var quest_tracker: PanelContainer = $QuestTracker
 @onready var quest_title: Label = $QuestTracker/V/Title
 @onready var quest_objective: Label = $QuestTracker/V/Objective
+@onready var run_timer: Label = $RunTimer
+@onready var floor_banner: Label = $FloorBanner
 @onready var virtual_stick: Control = $VirtualStick
+
+var _last_floor: int = -1
 
 @onready var skill_primary: Button = $SkillCluster/Primary
 @onready var skill_2: Button = $SkillCluster/S2
@@ -92,6 +96,10 @@ func _style_bars() -> void:
     gold_label.add_theme_font_size_override("font_size", T.FS_LABEL_LG)
     minimap_stub.add_theme_stylebox_override("panel", UiStyle_.card_resting())
     quest_tracker.add_theme_stylebox_override("panel", UiStyle_.chip())
+    run_timer.add_theme_color_override("font_color", T.ON_SURFACE_MUTED)
+    run_timer.add_theme_font_size_override("font_size", T.FS_LABEL_LG)
+    floor_banner.add_theme_font_size_override("font_size", T.FS_DISPLAY_MD)
+    floor_banner.add_theme_color_override("font_color", T.PRIMARY)
     quest_title.add_theme_color_override("font_color", T.PRIMARY)
     quest_title.add_theme_font_size_override("font_size", T.FS_LABEL_LG)
     quest_objective.add_theme_color_override("font_color", T.ON_SURFACE)
@@ -220,6 +228,33 @@ func _create_cd_label(btn: Button) -> void:
     lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
     btn.add_child(lbl)
     _cd_labels[btn] = lbl
+
+func _refresh_run_timer() -> void:
+    var t: float = RunState.run_time
+    var h: int = int(t / 3600.0)
+    var m: int = int(t / 60.0) % 60
+    var s: int = int(t) % 60
+    if h > 0:
+        run_timer.text = "%d:%02d:%02d" % [h, m, s]
+    else:
+        run_timer.text = "%02d:%02d" % [m, s]
+
+func _refresh_floor_banner() -> void:
+    if RunState.floor_index == _last_floor:
+        return
+    _last_floor = RunState.floor_index
+    var region_names := ["the Coastreach", "the Ruinmarch", "Thalanore Canopy", "Graymarrow Hold", "Ashfen Caldera"]
+    var region: String = region_names[RunState.floor_index % region_names.size()]
+    floor_banner.text = "FLOOR %d  ·  %s" % [RunState.floor_index + 1, region]
+    floor_banner.visible = true
+    floor_banner.modulate.a = 0.0
+    floor_banner.position.y = 240
+    var tw := create_tween().set_parallel(true)
+    tw.tween_property(floor_banner, "modulate:a", 1.0, 0.3)
+    tw.tween_property(floor_banner, "position:y", 220, 0.4).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+    tw.chain().tween_interval(1.4)
+    tw.tween_property(floor_banner, "modulate:a", 0.0, 0.5)
+    tw.tween_callback(func(): floor_banner.visible = false)
 
 func _refresh_quest_tracker() -> void:
     var pinned: String = QuestSystem.pinned_quest_id
@@ -354,6 +389,8 @@ func _process(delta: float) -> void:
     gold_label.text = "%d g" % GameState.gold
     _refresh_skill_cooldowns()
     _refresh_quest_tracker()
+    _refresh_run_timer()
+    _refresh_floor_banner()
 
 func _on_perk_chosen(id: String) -> void:
     var pill := _make_buff_pill(id, false)
