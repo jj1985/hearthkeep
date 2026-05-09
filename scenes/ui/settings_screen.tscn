@@ -1,0 +1,111 @@
+[gd_scene load_steps=3 format=3 uid="uid://hk_settings"]
+
+[ext_resource type="Script" path="res://scripts/ui/settings_screen.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/ui/safe_area_margin.gd" id="2"]
+
+[node name="Settings" type="Control"]
+script = ExtResource("1")
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Bg" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="SafeArea" type="MarginContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("2")
+
+[node name="V" type="VBoxContainer" parent="SafeArea"]
+theme_override_constants/separation = 14
+
+[node name="Headline" type="Label" parent="SafeArea/V"]
+text = "SETTINGS"
+horizontal_alignment = 1
+
+[node name="MusicRow" type="VBoxContainer" parent="SafeArea/V"]
+theme_override_constants/separation = 4
+
+[node name="Label" type="Label" parent="SafeArea/V/MusicRow"]
+text = "Music"
+
+[node name="Slider" type="HSlider" parent="SafeArea/V/MusicRow"]
+custom_minimum_size = Vector2(0, 32)
+
+[node name="SfxRow" type="VBoxContainer" parent="SafeArea/V"]
+theme_override_constants/separation = 4
+
+[node name="Label" type="Label" parent="SafeArea/V/SfxRow"]
+text = "SFX"
+
+[node name="Slider" type="HSlider" parent="SafeArea/V/SfxRow"]
+custom_minimum_size = Vector2(0, 32)
+
+[node name="AmbientRow" type="VBoxContainer" parent="SafeArea/V"]
+theme_override_constants/separation = 4
+
+[node name="Label" type="Label" parent="SafeArea/V/AmbientRow"]
+text = "Ambient"
+
+[node name="Slider" type="HSlider" parent="SafeArea/V/AmbientRow"]
+custom_minimum_size = Vector2(0, 32)
+
+[node name="ShakeRow" type="VBoxContainer" parent="SafeArea/V"]
+theme_override_constants/separation = 4
+
+[node name="Label" type="Label" parent="SafeArea/V/ShakeRow"]
+text = "Screen shake"
+
+[node name="Slider" type="HSlider" parent="SafeArea/V/ShakeRow"]
+custom_minimum_size = Vector2(0, 32)
+
+[node name="OrientationRow" type="HBoxContainer" parent="SafeArea/V"]
+theme_override_constants/separation = 12
+
+[node name="Label" type="Label" parent="SafeArea/V/OrientationRow"]
+text = "Orientation"
+custom_minimum_size = Vector2(160, 0)
+
+[node name="OptionButton" type="OptionButton" parent="SafeArea/V/OrientationRow"]
+size_flags_horizontal = 3
+
+[node name="ControlRow" type="HBoxContainer" parent="SafeArea/V"]
+theme_override_constants/separation = 12
+
+[node name="Label" type="Label" parent="SafeArea/V/ControlRow"]
+text = "Controls"
+custom_minimum_size = Vector2(160, 0)
+
+[node name="OptionButton" type="OptionButton" parent="SafeArea/V/ControlRow"]
+size_flags_horizontal = 3
+
+[node name="AutoPickupRow" type="HBoxContainer" parent="SafeArea/V"]
+theme_override_constants/separation = 12
+
+[node name="Check" type="CheckBox" parent="SafeArea/V/AutoPickupRow"]
+text = "Auto-pickup junk"
+
+[node name="SubtitleRow" type="HBoxContainer" parent="SafeArea/V"]
+theme_override_constants/separation = 12
+
+[node name="Check" type="CheckBox" parent="SafeArea/V/SubtitleRow"]
+text = "Subtitled enemy barks"
+
+[node name="HapticsRow" type="HBoxContainer" parent="SafeArea/V"]
+theme_override_constants/separation = 12
+
+[node name="Check" type="CheckBox" parent="SafeArea/V/HapticsRow"]
+text = "Haptics (mobile)"
+
+[node name="Footer" type="HBoxContainer" parent="SafeArea/V"]
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="Save" type="Button" parent="SafeArea/V/Footer"]
+custom_minimum_size = Vector2(160, 56)
+text = "SAVE"
+
+[node name="Close" type="Button" parent="SafeArea/V/Footer"]
+custom_minimum_size = Vector2(160, 56)
+text = "CLOSE"

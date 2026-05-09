@@ -21,6 +21,7 @@ const SCENES := {
     "pause_menu": "res://scenes/ui/pause_menu.tscn",
     "game_over": "res://scenes/ui/game_over.tscn",
     "boss_bar": "res://scenes/ui/boss_bar.tscn",
+    "settings": "res://scenes/ui/settings_screen.tscn",
 }
 
 func test_scenes_load_as_packed_scenes() -> void:

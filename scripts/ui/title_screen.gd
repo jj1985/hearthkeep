@@ -143,4 +143,4 @@ func _on_codex() -> void:
     get_tree().change_scene_to_file("res://scenes/ui/journal.tscn")
 
 func _on_settings() -> void:
-    EventBus.floating_text.emit("Settings coming soon", Vector2.ZERO, T.ON_SURFACE_MUTED)
+    get_tree().change_scene_to_file("res://scenes/ui/settings_screen.tscn")
