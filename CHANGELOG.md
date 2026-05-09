@@ -1,5 +1,39 @@
 # HEARTHKEEP — Changelog
 
+## v0.2.2 — Live HUD + Alchemy + bounties
+
+### New
+- **Alchemy** crafting station: 5 vessels × 6 reagents × 5 catalysts data
+  layer with `craft(selections)` producing potions / elixirs / oils.
+  Drake Blood bumps rarity 1 tier, Dragon's Tear bumps 2. 8 GUT tests
+  covering data tables, lookup helpers, rarity bumps, oil-jar routing.
+- **Bounty board** in Journal QUESTS tab. 4 dynamic bounties (goblin
+  skirmishers, warchief, drakes, bandits). Tap ACCEPT to register +
+  start, instantly available for kill-objective tracking.
+- **HUD quest tracker chip** — top-center pinned-quest title + first
+  incomplete objective ("Slay 4/15 goblins") updates live.
+- **Talent tree tier headers** — "TIER 1 / 2 / 3" between node groups,
+  computed via BFS depth from any root.
+- **Bandit + Drake dye drops** — 8% / 25% chance respectively.
+
+### Polish
+- Camera shake stacks additively (cap 4.0) with a taper hold-then-decay
+  envelope; previously every shake clamped via `max()` and cut off cold.
+- Difficulty curve flatter past floor 10 (+0.15 per floor instead of
+  +0.30) so endless runs stay playable.
+- Stats panel grouped into PROGRESS / COMBAT / ECONOMY / CHARACTER
+  sections with thousands-separator number formatting.
+- Loot pillar lights only spawn for Epic+ drops (~50% allocation savings
+  during boss death rains).
+- Dragons grant +500/650/800 XP on kill (was 0).
+- Snikkit's wager-the-run multiplier now actually survives `start_run`.
+
+### Engineering
+- 104 GUT tests across 12 suites (added test_alchemy + test_save_roundtrip).
+- `make lint` runs `godot --import` to surface parse errors.
+- Save round-trip persistence now covers krrik_defeated +
+  lifetime_kills_by_type.
+
 ## v0.2.1 — Content polish + content additions
 
 Continuing the autonomous iteration loop after v0.2.0.
