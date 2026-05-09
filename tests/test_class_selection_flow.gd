@@ -60,6 +60,25 @@ func test_run_state_set_classes_rejects_unknown_tertiary() -> void:
     var ok: bool = RunState.set_classes("warrior", "wizard", "bogus")
     assert_false(ok)
 
+func test_all_hybrid_prestiges_two_class_returns_at_most_one() -> void:
+    RunState.set_classes("warrior", "necromancer")
+    var hs: Array = RunState.all_hybrid_prestiges()
+    assert_eq(hs.size(), 1)
+    assert_eq(String(hs[0].get("id", "")), "death_knight")
+
+func test_all_hybrid_prestiges_three_class_returns_pairwise_matches() -> void:
+    # warrior + necromancer = death_knight; warrior + ranger = berserker;
+    # necromancer + ranger = plaguelord. All three pairs should resolve.
+    RunState.set_classes("warrior", "necromancer", "ranger")
+    var hs: Array = RunState.all_hybrid_prestiges()
+    var ids: Array = []
+    for h in hs:
+        ids.append(String(h.get("id", "")))
+    assert_eq(hs.size(), 3, "Three hybrid pairs expected: %s" % str(ids))
+    assert_true(ids.has("death_knight"))
+    assert_true(ids.has("berserker"))
+    assert_true(ids.has("plaguelord"))
+
 func test_player_resources_use_triple_blend_when_tertiary_set() -> void:
     # Spawn a player with triple-class set; max_hp must match the
     # 50/30/20 blend, not the 60/40 blend.

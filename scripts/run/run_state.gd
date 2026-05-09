@@ -133,3 +133,27 @@ func hybrid_prestige() -> Dictionary:
     if class_secondary == "":
         return {}
     return Classes.hybrid_for(class_primary, class_secondary)
+
+func all_hybrid_prestiges() -> Array:
+    # Returns every pairwise hybrid prestige among the active classes.
+    # Two-class: 0 or 1 entry. Triple-class: up to 3 (P+S, P+T, S+T).
+    var out: Array = []
+    var pairs: Array = [[class_primary, class_secondary]]
+    if class_tertiary != "":
+        pairs.append([class_primary, class_tertiary])
+        pairs.append([class_secondary, class_tertiary])
+    var seen: Dictionary = {}
+    for pair in pairs:
+        var a: String = pair[0]
+        var b: String = pair[1]
+        if a == "" or b == "":
+            continue
+        var h: Dictionary = Classes.hybrid_for(a, b)
+        if h.is_empty():
+            continue
+        var hid: String = String(h.get("id", ""))
+        if seen.has(hid):
+            continue
+        seen[hid] = true
+        out.append(h)
+    return out

@@ -118,8 +118,7 @@ func _spawn_player() -> void:
     player.class_tertiary = RunState.class_tertiary
     player.position = Vector3(0, 0, 0)
     player_layer.add_child(player)
-    var hybrid: Dictionary = RunState.hybrid_prestige()
-    if not hybrid.is_empty():
+    for hybrid in RunState.all_hybrid_prestiges():
         EventBus.floating_text.emit("✦ %s ✦" % hybrid.get("name", ""), Vector2(0, 0), Color(1, 0.7, 0.3))
 
 const FLOOR_REGIONS := [
