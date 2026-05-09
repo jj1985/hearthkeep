@@ -34,6 +34,7 @@ const UiAnim_ := preload("res://scripts/ui/ui_anim.gd")
 @onready var virtual_stick: Control = $VirtualStick
 
 var _last_floor: int = -1
+var _class_chip: Label = null
 
 @onready var skill_primary: Button = $SkillCluster/Primary
 @onready var skill_2: Button = $SkillCluster/S2
@@ -69,6 +70,7 @@ func _ready() -> void:
     _wire_skill_button(skill_4, "skill_3")
     _wire_skill_button(skill_5, "skill_4")
     call_deferred("_relabel_skill_buttons")
+    _build_class_chip()
     _wire_skill_button(potion_hp_btn, "potion_hp")
     _wire_skill_button(potion_mp_btn, "potion_mp")
     _wire_skill_button(dodge_btn, "dodge")
@@ -83,6 +85,26 @@ func _ready() -> void:
     bond_btn.mouse_exited.connect(_on_bond_up)
     for b in [skill_primary, skill_2, skill_3, skill_4, skill_5, potion_hp_btn, potion_mp_btn, dodge_btn, pause_btn, journal_btn, bond_btn]:
         UiAnim_.bind_press_feedback(b, 0.92)
+
+func _build_class_chip() -> void:
+    # Tiny "WAR / WIZ / ROG" chip under the level/floor block so the
+    # player knows their composition at a glance — especially in
+    # triple-class mode.
+    _class_chip = Label.new()
+    _class_chip.text = _class_chip_text()
+    _class_chip.add_theme_color_override("font_color", T.PRIMARY)
+    _class_chip.add_theme_font_size_override("font_size", T.FS_LABEL_SM)
+    _class_chip.position = Vector2(16, 92)
+    add_child(_class_chip)
+
+func _class_chip_text() -> String:
+    var parts: Array = []
+    for cid in [RunState.class_primary, RunState.class_secondary, RunState.class_tertiary]:
+        if cid == "":
+            continue
+        var nm: String = String(Classes.get_class_def(cid).get("name", cid))
+        parts.append(nm.substr(0, 3).to_upper())
+    return " · ".join(parts)
 
 func _style_bars() -> void:
     _style_progress(hp_bar, T.ERROR, T.SURFACE_DIM)
