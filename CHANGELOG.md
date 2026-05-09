@@ -1,5 +1,33 @@
 # HEARTHKEEP — Changelog
 
+## v0.2.4 — All 7 crafting station UIs + HUD polish
+
+### New UIs
+- **Atelier wizard UI** — Form → Sigil → Ink → Inscribe (4 steps)
+- **Loom wizard UI** — Piece → Fabric → Trim → Weave
+- **Cooking wizard UI** — Dish → Staple → Spice → Cook
+- **Engraving Bench UI** — special-shape picker that lists items from
+  the Treasury (weapons / armor / trinkets), pick a script (Plain /
+  Cinder / Frost / Aurate / Shadowline / Draconic), type an optional
+  label, costs gold. Mutates the item in-place + bumps rarity.
+
+### All 7 crafting stations now have full UIs
+| Station | Output |
+|---|---|
+| Forge | weapons + armor (Form/Primary/Secondary/Embellishment/Engraving) |
+| Alchemy | potions / oils / scrolls (Vessel/Reagent/Catalyst/Label) |
+| Workbench | jewelry / charms / belts (Mount/Stone/Inscription) |
+| Atelier | scrolls / runes / foci (Form/Sigil/Ink) |
+| Loom | cloth armor / capes / banners (Piece/Fabric/Trim) |
+| Cooking | food buffs (Dish/Staple/Spice) |
+| Engraving | cosmetic engraving + stat tweak on existing items |
+
+### HUD polish
+- **Run timer** top-center (MM:SS or H:MM:SS for runs past an hour).
+- **Floor banner** animated entrance: slides in from below with TRANS_BACK
+  ease, holds 1.4 s, fades out 0.5 s. Shows "FLOOR N · region" matching
+  the run-scene region cycle.
+
 ## v0.2.3 — All 7 crafting stations + Architect + Towns + audio
 
 ### New
