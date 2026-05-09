@@ -21,7 +21,11 @@ func _ready() -> void:
         m.emission_energy_multiplier = 1.0 + 0.6 * float(rarity)
     body_entered.connect(_on_body_entered)
     add_to_group("loot")
-    pillar = VFX.spawn_loot_pillar_3d(global_position, rarity_color, 3.0 + 0.6 * float(rarity))
+    # Light pillars are expensive — only spawn them for Epic+ drops.
+    # Common-Rare drops still get the rarity-tinted mesh + emission, just
+    # no extra pillar light.
+    if rarity >= LootSystem.Rarity.EPIC:
+        pillar = VFX.spawn_loot_pillar_3d(global_position, rarity_color, 3.0 + 0.6 * float(rarity))
     if rarity >= LootSystem.Rarity.LEGENDARY:
         VFX.spawn_levelup_flare_3d(global_position)
         VFX.hit_stop(0.06)
