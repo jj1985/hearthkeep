@@ -4,6 +4,7 @@ extends Node3D
 
 const PlayerScene := preload("res://scenes/player/player.tscn")
 const GoblinScene := preload("res://scenes/enemies/goblin.tscn")
+const BanditScene := preload("res://scenes/enemies/bandit.tscn")
 const LootScene := preload("res://scenes/fx/loot_drop.tscn")
 
 @onready var player_layer: Node3D = $World/PlayerLayer
@@ -118,6 +119,10 @@ func _maybe_spawn_wave() -> void:
     var n: int = int(clamp(2 + RunState.floor_index, 1, 6))
     for i in range(n):
         var roll: int = randi() % 100
+        # On floor 2+, ~15% chance to spawn a bandit instead of a goblin
+        if RunState.floor_index >= 2 and roll > 84 and roll <= 95:
+            _spawn_bandit(_random_spawn_pos())
+            continue
         var v: int = 0
         if roll > 95 and RunState.floor_index >= 2:
             v = 3
@@ -137,6 +142,12 @@ func _spawn_goblin(pos: Vector3, v: int) -> void:
     g.variant = v
     g.stats_scale = RunState.enemy_scaling()
     enemy_layer.add_child(g)
+
+func _spawn_bandit(pos: Vector3) -> void:
+    var b = BanditScene.instantiate()
+    b.position = pos
+    b.stats_scale = RunState.enemy_scaling()
+    enemy_layer.add_child(b)
 
 func _random_spawn_pos() -> Vector3:
     if player == null or not is_instance_valid(player):
