@@ -1,2 +1,6 @@
 filename,source_url,license,author,date_acquired,modifications
 icon.svg,project-internal,MIT,hearthkeep-team,2026-05-08,hand-authored-svg
+fonts/Cinzel.ttf,https://github.com/google/fonts/tree/main/ofl/cinzel,OFL-1.1,Natanael Gama,2026-05-08,none
+fonts/Inter.ttf,https://github.com/google/fonts/tree/main/ofl/inter,OFL-1.1,Rasmus Andersson,2026-05-08,none
+fonts/OFL_Cinzel.txt,https://github.com/google/fonts/tree/main/ofl/cinzel,OFL-1.1,Natanael Gama,2026-05-08,license-text
+fonts/OFL_Inter.txt,https://github.com/google/fonts/tree/main/ofl/inter,OFL-1.1,Rasmus Andersson,2026-05-08,license-text
