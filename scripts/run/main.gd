@@ -5,6 +5,7 @@ extends Node3D
 const PlayerScene := preload("res://scenes/player/player.tscn")
 const GoblinScene := preload("res://scenes/enemies/goblin.tscn")
 const BanditScene := preload("res://scenes/enemies/bandit.tscn")
+const DrakeScene := preload("res://scenes/enemies/drake.tscn")
 const LootScene := preload("res://scenes/fx/loot_drop.tscn")
 
 @onready var player_layer: Node3D = $World/PlayerLayer
@@ -108,6 +109,9 @@ func _enter_room() -> void:
         EventBus.floating_text.emit("FLOOR " + str(RunState.floor_index + 1), Vector2(player.global_position.x, player.global_position.z), Color(1, 0.8, 0.3))
     for i in range(5 + RunState.floor_index):
         _spawn_goblin(_random_spawn_pos(), randi() % 3)
+    # Drake elite on floors 3 and 4 (the ones leading into a dragon at floor 5)
+    if RunState.floor_index in [3, 4]:
+        _spawn_drake(_random_spawn_pos())
 
 func _maybe_spawn_wave() -> void:
     if player == null or not is_instance_valid(player):
@@ -148,6 +152,12 @@ func _spawn_bandit(pos: Vector3) -> void:
     b.position = pos
     b.stats_scale = RunState.enemy_scaling()
     enemy_layer.add_child(b)
+
+func _spawn_drake(pos: Vector3) -> void:
+    var d = DrakeScene.instantiate()
+    d.position = pos + Vector3(0, 4.0, 0)
+    d.stats_scale = RunState.enemy_scaling()
+    enemy_layer.add_child(d)
 
 func _random_spawn_pos() -> Vector3:
     if player == null or not is_instance_valid(player):
