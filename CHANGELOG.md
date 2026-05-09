@@ -1,5 +1,86 @@
 # HEARTHKEEP — Changelog
 
+## v0.2.1 — Content polish + content additions
+
+Continuing the autonomous iteration loop after v0.2.0.
+
+### New content
+- **Krrik III** warband-king encounter on floor 7 (one-shot per save):
+  600 HP × scaling, 28 dmg, summons goblin reinforcements at 66% / 33%
+  HP thresholds, 7-meter roar AOE on cooldown, awards warchief_crown
+  trophy + 5 Epic-or-Legendary loot rain on death
+- **Drake** elite mid-boss on floors 3 + 4 (the two leading into a
+  dragon): 200 HP × scaling, 22 dmg, hover-dive-recover state machine,
+  guaranteed Epic drop on death
+- **Bandit** mid-floor enemy with 20% parry chance: spawns on floor 2+
+  at ~10% wave-roll chance, 36 HP / 9 dmg, faster than goblin Skirmisher
+
+### Combat
+- Real class skills on Q/E/R/F (replaces the haste/might placeholders):
+  fireball / cleave / backstab / smite / volley / etc. — each with
+  cooldown, mana cost, AOE radius, damage multiplier, element tag
+- Skill cooldown timer overlay on each cluster button (0.5s+ shows
+  remaining seconds)
+- Class-specific skill glyphs on cluster buttons (⚔ ✦ ⛨ ❗ for warrior,
+  🔥 ❄ ⚡ ○ for wizard, etc.)
+- 3 keystone effects wired: Berserker (low-HP atk speed + crit),
+  Death Knight (kill-heal), Execute: Ender (one-shot non-elites
+  below 35% HP)
+- Damage-scaled hit-stop polish; lifesteal proc shows verdant heal floater
+- Goblin AI variant kit: shaman heals/rallies on cooldown, sapper
+  visible-fuse telegraph, warchief calls reinforcements at <50% HP
+
+### UI
+- Bond stone HUD button (hold-to-channel teleport home, in-combat blocked)
+- Dye Workbench in Villa: 25-color palette, 7 armor slots, save dye sets,
+  pot-consumption + preview-only paths
+- Journal STATS tab: 4 sections (PROGRESS / COMBAT / ECONOMY / CHARACTER)
+  + KILLS BY TYPE breakdown, thousands-separator number formatting
+- Mobile-friendly Journal button on HUD top-right
+- Skill cooldown labels on HUD skill cluster buttons
+- Title screen: ember-rain particles + dragon-shadow sweep on a 12s loop
+
+### World
+- Floor environment variation: 5 region palettes cycling (Coastreach /
+  Ruinmarch / Thalanore Canopy / Graymarrow Hold / Ashfen Caldera) —
+  sun + ambient + fog + torch colors swap per (floor_index % 5)
+- EventDirector events firing real in-run impact: goblin raid (6
+  extra spawns), wandering merchant (3 free items), caravan ambush
+  (3 bandits), carnival (mystery item), dragon flyover (atmospheric)
+- Day/night sky tint pass: phase-driven sky_top + sky_horizon + fog
+  color, weather modifiers (Rain/Storm/Fog/Ashfall) layered
+
+### Meta-progression
+- Dragon kills unlock classes: Vyxhasis → Paladin, Ourzhal → Ranger
+- All three dragons defeated → triple_class meta_unlock flips on
+- Class select greys out locked classes with 🔒 prefix
+
+### Economy
+- Whetstones / oils now apply weapon buffs at point-of-sale via
+  Bren's Counter (5 weapon-buff types: flame / frost / lightning /
+  poison / holy)
+- Snikkit's Wager-the-Run multiplier survives start_run (was bug:
+  start_run reset it to 1.0 the moment you played)
+- Auto-route junk pickups to Treasury junk chest
+- Run-start floater "WAGER ACTIVE ×N.NN" when active
+
+### Quests
+- Kill objectives match all goblin variants (was matching only
+  Skirmishers because target_id "goblin" didn't match "goblin_sapper"
+  etc.)
+- Quest-complete fanfare: gold floater + 4-note arpeggio shimmer SFX
+- Dragons fire EventBus.boss_defeated → TrophyManager awards trophy +
+  unlocks classes + grants 500-800 XP
+
+### Engineering
+- 95 GUT tests across 11 suites (added test_content + test_save_roundtrip,
+  17 new tests)
+- Save round-trip integration covers krrik_defeated + lifetime_kills_by_type
+- `make lint` runs `godot --import` to surface parse errors / warnings
+- README refreshed for v0.2.0 inventory + install link
+- versionCode auto-bumps (now at 67); APK filename version-derived
+  from export_presets.cfg
+
 ## v0.2.0 — Pillars complete (autonomous iteration milestone)
 
 A single autonomous build pass landed every queued post-demo pillar.
