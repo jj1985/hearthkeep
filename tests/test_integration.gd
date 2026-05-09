@@ -110,3 +110,14 @@ func test_bond_stone_rebinding_persists_in_memory() -> void:
     var ok: bool = TravelSystem.set_bond("thalanore_canopy")
     assert_true(ok)
     assert_eq(TravelSystem.bond_location, "thalanore_canopy")
+
+# ---- Triple-class perk pool ----
+
+func test_perk_offer_includes_tertiary_class_perks() -> void:
+    # Adding a tertiary should grow the candidate pool — at minimum
+    # the pool must contain at least one perk we can verify came from
+    # that class's bucket. Easiest signal: pool size strictly grows.
+    var two: Array = PerkPool.draw_offer("warrior", "wizard", 999, [], "")
+    var three: Array = PerkPool.draw_offer("warrior", "wizard", 999, [], "rogue")
+    assert_gt(three.size(), two.size(),
+        "Tertiary class must contribute additional perks to the offer pool")
