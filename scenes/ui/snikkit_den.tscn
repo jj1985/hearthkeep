@@ -1,0 +1,70 @@
+[gd_scene load_steps=3 format=3 uid="uid://hk_snikkit_den"]
+
+[ext_resource type="Script" path="res://scripts/ui/snikkit_den.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/ui/safe_area_margin.gd" id="2"]
+
+[node name="SnikkitDen" type="Control"]
+script = ExtResource("1")
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Bg" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="SafeArea" type="MarginContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("2")
+
+[node name="V" type="VBoxContainer" parent="SafeArea"]
+theme_override_constants/separation = 16
+
+[node name="Headline" type="Label" parent="SafeArea/V"]
+horizontal_alignment = 1
+
+[node name="Blurb" type="Label" parent="SafeArea/V"]
+horizontal_alignment = 1
+
+[node name="Balance" type="Label" parent="SafeArea/V"]
+horizontal_alignment = 1
+
+[node name="Mystery" type="VBoxContainer" parent="SafeArea/V"]
+theme_override_constants/separation = 6
+
+[node name="StakeLabel" type="Label" parent="SafeArea/V/Mystery"]
+text = "Stake"
+
+[node name="Slider" type="HSlider" parent="SafeArea/V/Mystery"]
+custom_minimum_size = Vector2(0, 32)
+
+[node name="Btn" type="Button" parent="SafeArea/V/Mystery"]
+custom_minimum_size = Vector2(0, 56)
+text = "PULL THE LEVER  (Mystery item)"
+
+[node name="Double" type="VBoxContainer" parent="SafeArea/V"]
+theme_override_constants/separation = 6
+
+[node name="Status" type="Label" parent="SafeArea/V/Double"]
+text = ""
+
+[node name="Btn" type="Button" parent="SafeArea/V/Double"]
+custom_minimum_size = Vector2(0, 56)
+text = "DOUBLE OR NOTHING"
+
+[node name="Wager" type="VBoxContainer" parent="SafeArea/V"]
+theme_override_constants/separation = 6
+
+[node name="Status" type="Label" parent="SafeArea/V/Wager"]
+text = ""
+
+[node name="Btn" type="Button" parent="SafeArea/V/Wager"]
+custom_minimum_size = Vector2(0, 56)
+text = "WAGER THE NEXT RUN  (+0.10x, costs 100 g)"
+
+[node name="Footer" type="HBoxContainer" parent="SafeArea/V"]
+alignment = 1
+
+[node name="Close" type="Button" parent="SafeArea/V/Footer"]
+custom_minimum_size = Vector2(220, 56)
+text = "CLOSE"
