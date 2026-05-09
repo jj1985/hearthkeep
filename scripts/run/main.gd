@@ -40,6 +40,7 @@ func _ready() -> void:
     EventBus.screen_shake.connect(_on_screen_shake)
     EventBus.hit_stop.connect(_on_hit_stop)
     EventBus.day_night_phase_changed.connect(_on_phase_changed)
+    EventBus.world_event_started.connect(_on_world_event)
     RunState.level_up_pending.connect(_on_level_up_pending)
     QuestSystem.start("main_ch1_iron_tide")
     _spawn_player()
@@ -215,6 +216,34 @@ func _on_hit_stop(duration: float) -> void:
     Engine.time_scale = 0.05
     await get_tree().create_timer(duration, true, false, true).timeout
     Engine.time_scale = 1.0
+
+func _on_world_event(event_id: String, ev: Dictionary) -> void:
+    var blurb: String = String(ev.get("blurb", ev.get("name", event_id)))
+    EventBus.floating_text.emit(blurb, Vector2.ZERO, Color(1, 0.7, 0.3))
+    SfxBus.play("dragon_roar", -8.0)
+    match event_id:
+        "goblin_raid":
+            for i in range(6):
+                _spawn_goblin(_random_spawn_pos(), randi() % 3)
+            if MusicDirector.current_layer < MusicDirector.Layer.COMBAT:
+                MusicDirector.cue_combat(true)
+        "wandering_merchant":
+            # Three free items in a small ring near the player
+            for i in range(3):
+                var ang: float = float(i) * TAU / 3.0
+                var pos: Vector2 = Vector2(
+                    player.global_position.x + cos(ang) * 3.0,
+                    player.global_position.z + sin(ang) * 3.0)
+                EventBus.loot_dropped.emit(LootSystem.roll_item(2 + i % 2), pos)
+        "caravan_ambush":
+            for i in range(3):
+                _spawn_bandit(_random_spawn_pos())
+        "carnival":
+            # Free Mystery Item courtesy of the carnival
+            var item: Dictionary = LootSystem.roll_item(-1, 1.5)
+            EventBus.loot_dropped.emit(item, Vector2(player.global_position.x, player.global_position.z + 2.0))
+        "dragon_flyover":
+            EventBus.screen_shake.emit(0.4, 0.8)
 
 func _on_phase_changed(phase: int) -> void:
     var c: Color = WorldSim.phase_color()
