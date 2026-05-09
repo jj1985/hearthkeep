@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://scripts/boss/arena_runner.gd" id="1"]
 [ext_resource type="PackedScene" uid="uid://b1norrath_hud" path="res://scenes/ui/hud.tscn" id="2"]
 [ext_resource type="Script" path="res://scripts/fx/floating_text_layer.gd" id="3"]
+[ext_resource type="PackedScene" uid="uid://hk_boss_bar" path="res://scenes/ui/boss_bar.tscn" id="4"]
 
 [node name="Arena" type="Node3D"]
 script = ExtResource("1")
@@ -13,3 +14,8 @@ script = ExtResource("1")
 
 [node name="FloatingText" type="CanvasLayer" parent="."]
 script = ExtResource("3")
+
+[node name="BossBarLayer" type="CanvasLayer" parent="."]
+layer = 50
+
+[node name="BossBar" parent="BossBarLayer" instance=ExtResource("4")]
