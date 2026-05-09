@@ -131,6 +131,7 @@ func _card_min_size() -> Vector2:
 # ---- Take confirmation animation (spec §9.4) ----
 
 func _take(offer: Dictionary, chosen: Control) -> void:
+    SfxBus.play("perk_pick", -2.0)
     var tw := create_tween().set_parallel(true)
     tw.tween_property(chosen, "scale", Vector2(1.08, 1.08), 0.18)
     for c in grid.get_children():

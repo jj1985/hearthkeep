@@ -37,6 +37,8 @@ const UiAnim_ := preload("res://scripts/ui/ui_anim.gd")
 
 var player: Node = null
 var perk_chips: Array = []
+var _low_hp_t: float = 0.0
+var _was_low_hp: bool = false
 
 func _ready() -> void:
     EventBus.perk_chosen.connect(_on_perk_chosen)
@@ -124,7 +126,7 @@ func _wire_skill_button(b: Button, action: String) -> void:
 func _on_pause() -> void:
     get_tree().paused = not get_tree().paused
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
     if player == null:
         var p_arr := get_tree().get_nodes_in_group("player")
         if p_arr.is_empty():
@@ -132,8 +134,20 @@ func _process(_delta: float) -> void:
         player = p_arr[0]
     if player.has_method("get") and (player as Node).get("stats") != null:
         var s = player.stats
-        hp_bar.value = s.hp / max(1.0, s.max_hp) * 100.0
+        var pct: float = s.hp / max(1.0, s.max_hp)
+        hp_bar.value = pct * 100.0
         mp_bar.value = s.mp / max(1.0, s.max_mp) * 100.0
+        # Low-HP warning: pulse + heartbeat ping when below 25%
+        var is_low: bool = pct < 0.25 and pct > 0.0
+        if is_low:
+            _low_hp_t -= delta
+            if _low_hp_t <= 0.0:
+                _low_hp_t = 1.2
+                SfxBus.play("low_hp", -10.0)
+            hp_bar.modulate.a = 0.5 + 0.5 * (0.5 + 0.5 * sin(Time.get_ticks_msec() * 0.012))
+        elif _was_low_hp:
+            hp_bar.modulate.a = 1.0
+        _was_low_hp = is_low
     xp_bar.value = (RunState.xp / max(0.001, RunState.xp_to_next)) * 100.0
     lvl_label.text = "Lv %d" % RunState.player_level
     floor_label.text = "F%d" % (RunState.floor_index + 1)

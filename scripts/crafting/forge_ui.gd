@@ -192,7 +192,8 @@ func _commit_craft() -> void:
     ChestManager.deposit(item)
     EventBus.floating_text.emit("FORGED: %s" % String(item.get("name", "?")),
         Vector2.ZERO, T.rarity(LootSystem.RARITY_NAMES[clampi(int(item.get("rarity", 0)), 0, LootSystem.RARITY_NAMES.size() - 1)].to_lower()))
-    SfxBus.play("levelup")
+    SfxBus.play("forge_strike", 0.0)
+    SfxBus.play("levelup", -3.0)
     selections = {}
     _enter_step(0)
 

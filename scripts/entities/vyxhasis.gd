@@ -60,7 +60,12 @@ func _on_phase_entered(p: int) -> void:
         Phase.ENRAGED: msg = "VYXHASIS RAGES!"
     if msg != "":
         EventBus.floating_text.emit(msg, Vector2(global_position.x, global_position.z), T.SECONDARY)
-        SfxBus.play("dragon_roar", -2.0)
+        if p == Phase.AIR:
+            SfxBus.play("dragon_phase_air", 0.0)
+        elif p == Phase.ENRAGED:
+            SfxBus.play("dragon_phase_enraged", 2.0)
+        else:
+            SfxBus.play("dragon_roar", -2.0)
         EventBus.screen_shake.emit(0.6, 0.4)
 
 func _apply_phase_visual() -> void:
