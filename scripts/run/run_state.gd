@@ -9,6 +9,7 @@ var seed: int = 0
 var floor_index: int = 0
 var class_primary: String = "warrior"
 var class_secondary: String = ""
+var boss_dragon_id: String = ""
 var run_time: float = 0.0
 var player_level: int = 1
 var xp: float = 0.0

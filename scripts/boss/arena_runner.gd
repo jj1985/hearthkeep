@@ -1,13 +1,21 @@
 extends Node3D
 
-# Vyxhasis arena runner. Builds a cylindrical stone arena, brazier lights,
-# spawns the player + Vyxhasis, drives camera tracking. Phase A only —
-# no breath cones, no telegraph rings, no air-phase mesh swap. Future
-# work in Phase B.
+# Arena runner. Builds the procedural arena, spawns the player + the
+# named dragon, drives camera tracking. Dragon picked from
+# GameState.next_dragon_to_fight or RunState.boss_dragon_id (set by
+# run/main when transitioning to a boss floor).
 
 const PlayerScene := preload("res://scenes/player/player.tscn")
-const VyxhasisScript := preload("res://scripts/entities/vyxhasis.gd")
+const VyxhasisScript   := preload("res://scripts/entities/vyxhasis.gd")
+const OurzhalScript    := preload("res://scripts/entities/ourzhal.gd")
+const AethyrnaxScript  := preload("res://scripts/entities/aethyrnax.gd")
 const LootScene := preload("res://scenes/fx/loot_drop.tscn")
+
+const DRAGON_PALETTES := {
+    "vyxhasis":  {"sun": Color(1.0, 0.45, 0.20), "amb": Color(0.35, 0.22, 0.55), "brazier": Color(1.0, 0.5, 0.2),  "fog": Color(0.30, 0.15, 0.10)},
+    "ourzhal":   {"sun": Color(0.45, 0.55, 1.0), "amb": Color(0.20, 0.25, 0.50), "brazier": Color(0.5, 0.7, 1.0),  "fog": Color(0.10, 0.18, 0.30)},
+    "aethyrnax": {"sun": Color(0.65, 0.85, 1.0), "amb": Color(0.30, 0.45, 0.60), "brazier": Color(0.7, 0.9, 1.0),  "fog": Color(0.20, 0.30, 0.40)},
+}
 
 @onready var world: Node3D = $World
 @onready var hud: CanvasLayer = $HUD
@@ -17,6 +25,7 @@ var dragon: Node3D
 var camera: Camera3D
 var camera_shake_t: float = 0.0
 var camera_shake_strength: float = 0.0
+var dragon_id: String = ""
 
 func _ready() -> void:
     SaveSystem.load_save()
@@ -26,16 +35,36 @@ func _ready() -> void:
     EventBus.loot_dropped.connect(_on_loot_dropped)
     EventBus.screen_shake.connect(_on_screen_shake)
     EventBus.hit_stop.connect(_on_hit_stop)
+    dragon_id = _resolve_dragon_id()
     _build_arena()
     _spawn_camera()
     _spawn_player()
     _spawn_dragon()
     MusicDirector.set_layer(MusicDirector.Layer.BOSS)
     SfxBus.play("dragon_roar", -2.0)
-    EventBus.floating_text.emit("VYXHASIS  THE  CINDERWASTES", Vector3.ZERO, Color(1, 0.5, 0.3))
+    EventBus.floating_text.emit(_intro_text(), Vector2.ZERO, Color(1, 0.5, 0.3))
+
+func _resolve_dragon_id() -> String:
+    var v: Variant = RunState.get("boss_dragon_id")
+    if v != null and String(v) != "":
+        return String(v)
+    # Cycle through any not-yet-defeated dragon
+    for d in ["vyxhasis", "ourzhal", "aethyrnax"]:
+        if not GameState.defeated_dragons.has(d):
+            return d
+    # All defeated — replay the most recent
+    return "vyxhasis"
+
+func _intro_text() -> String:
+    match dragon_id:
+        "vyxhasis":  return "VYXHASIS  THE  CINDERWASTES"
+        "ourzhal":   return "OURZHAL  OF  THE  STORMHEART"
+        "aethyrnax": return "AETHYRNAX  THE  COLD-CROWNED"
+    return "DRAGON"
 
 func _build_arena() -> void:
-    # Cylindrical stone floor
+    var pal: Dictionary = DRAGON_PALETTES.get(dragon_id, DRAGON_PALETTES["vyxhasis"])
+
     var floor_mesh := CSGCylinder3D.new()
     floor_mesh.radius = 22.0
     floor_mesh.height = 1.0
@@ -47,49 +76,44 @@ func _build_arena() -> void:
     floor_mesh.position = Vector3(0, -0.5, 0)
     world.add_child(floor_mesh)
 
-    # Sun (fading dusk)
     var sun := DirectionalLight3D.new()
-    sun.light_color = Color(1.0, 0.45, 0.20)
+    sun.light_color = pal["sun"]
     sun.light_energy = 0.6
     sun.rotation = Vector3(deg_to_rad(-50), deg_to_rad(30), 0)
     world.add_child(sun)
 
-    # Ambient violet rim
     var amb := DirectionalLight3D.new()
-    amb.light_color = Color(0.35, 0.22, 0.55)
+    amb.light_color = pal["amb"]
     amb.light_energy = 0.25
     amb.rotation = Vector3(deg_to_rad(40), deg_to_rad(150), 0)
     world.add_child(amb)
 
-    # Brazier lights at compass points
     var positions := [Vector3(0, 2.5, -16), Vector3(0, 2.5, 16),
                       Vector3(16, 2.5, 0), Vector3(-16, 2.5, 0)]
     for p in positions:
         var br := OmniLight3D.new()
-        br.light_color = Color(1.0, 0.5, 0.2)
+        br.light_color = pal["brazier"]
         br.light_energy = 4.0
         br.omni_range = 14.0
         br.position = p
         world.add_child(br)
-        # Visible brazier mesh
         var brazier := CSGCylinder3D.new()
         brazier.radius = 0.6
         brazier.height = 2.0
         brazier.sides = 12
         var b_mat := StandardMaterial3D.new()
         b_mat.albedo_color = Color(0.18, 0.12, 0.08)
-        b_mat.emission = Color(1.0, 0.4, 0.1)
+        b_mat.emission = pal["brazier"]
         b_mat.emission_energy_multiplier = 1.0
         brazier.material = b_mat
         brazier.position = p - Vector3(0, 1.5, 0)
         world.add_child(brazier)
 
-    # Background sky-dome backdrop
     var sky := Environment.new()
     sky.background_mode = Environment.BG_COLOR
     sky.background_color = Color(0.06, 0.04, 0.08)
     sky.fog_enabled = true
-    sky.fog_light_color = Color(0.3, 0.15, 0.10)
+    sky.fog_light_color = pal["fog"]
     sky.fog_density = 0.015
     var world_env := WorldEnvironment.new()
     world_env.environment = sky
@@ -110,9 +134,12 @@ func _spawn_player() -> void:
 
 func _spawn_dragon() -> void:
     dragon = Node3D.new()
-    dragon.set_script(VyxhasisScript)
+    var script_for: Script = VyxhasisScript
+    match dragon_id:
+        "ourzhal":   script_for = OurzhalScript
+        "aethyrnax": script_for = AethyrnaxScript
+    dragon.set_script(script_for)
     dragon.position = Vector3(0, 1.5, -8)
-    # Build the body mesh as a child node
     var body := MeshInstance3D.new()
     body.name = "Body"
     var bm := BoxMesh.new()
@@ -123,7 +150,6 @@ func _spawn_dragon() -> void:
     dm.emission_enabled = true
     body.set_surface_override_material(0, dm)
     dragon.add_child(body)
-    # Hit area
     var area := Area3D.new()
     area.name = "HitArea"
     var shape := CollisionShape3D.new()

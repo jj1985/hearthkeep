@@ -138,13 +138,24 @@ func _next_room() -> void:
     RunState.floor_index = room_index
     GameState.deepest_floor = max(GameState.deepest_floor, RunState.floor_index)
     # Boss floor every 5: switch to a dragon arena scene.
-    # Phase A only ships Vyxhasis; Ourzhal/Aethyrnax are roadmap.
-    if (RunState.floor_index + 1) % 5 == 0 and not GameState.defeated_dragons.has("vyxhasis"):
-        EventBus.floating_text.emit("A SHADOW OVER THE WASTES…", Vector2(player.global_position.x, player.global_position.z), Color(1, 0.5, 0.3))
-        await get_tree().create_timer(1.4).timeout
-        get_tree().change_scene_to_file("res://scenes/boss/vyxhasis_arena.tscn")
-        return
+    if (RunState.floor_index + 1) % 5 == 0:
+        var next_d: String = _next_dragon_to_fight()
+        if next_d != "":
+            RunState.boss_dragon_id = next_d
+            EventBus.floating_text.emit("A SHADOW OVER THE WASTES…",
+                Vector2(player.global_position.x, player.global_position.z), Color(1, 0.5, 0.3))
+            await get_tree().create_timer(1.4).timeout
+            get_tree().change_scene_to_file("res://scenes/boss/vyxhasis_arena.tscn")
+            return
     _enter_room()
+
+func _next_dragon_to_fight() -> String:
+    for d in ["vyxhasis", "ourzhal", "aethyrnax"]:
+        if not GameState.defeated_dragons.has(d):
+            return d
+    # All three defeated — cycle through repeatable replays
+    var roster := ["vyxhasis", "ourzhal", "aethyrnax"]
+    return roster[(RunState.floor_index / 5) % roster.size()]
 
 func _on_loot_dropped(item: Dictionary, pos: Variant) -> void:
     var l = LootScene.instantiate()
