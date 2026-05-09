@@ -4,26 +4,27 @@
 
 A 3D mobile ARPG roguelike with deep multiclassing, dragons, goblin warbands, in-world gambling, a player villa with treasury and trophy hall, full crafting, and Megabonk-style perk-card escalation.
 
-**Engine:** Godot 4.6.x.  **Target:** Android (mobile renderer, portrait-default), with Forward+ on desktop for iteration.  **Status:** v0.2.0 — see [CHANGELOG.md](CHANGELOG.md) and the [GitHub release](https://github.com/jj1985/hearthkeep/releases/tag/v0.2.0).
+**Engine:** Godot 4.6.x.  **Target:** Android (mobile renderer, portrait-default), with Forward+ on desktop for iteration.  **Status:** v0.2.5 — see [CHANGELOG.md](CHANGELOG.md) and the [GitHub release](https://github.com/jj1985/hearthkeep/releases/tag/v0.2.5).
 
 ---
 
 ## Install (sideload to Android)
 
 ```bash
-# 1. Download HearthkeepDemo-v0.2.0.apk from
-#    https://github.com/jj1985/hearthkeep/releases/tag/v0.2.0
+# 1. Download HearthkeepDemo-v0.2.5.apk from
+#    https://github.com/jj1985/hearthkeep/releases/tag/v0.2.5
 # 2. With your phone plugged in via USB and dev mode + USB debugging on:
-adb install -r HearthkeepDemo-v0.2.0.apk
+adb install -r HearthkeepDemo-v0.2.5.apk
 ```
 
 Or run on desktop: `make run`.
 
-## What's playable in v0.2.0
+## What's playable in v0.2.5
 
 ### Combat
 - 3D isometric ARPG combat with virtual stick + diamond skill cluster
 - 7 base classes × 7 secondary class combos = 10 named hybrid prestiges (Death Knight, Trickster, Spellbow, Templar, Warden, Bonechanter, Berserker, Shadow Blade, Warpriest, Plaguelord) with active gameplay perks
+- **Triple-class meta-unlock** after defeating all 3 dragons: pick a third class for a 50/30/20 stat blend, perk pool draws from all 3, skill bar slot 2/3 binds to secondary[0] / tertiary[0], and every pairwise hybrid prestige fires
 - Real class skills on Q/E/R/F (fireball / cleave / backstab / smite / volley / etc.) with cooldowns, mana costs, AOE effects
 - Damage-scaled hit-stop + screen shake, lifesteal floaters, low-HP heartbeat warning
 - Reactive goblins (Skirmisher / Sapper-with-fuse-telegraph / Shaman-with-heals / Warchief-calls-reinforcements), Bandits with parry chance, Drake elites
@@ -149,7 +150,7 @@ Cosmetics + expansions + supporter pass.  **Never** energy/timers/paywalls.  No 
 
 Tagged milestones land on GitHub Releases with a sideloadable APK.
 
-- [v0.2.0 — Autonomous iteration milestone](https://github.com/jj1985/hearthkeep/releases/tag/v0.2.0) (current)
+- [v0.2.0 — Autonomous iteration milestone](https://github.com/jj1985/hearthkeep/releases/tag/v0.2.5) (current)
 - [v0.1.0-multiclass — first sideloadable APK](https://github.com/jj1985/hearthkeep/releases/tag/v0.1.0-multiclass)
 
 ---
