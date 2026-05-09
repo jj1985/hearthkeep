@@ -27,6 +27,17 @@ func _on_boss_defeated(boss_id: String) -> void:
     var first_kill: bool = not GameState.defeated_dragons.has(boss_id)
     if first_kill:
         GameState.defeated_dragons.append(boss_id)
+        # Class unlocks: defeating a dragon for the first time unlocks
+        # a meta-progression class.
+        match boss_id:
+            "vyxhasis":
+                if not GameState.unlocked_classes.has("paladin"):
+                    GameState.unlocked_classes.append("paladin")
+                    EventBus.floating_text.emit("PALADIN UNLOCKED", Vector2.ZERO, Color(1, 0.9, 0.5))
+            "ourzhal":
+                if not GameState.unlocked_classes.has("ranger"):
+                    GameState.unlocked_classes.append("ranger")
+                    EventBus.floating_text.emit("RANGER UNLOCKED", Vector2.ZERO, Color(0.6, 0.9, 0.5))
     var trophy_id: String = String(BOSS_TROPHY.get(boss_id, "%s_horn" % boss_id))
     if TrophyDB.find(trophy_id).is_empty():
         return

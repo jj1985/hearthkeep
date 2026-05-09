@@ -82,14 +82,23 @@ func _populate_list() -> void:
 func _make_class_row(id: String) -> Button:
     var b := Button.new()
     var def: Dictionary = Classes.get_class_def(id)
-    b.text = "  %s  ›" % def.get("name", id.capitalize())
+    var unlocked: bool = GameState.unlocked_classes.has(id)
+    var label: String = "  %s  ›" % def.get("name", id.capitalize())
+    if not unlocked:
+        label = "  🔒  %s   (locked)" % def.get("name", id.capitalize())
+    b.text = label
     b.alignment = HORIZONTAL_ALIGNMENT_LEFT
     b.set_meta("class_id", id)
+    b.set_meta("unlocked", unlocked)
     b.custom_minimum_size = Vector2(0, 88)
     UiStyle_.apply_secondary(b)
     b.add_theme_font_size_override("font_size", T.FS_TITLE_LG)
-    b.pressed.connect(_on_row_pressed.bind(id))
-    UiAnim_.bind_press_feedback(b)
+    if unlocked:
+        b.pressed.connect(_on_row_pressed.bind(id))
+        UiAnim_.bind_press_feedback(b)
+    else:
+        b.disabled = true
+        b.add_theme_color_override("font_disabled_color", T.ON_SURFACE_DISABLED)
     return b
 
 func _on_row_pressed(id: String) -> void:
