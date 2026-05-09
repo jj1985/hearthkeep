@@ -144,6 +144,9 @@ func _check_completion(quest_id: String) -> void:
         if reward.has("tokens"):
             for fid in (reward["tokens"] as Dictionary).keys():
                 FactionState.add_tokens(fid, int((reward["tokens"] as Dictionary)[fid]))
+        var title: String = String(q.get("title", quest_id))
+        EventBus.floating_text.emit("QUEST COMPLETE — " + title.to_upper(), Vector2.ZERO, Color(0.45, 0.85, 0.45))
+        SfxBus.play("quest_complete", -2.0)
         EventBus.quest_completed.emit(quest_id)
 
 func get_active_list() -> Array:
@@ -160,7 +163,13 @@ func _on_entity_killed(entity, _killer) -> void:
         id_hint = "goblin"
     for qid in active.keys():
         for obj in active[qid]["objectives"]:
-            if (obj as Dictionary).get("kind","") == "kill" and ((obj as Dictionary).get("target_id","") == id_hint or (obj as Dictionary).get("target_id","") == "any"):
+            if (obj as Dictionary).get("kind","") != "kill":
+                continue
+            var target_id: String = String((obj as Dictionary).get("target_id",""))
+            if target_id == "any" \
+                or target_id == id_hint \
+                or id_hint.begins_with(target_id + "_") \
+                or (target_id == "goblin" and id_hint.begins_with("goblin")):
                 progress(qid, (obj as Dictionary)["id"], 1)
 
 func _on_boss_defeated(boss_id: String) -> void:
