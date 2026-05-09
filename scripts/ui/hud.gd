@@ -26,6 +26,9 @@ const UiAnim_ := preload("res://scripts/ui/ui_anim.gd")
 @onready var bond_progress: ProgressBar = $TopRight/BondStone/BondProgress
 @onready var minimap_stub: PanelContainer = $TopRight/Minimap
 @onready var perk_strip: HBoxContainer = $BuffRow/Strip
+@onready var quest_tracker: PanelContainer = $QuestTracker
+@onready var quest_title: Label = $QuestTracker/V/Title
+@onready var quest_objective: Label = $QuestTracker/V/Objective
 @onready var virtual_stick: Control = $VirtualStick
 
 @onready var skill_primary: Button = $SkillCluster/Primary
@@ -88,6 +91,11 @@ func _style_bars() -> void:
     gold_label.add_theme_color_override("font_color", T.PRIMARY)
     gold_label.add_theme_font_size_override("font_size", T.FS_LABEL_LG)
     minimap_stub.add_theme_stylebox_override("panel", UiStyle_.card_resting())
+    quest_tracker.add_theme_stylebox_override("panel", UiStyle_.chip())
+    quest_title.add_theme_color_override("font_color", T.PRIMARY)
+    quest_title.add_theme_font_size_override("font_size", T.FS_LABEL_LG)
+    quest_objective.add_theme_color_override("font_color", T.ON_SURFACE)
+    quest_objective.add_theme_font_size_override("font_size", T.FS_BODY_SM)
 
 func _style_progress(bar: ProgressBar, fill: Color, bg: Color) -> void:
     var sb_bg := StyleBoxFlat.new()
@@ -213,6 +221,26 @@ func _create_cd_label(btn: Button) -> void:
     btn.add_child(lbl)
     _cd_labels[btn] = lbl
 
+func _refresh_quest_tracker() -> void:
+    var pinned: String = QuestSystem.pinned_quest_id
+    if pinned == "" or not QuestSystem.active.has(pinned):
+        quest_tracker.visible = false
+        return
+    var def: Dictionary = QuestSystem.registry.get(pinned, {})
+    var prog: Dictionary = QuestSystem.active.get(pinned, {})
+    quest_tracker.visible = true
+    quest_title.text = String(def.get("title", pinned))
+    var obj_text: String = ""
+    for obj in prog.get("objectives", []):
+        var done: int = int(obj.get("current", 0))
+        var need: int = int(obj.get("needed", obj.get("count", 1)))
+        if done < need:
+            obj_text = "%s  (%d/%d)" % [String(obj.get("text", obj.get("id", ""))), done, need]
+            break
+    if obj_text == "":
+        obj_text = "All objectives done — turn in."
+    quest_objective.text = obj_text
+
 func _refresh_skill_cooldowns() -> void:
     if player == null or not is_instance_valid(player):
         return
@@ -325,6 +353,7 @@ func _process(delta: float) -> void:
     floor_label.text = "F%d" % (RunState.floor_index + 1)
     gold_label.text = "%d g" % GameState.gold
     _refresh_skill_cooldowns()
+    _refresh_quest_tracker()
 
 func _on_perk_chosen(id: String) -> void:
     var pill := _make_buff_pill(id, false)

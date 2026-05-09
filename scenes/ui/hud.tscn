@@ -137,6 +137,28 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 theme_override_constants/separation = 6
 
+[node name="QuestTracker" type="PanelContainer" parent="."]
+anchor_left = 0.5
+anchor_top = 0.0
+anchor_right = 0.5
+anchor_bottom = 0.0
+offset_left = -160.0
+offset_top = 16.0
+offset_right = 160.0
+offset_bottom = 80.0
+mouse_filter = 2
+
+[node name="V" type="VBoxContainer" parent="QuestTracker"]
+theme_override_constants/separation = 2
+
+[node name="Title" type="Label" parent="QuestTracker/V"]
+text = ""
+horizontal_alignment = 1
+
+[node name="Objective" type="Label" parent="QuestTracker/V"]
+text = ""
+horizontal_alignment = 1
+
 ; ---- Virtual stick (bottom-left) ----
 
 [node name="VirtualStick" type="Control" parent="."]
