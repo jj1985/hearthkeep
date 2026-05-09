@@ -26,6 +26,7 @@ const SCENES := {
     "merchant": "res://scenes/ui/merchant.tscn",
     "world_map": "res://scenes/ui/world_map.tscn",
     "trophy_picker": "res://scenes/ui/trophy_picker.tscn",
+    "loading_screen": "res://scenes/ui/loading_screen.tscn",
 }
 
 func test_scenes_load_as_packed_scenes() -> void:

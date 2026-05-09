@@ -179,4 +179,13 @@ func _refresh_begin() -> void:
 func _on_begin() -> void:
     if not RunState.set_classes(pending_primary, pending_secondary):
         return
-    get_tree().change_scene_to_file("res://scenes/run.tscn")
+    # Route through loading screen for cinematic transition.
+    var loading_ps: PackedScene = load("res://scenes/ui/loading_screen.tscn")
+    if loading_ps == null:
+        get_tree().change_scene_to_file("res://scenes/run.tscn")
+        return
+    var loading := loading_ps.instantiate()
+    loading.next_scene = "res://scenes/run.tscn"
+    loading.auto_advance_after = 2.4
+    get_tree().root.add_child(loading)
+    queue_free()
