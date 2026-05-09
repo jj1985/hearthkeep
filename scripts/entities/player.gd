@@ -208,13 +208,20 @@ func _use_potion(kind: String) -> void:
     EventBus.potion_used.emit(kind)
     SfxBus.play("potion")
     if kind == "hp":
-        stats.hp = min(stats.max_hp, stats.hp + stats.max_hp * 0.45)
+        var heal: float = stats.max_hp * 0.45
+        if stats.hp < stats.max_hp * 0.25:
+            heal *= 1.5    # low-HP bonus per loading-screen tip + design pillar
+        var prev: float = stats.hp
+        stats.hp = min(stats.max_hp, stats.hp + heal)
         VFX.spawn_hit_burst_3d(global_position + Vector3.UP * 0.5, Color(0.95, 0.2, 0.4), 1.2)
-        EventBus.floating_text.emit("+HEAL", Vector2(global_position.x, global_position.z), Color(1, 0.4, 0.5))
+        EventBus.floating_text.emit("+%d HP" % int(round(stats.hp - prev)),
+            Vector2(global_position.x, global_position.z), Color(0.55, 0.85, 0.55))
     elif kind == "mp":
+        var prev_mp: float = stats.mp
         stats.mp = min(stats.max_mp, stats.mp + stats.max_mp * 0.5)
         VFX.spawn_hit_burst_3d(global_position + Vector3.UP * 0.5, Color(0.3, 0.5, 1.0), 1.2)
-        EventBus.floating_text.emit("+MP", Vector2(global_position.x, global_position.z), Color(0.5, 0.7, 1.0))
+        EventBus.floating_text.emit("+%d MP" % int(round(stats.mp - prev_mp)),
+            Vector2(global_position.x, global_position.z), Color(0.5, 0.7, 1.0))
 
 func _refresh_dye_overlay() -> void:
     var head_color: Color = DyeSystem.dye_for("head")

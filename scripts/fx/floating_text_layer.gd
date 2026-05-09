@@ -55,7 +55,17 @@ func _on_floating_text(text: String, world_pos: Vector2, color: Color) -> void:
         pop.tween_property(l, "scale", Vector2(1.4, 1.4), 0.12).set_ease(Tween.EASE_OUT)
         pop.chain().tween_property(l, "scale", Vector2.ONE, 0.13)
     else:
-        l.add_theme_font_size_override("font_size", T.FS_NUMERIC_MD if not is_levelup else T.FS_HEADLINE_SM)
+        # Scale font size by parsed numeric magnitude in the text:
+        # chip damage (≤5)  → SM, normal (6-30) → MD, big (31+) → LG.
+        var n: int = _extract_number(text)
+        var size: int = T.FS_NUMERIC_MD
+        if is_levelup:
+            size = T.FS_HEADLINE_SM
+        elif n <= 5 and n > 0:
+            size = T.FS_BODY_LG
+        elif n >= 31:
+            size = T.FS_NUMERIC_LG
+        l.add_theme_font_size_override("font_size", size)
 
     var rise: float = 60.0 if not is_crit else 80.0
     var dur: float = 0.7 if not is_crit else 0.9
@@ -72,6 +82,19 @@ func _on_floating_text(text: String, world_pos: Vector2, color: Color) -> void:
     tw.chain().tween_callback(func():
         l.visible = false
         _free.append(idx))
+
+func _extract_number(s: String) -> int:
+    # Pulls the first integer out of the text — used by the size-by-magnitude
+    # heuristic. "+12" → 12, "CRIT 47" → 47, "FIRE BREATH" → 0.
+    var digits: String = ""
+    var seen_digit: bool = false
+    for c in s:
+        if c >= "0" and c <= "9":
+            digits += c
+            seen_digit = true
+        elif seen_digit:
+            break
+    return int(digits) if digits != "" else 0
 
 func _project(world_pos: Vector2) -> Vector2:
     if world_pos == Vector2.ZERO:
