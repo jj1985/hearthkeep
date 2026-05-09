@@ -38,6 +38,14 @@ func _on_boss_defeated(boss_id: String) -> void:
                 if not GameState.unlocked_classes.has("ranger"):
                     GameState.unlocked_classes.append("ranger")
                     EventBus.floating_text.emit("RANGER UNLOCKED", Vector2.ZERO, Color(0.6, 0.9, 0.5))
+        # All three dragons defeated → triple-class unlocks
+        var has_all: bool = GameState.defeated_dragons.has("vyxhasis") \
+            and GameState.defeated_dragons.has("ourzhal") \
+            and GameState.defeated_dragons.has("aethyrnax")
+        if has_all and not bool(GameState.meta_unlocks.get("triple_class", false)):
+            GameState.meta_unlocks["triple_class"] = true
+            EventBus.floating_text.emit("TRIPLE CLASS UNLOCKED", Vector2.ZERO, Color(0.85, 0.6, 1.0))
+            SfxBus.play("quest_complete", 0.0)
     var trophy_id: String = String(BOSS_TROPHY.get(boss_id, "%s_horn" % boss_id))
     if TrophyDB.find(trophy_id).is_empty():
         return
