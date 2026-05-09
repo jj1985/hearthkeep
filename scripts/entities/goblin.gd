@@ -289,11 +289,21 @@ func take_damage(amount: float, source, is_crit: bool = false) -> void:
     hit_flash = 0.08
     var color: Color = Color(1, 0.85, 0.2) if is_crit else Color(1, 1, 1)
     EventBus.floating_text.emit(("CRIT " if is_crit else "") + str(int(amount)), Vector2(global_position.x, global_position.z), color)
+    # Damage-scaled hit-stop: bigger hits freeze longer; crits get the
+    # spec'd 80 ms freeze. Per design pillars: every hit feels chunky,
+    # crits feel ceremonial.
+    var dmg_mag: float = clampf(amount / max(1.0, stats.max_hp), 0.0, 1.0)
     if is_crit:
         VFX.spawn_crit_burst_3d(global_position + Vector3.UP, Color(1, 0.85, 0.2))
+        VFX.hit_stop(0.08)
+        VFX.screen_shake(0.6 + dmg_mag * 0.4, 0.18)
+        SfxBus.play("crit", -2.0)
     else:
         VFX.spawn_hit_burst_3d(global_position + Vector3.UP, Color(1, 1, 1), 0.8)
-    SfxBus.play("crit" if is_crit else "hit")
+        # Light hit-stop scales with damage magnitude (capped at 50 ms)
+        VFX.hit_stop(min(0.05, 0.02 + dmg_mag * 0.06))
+        VFX.screen_shake(0.18 + dmg_mag * 0.2, 0.08 + dmg_mag * 0.06)
+        SfxBus.play("hit_heavy" if dmg_mag > 0.20 else "hit", -4.0)
     EventBus.damage_dealt.emit(source, self, amount, is_crit)
     if RunState.fire_dot_chance > 0.0 and randf() < RunState.fire_dot_chance:
         burn_timer = 3.0
@@ -333,6 +343,15 @@ func _die(source) -> void:
     if not is_instance_valid(self): return
     EventBus.entity_killed.emit(self, source)
     VFX.spawn_death_burst_3d(global_position + Vector3.UP * 0.5, Color(0.7, 0.2, 0.2))
+    # Death feels chunky regardless of variant. Warchief gets a longer
+    # ceremonial freeze + roar.
+    if variant == VariantType.WARCHIEF:
+        VFX.hit_stop(0.18)
+        VFX.screen_shake(1.4, 0.55)
+        SfxBus.play("dragon_roar", -4.0)
+    else:
+        VFX.hit_stop(0.06)
+        VFX.screen_shake(0.45, 0.18)
     var gold := randi_range(gold_min, gold_max)
     GameState.add_gold(gold)
     RunState.run_gold += gold
