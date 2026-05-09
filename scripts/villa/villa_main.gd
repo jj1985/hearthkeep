@@ -137,7 +137,10 @@ func _try_interact() -> void:
     if nearest_chest_id != "":
         _open_chest(nearest_chest_id)
     elif nearest_pedestal != null:
-        EventBus.floating_text.emit("Trophy slot — placement UI roadmap", Vector2(player.global_position.x, player.global_position.z), Color(1, 0.8, 1))
+        var slot_id: String = String(nearest_pedestal.get_meta("slot_id", "pedestal_1"))
+        TrophyManager.target_slot_id = slot_id
+        SaveSystem.save()
+        get_tree().change_scene_to_file("res://scenes/ui/trophy_picker.tscn")
     elif nearest_building != null:
         var scene_path: String = String(nearest_building.get_meta("building_scene", ""))
         if scene_path != "":

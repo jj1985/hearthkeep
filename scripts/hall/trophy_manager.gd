@@ -9,6 +9,7 @@ var collected: Dictionary = {}                 # trophy_id -> count (>=1 owned)
 var placed: Dictionary = {}                    # slot_id -> trophy_id
 var active_buff_ids: Array[String] = []        # selected for active bonus
 var active_cap: int = 4                        # tier 1 hall
+var target_slot_id: String = ""                # set by villa pedestal interact, read by trophy_picker
 
 signal trophies_changed
 signal active_buffs_changed
