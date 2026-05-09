@@ -50,6 +50,33 @@ func _apply_class_base() -> void:
     stats.damage = 6.0 + float(profile.get("str", 5)) * 0.5 + float(profile.get("int", 5)) * 0.4
     stats.crit_chance = 0.05 + float(profile.get("agi", 5)) * 0.005
     _apply_allocated_talents()
+    _apply_trophy_buffs()
+
+func _apply_trophy_buffs() -> void:
+    # Pull aggregate from TrophyManager (handles active-buff cap + set
+    # bonuses internally) and route into player stats / RunState.
+    if not Engine.has_singleton("TrophyManager"):
+        return
+    var agg: Dictionary = TrophyManager.aggregate_buffs()
+    for k in agg.keys():
+        var v: float = float(agg[k])
+        match String(k):
+            "max_hp":         stats.max_hp += v
+            "max_mp":         stats.max_mp += v
+            "armor":          stats.armor += v
+            "damage":         stats.damage += v
+            "crit_chance":    stats.crit_chance += v
+            "crit_damage":    RunState.crit_damage_bonus += v
+            "atk_speed":      RunState.atk_speed_mult *= (1.0 + v)
+            "move_speed":     RunState.move_speed_mult *= (1.0 + v)
+            "lifesteal":      RunState.lifesteal_pct += v
+            "thorns":         RunState.thorns_pct += v
+            "fire_dmg":       RunState.fire_dot_chance += v * 0.01
+            "frost_dmg":      RunState.frost_slow_chance += v * 0.01
+            "lightning_dmg":  RunState.lightning_chain_chance += v * 0.01
+            "magic_find":     RunState.pickup_radius_mult *= (1.0 + v * 0.01)
+            "aoe":            RunState.aoe_mult *= (1.0 + v)
+            _: pass
 
 func _apply_allocated_talents() -> void:
     # Walk RunState.allocated_talents and apply stat bumps from the

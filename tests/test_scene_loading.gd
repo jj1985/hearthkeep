@@ -33,6 +33,7 @@ const SCENES := {
     "krrik": "res://scenes/enemies/krrik.tscn",
     "dye_picker": "res://scenes/ui/dye_picker.tscn",
     "alchemy_ui": "res://scenes/crafting/alchemy_ui.tscn",
+    "upgrade_panel": "res://scenes/ui/upgrade_panel.tscn",
 }
 
 func test_scenes_load_as_packed_scenes() -> void:
