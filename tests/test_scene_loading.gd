@@ -27,6 +27,7 @@ const SCENES := {
     "world_map": "res://scenes/ui/world_map.tscn",
     "trophy_picker": "res://scenes/ui/trophy_picker.tscn",
     "loading_screen": "res://scenes/ui/loading_screen.tscn",
+    "tutorial_overlay": "res://scenes/ui/tutorial_overlay.tscn",
 }
 
 func test_scenes_load_as_packed_scenes() -> void:

@@ -1,0 +1,82 @@
+[gd_scene load_steps=2 format=3 uid="uid://hk_tutorial_overlay"]
+
+[ext_resource type="Script" path="res://scripts/ui/tutorial_overlay.gd" id="1"]
+
+[node name="TutorialOverlay" type="Control"]
+script = ExtResource("1")
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Dim" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Headline" type="Label" parent="."]
+anchor_left = 0.5
+anchor_top = 0.0
+anchor_right = 0.5
+anchor_bottom = 0.0
+offset_left = -240.0
+offset_top = 40.0
+offset_right = 240.0
+offset_bottom = 100.0
+text = "WELCOME, ADVENTURER"
+horizontal_alignment = 1
+
+[node name="StickLabel" type="Label" parent="."]
+anchor_left = 0.0
+anchor_top = 1.0
+anchor_right = 0.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = -200.0
+offset_right = 240.0
+offset_bottom = -160.0
+text = "←  MOVE"
+
+[node name="SkillsLabel" type="Label" parent="."]
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -240.0
+offset_top = -200.0
+offset_right = -24.0
+offset_bottom = -160.0
+text = "SKILLS  →"
+horizontal_alignment = 2
+
+[node name="PotionsLabel" type="Label" parent="."]
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -120.0
+offset_top = -120.0
+offset_right = 120.0
+offset_bottom = -80.0
+text = "↓  POTIONS"
+horizontal_alignment = 1
+
+[node name="MenuLabel" type="Label" parent="."]
+anchor_left = 1.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 0.0
+offset_left = -240.0
+offset_top = 100.0
+offset_right = -16.0
+offset_bottom = 140.0
+text = "MAP  /  PAUSE  ↑"
+horizontal_alignment = 2
+
+[node name="Dismiss" type="Button" parent="."]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -120.0
+offset_top = -28.0
+offset_right = 120.0
+offset_bottom = 28.0
+text = "READY"

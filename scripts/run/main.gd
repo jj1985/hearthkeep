@@ -42,6 +42,18 @@ func _ready() -> void:
     _spawn_player()
     _enter_room()
     MusicDirector.set_layer(MusicDirector.Layer.EXPLORATION)
+    if not Settings.tutorial_seen:
+        var tut_ps: PackedScene = load("res://scenes/ui/tutorial_overlay.tscn")
+        if tut_ps != null:
+            var tut := tut_ps.instantiate()
+            var layer := CanvasLayer.new()
+            layer.layer = 95
+            layer.add_child(tut)
+            add_child(layer)
+            get_tree().paused = true
+            tut.tree_exiting.connect(func():
+                if is_instance_valid(layer):
+                    layer.queue_free())
     # First-30-seconds hook: dragon roar + flyover-shadow-implied via SFX,
     # then a goblin charges. Real cinematic comes in a polish pass.
     SfxBus.play("dragon_roar", -4.0)

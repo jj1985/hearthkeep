@@ -20,6 +20,7 @@ var screen_shake_scale: float = 1.0
 var subtitle_barks: bool = true
 var orientation_lock: String = "auto"   # auto | landscape | portrait
 var haptics: bool = true
+var tutorial_seen: bool = false
 
 const PATH := "user://aerathis_settings.json"
 
@@ -41,6 +42,7 @@ func save() -> void:
         "subtitle_barks": subtitle_barks,
         "orientation_lock": orientation_lock,
         "haptics": haptics,
+        "tutorial_seen": tutorial_seen,
     }))
 
 func load_settings() -> void:
@@ -63,6 +65,7 @@ func load_settings() -> void:
     subtitle_barks = bool((d as Dictionary).get("subtitle_barks", subtitle_barks))
     orientation_lock = str((d as Dictionary).get("orientation_lock", orientation_lock))
     haptics = bool((d as Dictionary).get("haptics", haptics))
+    tutorial_seen = bool((d as Dictionary).get("tutorial_seen", tutorial_seen))
 
 func _ready() -> void:
     load_settings()
