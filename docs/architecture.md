@@ -125,7 +125,8 @@ scenes/
 |---|---|
 | Player damage / crit / lifesteal | `scripts/entities/player.gd` `_attack`. Crit roll uses `current_crit_chance`. Lifesteal applied in goblin.gd `take_damage`. |
 | Skill cooldowns | `scripts/entities/player.gd` `skill_cds` dict + `_process_skill_cooldowns`. |
-| Multiclass stat blend | `scripts/classes/class_db.gd` `combined_stat_profile` / `combined_resources` (60/40 weighted). |
+| Multiclass stat blend | `scripts/classes/class_db.gd` `combined_stat_profile` / `combined_resources` — 60/40 for two classes, **50/30/20 for three** (triple-class meta-unlock). |
+| Triple-class slot | `scripts/ui/class_select.gd` shows TERTIARY tab when `GameState.meta_unlocks.triple_class` is true. Skill bar slot 2/3 routes to secondary[0] / tertiary[0] (player.gd `_cast_skill`, hud.gd `_relabel_skill_buttons`). |
 | Trophy buffs applied | `scripts/entities/player.gd` `_apply_trophy_buffs` (16 stat keys mapped). |
 | Talent stat application | `scripts/entities/player.gd` `_apply_allocated_talents`. |
 | Quest kill tracking | `scripts/quests/quest_system.gd` `_on_entity_killed`. Goblin variants match via prefix. |
