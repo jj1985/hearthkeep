@@ -22,6 +22,8 @@ const UiAnim_ := preload("res://scripts/ui/ui_anim.gd")
 @onready var gold_label: Label = $TopRight/GoldLabel
 @onready var pause_btn: Button = $TopRight/PauseButton
 @onready var journal_btn: Button = $TopRight/JournalButton
+@onready var bond_btn: Button = $TopRight/BondStone
+@onready var bond_progress: ProgressBar = $TopRight/BondStone/BondProgress
 @onready var minimap_stub: PanelContainer = $TopRight/Minimap
 @onready var perk_strip: HBoxContainer = $BuffRow/Strip
 @onready var virtual_stick: Control = $VirtualStick
@@ -61,7 +63,10 @@ func _ready() -> void:
     _wire_skill_button(dodge_btn, "dodge")
     pause_btn.pressed.connect(_on_pause)
     journal_btn.pressed.connect(_on_journal)
-    for b in [skill_primary, skill_2, skill_3, skill_4, skill_5, potion_hp_btn, potion_mp_btn, dodge_btn, pause_btn, journal_btn]:
+    bond_btn.button_down.connect(_on_bond_down)
+    bond_btn.button_up.connect(_on_bond_up)
+    bond_btn.mouse_exited.connect(_on_bond_up)
+    for b in [skill_primary, skill_2, skill_3, skill_4, skill_5, potion_hp_btn, potion_mp_btn, dodge_btn, pause_btn, journal_btn, bond_btn]:
         UiAnim_.bind_press_feedback(b, 0.92)
 
 func _style_bars() -> void:
@@ -127,6 +132,33 @@ func _wire_skill_button(b: Button, action: String) -> void:
 
 var _pause_menu: Node = null
 
+func _on_bond_down() -> void:
+    if TravelSystem.channeling:
+        return
+    var enemies_nearby: bool = false
+    if player != null and is_instance_valid(player):
+        var pp: Vector3 = (player as Node3D).global_position
+        for e in get_tree().get_nodes_in_group("enemy"):
+            if not is_instance_valid(e): continue
+            if pp.distance_to((e as Node3D).global_position) < 12.0:
+                enemies_nearby = true
+                break
+    if not TravelSystem.can_channel(enemies_nearby):
+        var rem: int = int(ceil(TravelSystem.cooldown_remaining()))
+        var msg: String = "Bond stone: in combat" if enemies_nearby else "Bond stone: %ds cooldown" % rem
+        EventBus.floating_text.emit(msg, Vector2.ZERO, T.WARNING)
+        return
+    TravelSystem.begin_channel()
+    bond_progress.visible = true
+    bond_progress.value = 0.0
+    SfxBus.play("chest_open", -2.0)
+
+func _on_bond_up() -> void:
+    if TravelSystem.channeling:
+        TravelSystem.interrupt_channel()
+        bond_progress.visible = false
+        EventBus.floating_text.emit("Channel broken.", Vector2.ZERO, T.WARNING)
+
 func _on_journal() -> void:
     # Bubble up to the running scene (run/main has the journal-overlay
     # routine). On the villa scene we just scene-change.
@@ -154,6 +186,18 @@ func _on_pause() -> void:
     get_tree().paused = true
 
 func _process(delta: float) -> void:
+    # Tick bond-stone channel
+    if TravelSystem.channeling:
+        var done: bool = TravelSystem.tick_channel(delta)
+        var pct: float = (1.0 - TravelSystem.channel_t / max(0.001, TravelSystem.bond_channel_time)) * 100.0
+        bond_progress.value = clampf(pct, 0.0, 100.0)
+        if done:
+            bond_progress.visible = false
+            EventBus.floating_text.emit("HEARTHED HOME", Vector2.ZERO, T.PRIMARY)
+            SfxBus.play("levelup", -2.0)
+            SaveSystem.save()
+            get_tree().change_scene_to_file("res://scenes/villa/villa.tscn")
+            return
     if player == null:
         var p_arr := get_tree().get_nodes_in_group("player")
         if p_arr.is_empty():
