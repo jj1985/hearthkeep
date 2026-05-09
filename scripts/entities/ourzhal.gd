@@ -100,8 +100,7 @@ func _on_died() -> void:
     SfxBus.play("dragon_roar", 2.0)
     EventBus.screen_shake.emit(1.2, 0.8)
     EventBus.hit_stop.emit(0.5)
-    if not GameState.defeated_dragons.has("ourzhal"):
-        GameState.defeated_dragons.append("ourzhal")
+    EventBus.boss_defeated.emit("ourzhal")
     GameState.add_gold(650)
     if Engine.has_singleton("VendorSystem"):
         VendorSystem.add_currency("dragon_shards", 12)

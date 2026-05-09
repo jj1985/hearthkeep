@@ -49,6 +49,45 @@ func _apply_class_base() -> void:
     var profile: Dictionary = Classes.combined_stat_profile(class_primary, class_secondary)
     stats.damage = 6.0 + float(profile.get("str", 5)) * 0.5 + float(profile.get("int", 5)) * 0.4
     stats.crit_chance = 0.05 + float(profile.get("agi", 5)) * 0.005
+    _apply_allocated_talents()
+
+func _apply_allocated_talents() -> void:
+    # Walk RunState.allocated_talents and apply stat bumps from the
+    # talent definitions in TalentDB. Stat keys mapped to player stats
+    # below; unknown keys are ignored (so designers can add new talent
+    # effects without breaking the runtime).
+    var def: Dictionary = Classes.get_class_def(class_primary)
+    var tree_id: String = String(def.get("talent_tree", ""))
+    for node_id in RunState.allocated_talents.keys():
+        if not bool(RunState.allocated_talents[node_id]):
+            continue
+        var n: Dictionary = TalentDB.get_talent_node(tree_id, String(node_id))
+        if n.is_empty():
+            continue
+        var effect: Dictionary = n.get("stat", {})
+        for k in effect.keys():
+            var v: float = float(effect[k])
+            match String(k):
+                "str":            stats.damage += v * 0.5
+                "agi":            stats.crit_chance += v * 0.005
+                "int":            stats.damage += v * 0.4
+                "sta":            stats.max_hp += v * 5.0
+                "max_hp":         stats.max_hp += v
+                "max_mp":         stats.max_mp += v
+                "armor":          stats.armor += v
+                "crit_chance":    stats.crit_chance += v
+                "crit_dmg":       RunState.crit_damage_bonus += v
+                "atk_speed":      RunState.atk_speed_mult *= (1.0 + v)
+                "move_speed":     RunState.move_speed_mult *= (1.0 + v)
+                "lifesteal":      RunState.lifesteal_pct += v
+                "healing":        stats.max_hp += v * 5.0
+                "fire_dmg":       RunState.fire_dot_chance += v * 0.01
+                "frost_dmg":      RunState.frost_slow_chance += v * 0.01
+                "lightning_dmg":  RunState.lightning_chain_chance += v * 0.01
+                "aoe":            RunState.aoe_mult *= (1.0 + v)
+                _: pass    # unmapped stat — designer can add the mapping later
+    stats.hp = stats.max_hp
+    stats.mp = stats.max_mp
 
 func equipped_weapon_tags() -> Array:
     var tags: Array = []

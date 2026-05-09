@@ -17,13 +17,20 @@ signal active_buffs_changed
 func _ready() -> void:
     EventBus.boss_defeated.connect(_on_boss_defeated)
 
+const BOSS_TROPHY := {
+    "vyxhasis": "vyxhasis_horn",
+    "ourzhal":  "ourzhal_scale",
+    "aethyrnax": "aethyrnax_fang",
+}
+
 func _on_boss_defeated(boss_id: String) -> void:
     var first_kill: bool = not GameState.defeated_dragons.has(boss_id)
     if first_kill:
         GameState.defeated_dragons.append(boss_id)
-        var trophy_id: String = "%s_horn" % boss_id
-        if TrophyDB.find(trophy_id).is_empty():
-            return
+    var trophy_id: String = String(BOSS_TROPHY.get(boss_id, "%s_horn" % boss_id))
+    if TrophyDB.find(trophy_id).is_empty():
+        return
+    if first_kill or int(collected.get(trophy_id, 0)) == 0:
         award(trophy_id)
 
 func award(trophy_id: String) -> bool:
