@@ -320,7 +320,15 @@ func take_damage(amount: float, source, is_crit: bool = false) -> void:
     var player_obj := _find_player()
     if player_obj != null and RunState.lifesteal_pct > 0.0 and source == player_obj:
         if "stats" in player_obj:
-            (player_obj as Object).stats.hp = min((player_obj as Object).stats.max_hp, (player_obj as Object).stats.hp + amount * RunState.lifesteal_pct)
+            var heal_amt: float = amount * RunState.lifesteal_pct
+            var p_stats: Object = (player_obj as Object).stats
+            var prev_hp: float = float(p_stats.hp)
+            p_stats.hp = min(float(p_stats.max_hp), prev_hp + heal_amt)
+            var actual_heal: float = float(p_stats.hp) - prev_hp
+            if actual_heal > 0.5:
+                EventBus.floating_text.emit("+%d" % int(round(actual_heal)),
+                    Vector2((player_obj as Node3D).global_position.x, (player_obj as Node3D).global_position.z),
+                    Color(0.55, 0.85, 0.55))
     if stats.is_dead():
         _die(source)
 
