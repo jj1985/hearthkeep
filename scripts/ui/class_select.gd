@@ -214,7 +214,27 @@ func _refresh_begin() -> void:
         var t_def: Dictionary = Classes.get_class_def(pending_tertiary)
         var t_name: String = t_def.get("name", "?").to_upper()
         begin_btn.text = "BEGIN AS %s/%s/%s" % [p_name, s_name, t_name]
-        hybrid_callout_label.text = "⚜  TRIPLE-CLASS — 50/30/20 STAT BLEND"
+        # Enumerate every pairwise hybrid prestige present in the trio.
+        var pairs: Array = [
+            [pending_primary, pending_secondary],
+            [pending_primary, pending_tertiary],
+            [pending_secondary, pending_tertiary],
+        ]
+        var matched: Array = []
+        var seen: Dictionary = {}
+        for pair in pairs:
+            var h: Dictionary = Classes.hybrid_for(pair[0], pair[1])
+            if h.is_empty():
+                continue
+            var hid: String = String(h.get("id", ""))
+            if seen.has(hid):
+                continue
+            seen[hid] = true
+            matched.append(String(h.get("name", "")).to_upper())
+        if matched.is_empty():
+            hybrid_callout_label.text = "⚜  TRIPLE-CLASS — 50/30/20 STAT BLEND"
+        else:
+            hybrid_callout_label.text = "⚜  TRIPLE-CLASS  ·  " + " + ".join(matched)
         hybrid_callout.visible = true
         return
     begin_btn.text = "BEGIN AS %s/%s" % [p_name, s_name]
