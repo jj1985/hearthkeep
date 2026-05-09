@@ -30,6 +30,7 @@ const BUILDINGS := [
     {"id":"war_room",    "label":"War Room",         "scene":"res://scenes/ui/journal.tscn",          "pos":Vector3(  0, 0, -10), "color":Color(0.9, 0.4, 0.4)},
     {"id":"wayspire",    "label":"Wayspire",          "scene":"res://scenes/ui/world_map.tscn",        "pos":Vector3(  0, 0,  10), "color":Color(0.4, 0.85, 0.95)},
     {"id":"dyer",        "label":"Dye Workbench",     "scene":"res://scenes/ui/dye_picker.tscn",       "pos":Vector3( 12, 0,  -2), "color":Color(0.85, 0.55, 0.85)},
+    {"id":"alchemy",     "label":"Alchemy Lab",       "scene":"res://scenes/crafting/alchemy_ui.tscn", "pos":Vector3(-12, 0,  -2), "color":Color(0.55, 0.85, 0.55)},
 ]
 
 func _ready() -> void:
