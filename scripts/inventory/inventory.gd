@@ -15,6 +15,16 @@ func _ready() -> void:
     EventBus.item_picked_up.connect(_on_item_picked_up)
 
 func _on_item_picked_up(item: Dictionary) -> void:
+    # Auto-route junk straight into the Treasury junk chest if enabled
+    # (default Settings.auto_pickup_junk = true). Bag stays clean for
+    # actual gear; junk piles up in the chest for sell-all-junk.
+    if Settings.auto_pickup_junk:
+        var tags: Array = item.get("tags", [])
+        var is_junk: bool = (tags is Array and (tags.has("junk") or tags.has("vendor_trash"))) \
+            or item.get("vendor_trash", false) or item.get("is_junk", false)
+        if is_junk and Engine.has_singleton("ChestManager"):
+            ChestManager.deposit(item)
+            return
     if bag.size() >= MAX_BAG:
         # Auto-sell to gold to keep loop loose
         GameState.add_gold(_sell_value(item))
