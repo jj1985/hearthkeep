@@ -138,6 +138,7 @@ func _physics_process(delta: float) -> void:
     attack_cooldown = max(0.0, attack_cooldown - delta)
     dodge_cooldown = max(0.0, dodge_cooldown - delta)
     dodge_timer = max(0.0, dodge_timer - delta)
+    _process_skill_cooldowns(delta)
     dodging = dodge_timer > 0.0
 
     var input := Vector3(
@@ -170,9 +171,13 @@ func _physics_process(delta: float) -> void:
     if Input.is_action_just_pressed("potion_mp"):
         _use_potion("mp")
     if Input.is_action_just_pressed("skill_1"):
-        BuffSystem.apply("haste", BuffSystem.SOURCE_CLASS_SKILL)
+        _cast_skill(0)
     if Input.is_action_just_pressed("skill_2"):
-        BuffSystem.apply("blessing_might", BuffSystem.SOURCE_CLASS_SKILL)
+        _cast_skill(1)
+    if Input.is_action_just_pressed("skill_3"):
+        _cast_skill(2)
+    if Input.is_action_just_pressed("skill_4"):
+        _cast_skill(3)
 
 func _attack() -> void:
     if attack_cooldown > 0.0:
@@ -231,6 +236,114 @@ func take_damage(amount: float, _src: Object) -> void:
     if RunState.thorns_pct > 0.0 and _src is Node3D and (_src as Node).is_in_group("enemy"):
         if (_src as Object).has_method("take_damage"):
             (_src as Object).call("take_damage", mitigated * RunState.thorns_pct, self, false)
+
+# Per-class skill kits. Slots 0..3 map to skill_1..skill_4 (Q/E/R/F).
+# Each entry: { name, cooldown, mana_cost, callable }.  Class kits chosen
+# from the first 4 skills in Classes.CLASSES[primary]["skills"]; secondary
+# class slot 0 + 1 are appended in slots 4..5 (currently unbound — Q/E/R/F
+# only exposes 4 buttons; future "swap" panel can switch active row).
+
+var skill_cds: Dictionary = {}    # slot_index -> remaining cooldown
+
+func _cast_skill(slot: int) -> void:
+    var def: Dictionary = Classes.get_class_def(class_primary)
+    var skills: Array = def.get("skills", [])
+    if slot >= skills.size():
+        return
+    var skill_id: String = String(skills[slot])
+    var cd: float = float(skill_cds.get(slot, 0.0))
+    if cd > 0.0:
+        EventBus.floating_text.emit("%s on cooldown (%.1fs)" % [skill_id, cd], Vector2.ZERO, T_color_warning())
+        return
+    var mana_cost: float = _skill_mana_cost(skill_id)
+    if stats.mp < mana_cost:
+        EventBus.floating_text.emit("Out of mana", Vector2.ZERO, T_color_error())
+        return
+    stats.mp -= mana_cost
+    var dur: float = _skill_cooldown(skill_id)
+    skill_cds[slot] = dur
+    _resolve_skill(skill_id)
+
+func _skill_cooldown(id: String) -> float:
+    match id:
+        "fireball", "frost_nova", "chain_lightning": return 4.0
+        "backstab", "shadow_step": return 5.0
+        "cleave", "whirlwind": return 6.0
+        "raise_skeleton", "corpse_explosion": return 8.0
+        "smite", "consecrate", "blessing_of_might": return 5.0
+        "volley", "aimed_shot", "trap": return 4.5
+        "dissonance", "heroic_anthem": return 6.0
+    return 5.0
+
+func _skill_mana_cost(id: String) -> float:
+    match id:
+        "fireball", "frost_nova", "chain_lightning", "arcane_orb": return 18.0
+        "raise_skeleton", "corpse_explosion", "bone_spear": return 16.0
+        "cleave", "whirlwind", "backstab", "shadow_step", "smite", "volley": return 8.0
+    return 12.0
+
+func _resolve_skill(id: String) -> void:
+    SfxBus.play("crit", -3.0)
+    EventBus.floating_text.emit(id.replace("_", " ").to_upper(), global_position, Color(1, 0.85, 0.4))
+    var aoe_radius: float = 5.0
+    var dmg_mult: float = 2.2
+    var element: String = "physical"
+    match id:
+        "fireball":
+            aoe_radius = 4.0
+            dmg_mult = 2.6
+            element = "fire"
+            VFX.spawn_hit_burst_3d(global_position + facing * 4.0 + Vector3.UP, Color(1, 0.5, 0.1), 1.6)
+        "frost_nova":
+            aoe_radius = 5.0
+            dmg_mult = 1.8
+            element = "frost"
+            VFX.spawn_hit_burst_3d(global_position + Vector3.UP, Color(0.6, 0.85, 1.0), 1.4)
+        "chain_lightning":
+            aoe_radius = 8.0
+            dmg_mult = 1.6
+            element = "lightning"
+            VFX.spawn_hit_burst_3d(global_position + Vector3.UP, Color(0.7, 0.9, 1.0), 1.2)
+        "backstab":
+            aoe_radius = 1.6
+            dmg_mult = 3.5
+            VFX.spawn_crit_burst_3d(global_position + facing * 1.6 + Vector3.UP, Color(0.85, 0.2, 0.85))
+        "cleave":
+            aoe_radius = 3.0
+            dmg_mult = 1.6
+            VFX.spawn_hit_burst_3d(global_position + facing * 1.6 + Vector3.UP, Color(1, 1, 1), 1.4)
+        "whirlwind":
+            aoe_radius = 4.0
+            dmg_mult = 1.4
+            VFX.spawn_hit_burst_3d(global_position + Vector3.UP, Color(0.95, 0.8, 0.4), 1.6)
+        "smite":
+            aoe_radius = 1.8
+            dmg_mult = 2.4
+            VFX.spawn_hit_burst_3d(global_position + facing * 2.0 + Vector3.UP * 1.5, Color(1, 0.95, 0.5), 1.4)
+        "volley", "aimed_shot":
+            aoe_radius = 2.5
+            dmg_mult = 2.0
+        "blessing_of_might", "heroic_anthem", "haste":
+            BuffSystem.apply("haste" if id == "haste" else "blessing_might", BuffSystem.SOURCE_CLASS_SKILL)
+            return
+    # AOE damage application
+    var origin: Vector3 = global_position + facing * 2.0
+    for e in get_tree().get_nodes_in_group("enemy"):
+        if not is_instance_valid(e): continue
+        var en: Node3D = e as Node3D
+        if origin.distance_to(en.global_position) <= aoe_radius and (e as Object).has_method("take_damage"):
+            var roll_crit: bool = randf() < current_crit_chance()
+            var dmg: float = current_damage() * dmg_mult * (stats.crit_damage if roll_crit else 1.0)
+            (e as Object).call("take_damage", dmg, self, roll_crit)
+
+func T_color_warning() -> Color:
+    return Color(0.78, 0.62, 0.18)
+func T_color_error() -> Color:
+    return Color(0.65, 0.20, 0.20)
+
+func _process_skill_cooldowns(delta: float) -> void:
+    for k in skill_cds.keys():
+        skill_cds[k] = max(0.0, float(skill_cds[k]) - delta)
 
 func _use_potion(kind: String) -> void:
     EventBus.potion_used.emit(kind)
