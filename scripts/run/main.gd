@@ -218,7 +218,6 @@ func _close_journal_overlay() -> void:
     get_tree().paused = false
 
 func _on_player_died() -> void:
-    EventBus.floating_text.emit("YOU DIED", Vector2(player.global_position.x, player.global_position.z), Color(1, 0.2, 0.2))
     GameState.run_count += 1
     var run_loot: Array = Inventory.bag.duplicate()
     if Settings.run_end_auto_return:
@@ -226,5 +225,17 @@ func _on_player_died() -> void:
         Inventory.bag.clear()
     SaveSystem.save()
     WorldSim.exit_run()
-    await get_tree().create_timer(1.5).timeout
-    get_tree().change_scene_to_file("res://scenes/title.tscn")
+    var ps: PackedScene = load("res://scenes/ui/game_over.tscn")
+    if ps == null:
+        get_tree().change_scene_to_file("res://scenes/title.tscn")
+        return
+    var go = ps.instantiate()
+    go.floors_cleared = RunState.floor_index
+    go.kills = RunState.run_kills
+    go.gold_earned = RunState.run_gold
+    go.legendaries = RunState.run_legendaries
+    var layer := CanvasLayer.new()
+    layer.layer = 90
+    layer.add_child(go)
+    add_child(layer)
+    get_tree().paused = true
