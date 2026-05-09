@@ -1,0 +1,58 @@
+[gd_scene load_steps=3 format=3 uid="uid://hk_world_map"]
+
+[ext_resource type="Script" path="res://scripts/ui/world_map.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/ui/safe_area_margin.gd" id="2"]
+
+[node name="WorldMap" type="Control"]
+script = ExtResource("1")
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Bg" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="SafeArea" type="MarginContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("2")
+
+[node name="V" type="VBoxContainer" parent="SafeArea"]
+theme_override_constants/separation = 12
+
+[node name="Headline" type="Label" parent="SafeArea/V"]
+text = "THE SUNDERED REALMS"
+horizontal_alignment = 1
+
+[node name="Subhead" type="Label" parent="SafeArea/V"]
+text = "Tap a wayspire portal to bind your bond stone."
+horizontal_alignment = 1
+
+[node name="MapPanel" type="PanelContainer" parent="SafeArea/V"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Canvas" type="Control" parent="SafeArea/V/MapPanel"]
+custom_minimum_size = Vector2(0, 360)
+mouse_filter = 0
+
+[node name="Detail" type="Label" parent="SafeArea/V"]
+text = "Tap a portal."
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="Footer" type="HBoxContainer" parent="SafeArea/V"]
+theme_override_constants/separation = 12
+
+[node name="UnlockAll" type="Button" parent="SafeArea/V/Footer"]
+custom_minimum_size = Vector2(0, 56)
+text = "BRIBE WAYSPIRE KEEPERS  (5000 g)"
+size_flags_horizontal = 3
+
+[node name="Bind" type="Button" parent="SafeArea/V/Footer"]
+custom_minimum_size = Vector2(160, 56)
+text = "BIND"
+
+[node name="Close" type="Button" parent="SafeArea/V/Footer"]
+custom_minimum_size = Vector2(160, 56)
+text = "CLOSE"

@@ -24,6 +24,7 @@ const SCENES := {
     "settings": "res://scenes/ui/settings_screen.tscn",
     "snikkit_den": "res://scenes/ui/snikkit_den.tscn",
     "merchant": "res://scenes/ui/merchant.tscn",
+    "world_map": "res://scenes/ui/world_map.tscn",
 }
 
 func test_scenes_load_as_packed_scenes() -> void:
