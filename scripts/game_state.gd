@@ -30,6 +30,19 @@ var deepest_floor: int = 0
 var lifetime_kills: int = 0
 var lifetime_legendaries: int = 0
 var krrik_defeated: bool = false
+var lifetime_kills_by_type: Dictionary = {}    # monster_id -> count
+
+func tally_kill(monster_id: String) -> void:
+    lifetime_kills_by_type[monster_id] = int(lifetime_kills_by_type.get(monster_id, 0)) + 1
+
+func _ready() -> void:
+    EventBus.entity_killed.connect(_on_entity_killed)
+
+func _on_entity_killed(entity, _killer) -> void:
+    var id_hint: String = "unknown"
+    if entity != null and entity.has_method("monster_id"):
+        id_hint = String((entity as Object).call("monster_id"))
+    tally_kill(id_hint)
 
 func add_gold(amount: int) -> void:
     gold = max(0, gold + amount)

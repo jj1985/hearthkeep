@@ -87,15 +87,29 @@ func _populate_stats() -> void:
         ["Lifetime legendaries", str(GameState.lifetime_legendaries)],
         ["Deepest floor",      str(GameState.deepest_floor)],
         ["Dragons defeated",   "%d / 3 (%s)" % [GameState.defeated_dragons.size(), ", ".join(GameState.defeated_dragons)]],
+        ["Krrik III defeated", "yes" if GameState.krrik_defeated else "no"],
         ["Trophies collected", str(TrophyManager.collected.size())],
         ["Active trophy buffs","%d / %d" % [TrophyManager.active_buff_ids.size(), TrophyManager.active_cap]],
         ["Talent points",      str(RunState.talent_points)],
         ["Talents allocated",  str(RunState.allocated_talents.size())],
         ["Gold",               str(GameState.gold)],
         ["Dye colors unlocked",str(GameState.unlocked_dye_colors.size())],
+        ["Triple-class unlocked", "yes" if bool(GameState.meta_unlocks.get("triple_class", false)) else "no"],
     ]
     for row in rows:
         stats_list.add_child(_stat_row(row[0], row[1]))
+    if not GameState.lifetime_kills_by_type.is_empty():
+        var hdr := Label.new()
+        hdr.text = "KILLS BY TYPE"
+        hdr.add_theme_font_size_override("font_size", T.FS_HEADLINE_SM)
+        hdr.add_theme_color_override("font_color", T.PRIMARY)
+        stats_list.add_child(hdr)
+        var sorted_keys := GameState.lifetime_kills_by_type.keys()
+        sorted_keys.sort_custom(func(a, b):
+            return int(GameState.lifetime_kills_by_type[a]) > int(GameState.lifetime_kills_by_type[b]))
+        for k in sorted_keys:
+            var n: int = int(GameState.lifetime_kills_by_type[k])
+            stats_list.add_child(_stat_row(String(k).replace("_", " ").capitalize(), str(n)))
 
 func _stat_row(label: String, value: String) -> Control:
     var panel := PanelContainer.new()
