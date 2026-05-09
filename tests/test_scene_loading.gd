@@ -37,6 +37,8 @@ const SCENES := {
     "town_visit": "res://scenes/ui/town_visit.tscn",
     "workbench_ui": "res://scenes/crafting/workbench_ui.tscn",
     "atelier_ui": "res://scenes/crafting/atelier_ui.tscn",
+    "loom_ui": "res://scenes/crafting/loom_ui.tscn",
+    "cooking_ui": "res://scenes/crafting/cooking_ui.tscn",
 }
 
 func test_scenes_load_as_packed_scenes() -> void:
