@@ -59,3 +59,16 @@ func test_run_state_set_classes_drops_tertiary_when_dupes_primary() -> void:
 func test_run_state_set_classes_rejects_unknown_tertiary() -> void:
     var ok: bool = RunState.set_classes("warrior", "wizard", "bogus")
     assert_false(ok)
+
+func test_player_resources_use_triple_blend_when_tertiary_set() -> void:
+    # Spawn a player with triple-class set; max_hp must match the
+    # 50/30/20 blend, not the 60/40 blend.
+    RunState.set_classes("warrior", "wizard", "rogue")
+    var player_scene: PackedScene = load("res://scenes/player/player.tscn")
+    var p: Node = player_scene.instantiate()
+    p.class_primary = RunState.class_primary
+    p.class_secondary = RunState.class_secondary
+    p.class_tertiary = RunState.class_tertiary
+    add_child_autofree(p)
+    # warrior 160 + wizard 85 + rogue 110 → 80 + 25.5 + 22 = 127.5
+    assert_almost_eq(float(p.stats.max_hp), 127.5, 1.0)

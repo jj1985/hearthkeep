@@ -115,6 +115,7 @@ func _spawn_player() -> void:
     player = PlayerScene.instantiate()
     player.class_primary = RunState.class_primary
     player.class_secondary = RunState.class_secondary
+    player.class_tertiary = RunState.class_tertiary
     player.position = Vector3(0, 0, 0)
     player_layer.add_child(player)
     var hybrid: Dictionary = RunState.hybrid_prestige()

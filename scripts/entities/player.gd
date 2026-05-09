@@ -4,6 +4,7 @@ const CharacterStats := preload("res://scripts/entities/character_stats.gd")
 
 @export var class_primary: String = "warrior"
 @export var class_secondary: String = ""
+@export var class_tertiary: String = ""
 
 var stats: CharacterStats
 var attack_cooldown: float = 0.0
@@ -39,14 +40,14 @@ func _ready() -> void:
 func _apply_class_base() -> void:
     if Classes.get_class_def(class_primary).is_empty():
         return
-    var res: Dictionary = Classes.combined_resources(class_primary, class_secondary)
+    var res: Dictionary = Classes.combined_resources(class_primary, class_secondary, class_tertiary)
     stats.max_hp = float(res["hp"]) * RunState.max_hp_mult
     stats.hp = stats.max_hp
     stats.max_mp = float(res["mp"])
     stats.mp = stats.max_mp
     stats.armor = float(res["armor"])
     stats.move_speed = 6.0
-    var profile: Dictionary = Classes.combined_stat_profile(class_primary, class_secondary)
+    var profile: Dictionary = Classes.combined_stat_profile(class_primary, class_secondary, class_tertiary)
     stats.damage = 6.0 + float(profile.get("str", 5)) * 0.5 + float(profile.get("int", 5)) * 0.4
     stats.crit_chance = 0.05 + float(profile.get("agi", 5)) * 0.005
     _apply_allocated_talents()
@@ -273,11 +274,25 @@ func take_damage(amount: float, _src: Object) -> void:
 var skill_cds: Dictionary = {}    # slot_index -> remaining cooldown
 
 func _cast_skill(slot: int) -> void:
-    var def: Dictionary = Classes.get_class_def(class_primary)
+    # Skill slot routing:
+    #   2 classes: all 4 slots from primary's first 4 skills.
+    #   3 classes: slot 0/1 = primary[0/1], slot 2 = secondary[0], slot 3 = tertiary[0].
+    # That way, every active class is represented on the hot bar in
+    # triple-class mode without expanding the bar past 4 buttons.
+    var src_class: String = class_primary
+    var src_slot: int = slot
+    if class_tertiary != "":
+        if slot == 2:
+            src_class = class_secondary
+            src_slot = 0
+        elif slot == 3:
+            src_class = class_tertiary
+            src_slot = 0
+    var def: Dictionary = Classes.get_class_def(src_class)
     var skills: Array = def.get("skills", [])
-    if slot >= skills.size():
+    if src_slot >= skills.size():
         return
-    var skill_id: String = String(skills[slot])
+    var skill_id: String = String(skills[src_slot])
     var cd: float = float(skill_cds.get(slot, 0.0))
     if cd > 0.0:
         EventBus.floating_text.emit("%s on cooldown (%.1fs)" % [skill_id, cd], Vector2.ZERO, T_color_warning())
@@ -408,7 +423,7 @@ func gain_xp(amount: float) -> void:
 func _on_perk_chosen(_id: String) -> void:
     var new_max: float = stats.max_hp
     if not Classes.get_class_def(class_primary).is_empty():
-        var res: Dictionary = Classes.combined_resources(class_primary, class_secondary)
+        var res: Dictionary = Classes.combined_resources(class_primary, class_secondary, class_tertiary)
         new_max = float(res["hp"]) * RunState.max_hp_mult
     var hp_ratio: float = stats.hp / max(1.0, stats.max_hp)
     stats.max_hp = new_max
