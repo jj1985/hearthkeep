@@ -2,6 +2,7 @@
 
 GODOT ?= $(HOME)/bin/godot
 PROJECT_PATH ?= .
+VERSION_NAME := $(shell grep '^version/name=' export_presets.cfg | cut -d'"' -f2)
 
 run:
 	$(GODOT) --path $(PROJECT_PATH)
@@ -16,7 +17,7 @@ apk-bump:
 
 apk: apk-bump
 	mkdir -p build
-	$(GODOT) --headless --path $(PROJECT_PATH) --export-debug "Android" build/HearthkeepDemo-v0.0.1.apk
+	$(GODOT) --headless --path $(PROJECT_PATH) --export-debug "Android" build/HearthkeepDemo-v$(VERSION_NAME).apk
 
 apk-clean:
 	rm -rf build/

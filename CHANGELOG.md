@@ -1,5 +1,74 @@
 # HEARTHKEEP — Changelog
 
+## v0.2.0 — Pillars complete (autonomous iteration milestone)
+
+A single autonomous build pass landed every queued post-demo pillar.
+**versionCode 47, versionName 0.2.0.**
+
+### Combat / dragons
+- Three named dragon bosses with full 3-phase state machines:
+  - **Vyxhasis** (fire) — breath / dive / rupture, ember-glow phase ramp
+  - **Ourzhal** (storm) — chain bolt / thunder-step / storm field, rune-blue → white-blue
+  - **Aethyrnax** (frost) — ice shards / frost nova (with player slow proxy) / glacial breath, glacial blue
+- Procedural arena (CSGCylinder + 4 brazier OmniLights + dusk WorldEnv), palette swaps per dragon
+- Boss HP banner: name + wide bar + 3 phase-indicator chips, heartbeat-pulse near transitions
+- Boss death: trophy award via `EventBus.boss_defeated` → TrophyManager (Vyxhasis Horn / Ourzhal Scale / Aethyrnax Fang), 8-10 legendary loot rain, +500-800 gold, +10-15 dragon shards
+- Dragon cycle: every 5th floor switches to the next not-yet-defeated dragon
+- Goblin AI variant kit:
+  - Shaman: rallies allies + heals self/allies (+12 HP) on 4s cooldown
+  - Sapper: 1.0s visible orange-blink fuse before detonation
+  - Warchief: at <50% HP, calls in 3 reinforcements (one-shot)
+- Damage-scaled hit-stop + screen shake (crit 80ms, normal 20-50ms by mag, warchief death 180ms)
+- Lifesteal proc shows verdant `+N` floater on player
+
+### UI overhaul (full design-spec implementation)
+- `OrientationMgr` rewritten around Material 3 width window-size classes (Compact/Medium/Expanded), exposes per-bucket scalars (font_scale, padding_scale, primary_btn_min_h_dp, combat_skill_btn_dp, perk_cards_per_row, class_grid_cols)
+- `SafeAreaMargin` (Android 14+ edge-to-edge, gesture-nav insets)
+- `UiTokens` — Sundered Realms palette: gold #D4A24C / ember #D4582C / rune-blue #5A8FB3 + 7 rarity tiers + 8dp grid + radii
+- `UiStyle` programmatic StyleBox builders + `UiAnim` motion tokens
+- Cinzel + Inter OFL fonts vendored (`art/fonts/`)
+- Title screen: 3-state machine (splash → tap-to-begin → menu), parallax-ready ember rain particles, dragon-shadow sweep on a 12s loop
+- Class select: paginated single-column list with sticky 240×240 procedural class portraits, PRIMARY/SECONDARY tabs, dynamic "BEGIN AS X/Y" CTA, hybrid-prestige callout
+- Perk picker: 2×2 GridContainer (compact) / 1×4 (expanded), 312×200 cards with rarity stripe, ⚜ evolution glyph, card-in stagger animation, take-confirm fade
+- Combat HUD: diamond skill cluster (88dp primary + 4×72dp secondaries), virtual stick (144dp gold-ringed), HP/MP/dodge/journal/bond/pause buttons, live radial minimap with enemy/boss/loot dots
+- Chest view: bucket-driven 5/7/10-col grid, filter chip rail, search, rarity bottom-stripe cells
+- Forge wizard: 6-step flow (Form → Primary → Secondary → Embellishment → Engraving → Forge!) on the data layer
+- Talent tree allocator (per-class, prereq-aware, point-spending)
+- Pause menu modal with Resume/Villa/Abandon/Quit
+- "YOU FELL" game-over overlay with run summary stats
+- Loading screen with rotating lore + class tips (60/25/15 mix per spec)
+- First-run tutorial overlay with 4-corner control callouts
+- Settings screen: audio sliders + orientation lock + control scheme + accessibility toggles
+- Snikkit's gambling den: Mystery Item / Double-or-Nothing / Wager-the-Run
+- General Merchant (Bren's Counter): Buy / Sell / Buyback tabs
+- World map / wayspire UI with Bond Stone bind + dev unlock-all bribe
+- Trophy Hall display picker per pedestal with set-progress + active-buff cap
+- Journal: 4 tabs (QUESTS / CODEX / REALM / STATS) with active-quest progress, 35 lore entries by category, 3-town summaries with ruler + mood, lifetime stats panel
+- Bond stone HUD button: hold-to-channel teleport home, in-combat blocked, 3-min cooldown
+- Floating-text renderer: pooled labels with crit/heal/error variants, magnitude-scaled font sizes
+- Iconified buff row: 32dp colored pills (fire→ember, frost→rune-blue, etc.) with ⚜ evolution markers
+
+### World
+- AI towns Phase A: 3 seeded towns (Coastreach, Black Bastion, Canopyhall), 5 named NPCs each with role + blurb, ruler + faction lean + mood bucket
+- Day/night sky tint pass: phase-driven sky_top + sky_horizon + fog color, weather modifiers (Rain/Storm/Fog/Ashfall) layered on top
+- Auto-route junk pickups to Treasury junk chest (when Settings.auto_pickup_junk on)
+
+### Crafting / economy
+- Forge data layer: 5 forms × 6 primary mats × 5 secondary × 5 embellishments × 5 quality tiers; `craft(selections)` produces full item dict; skill-driven quality distribution; embellishments inject affixes + bump rarity one tier
+- 13 forge unit tests including statistical proof that high-skill crafting averages higher quality
+
+### Audio
+- Expanded SFX catalog (`audio_bus.gd`): perc/shimmer/growl/swoosh wavetable kit with proper ADSR envelopes
+- 18 procedural SFX: hit, hit_heavy, crit, dodge, parry, footstep, pickup, potion, levelup, perk_pick, chest_open, forge_strike, low_hp (heartbeat), quest_complete, error, dragon_roar, dragon_phase_air, dragon_phase_enraged
+
+### Engineering
+- 78 GUT tests across 9 suites, 195+ asserts, all green
+- Pre-commit hook (`tools/install_hooks.sh`) blocks commits on test failure
+- Asset audit (`tools/asset_audit.py`) — license-whitelist enforcement; current state: 2 fonts tracked OK
+- Balance simulator (`tests/balance_sim.gd` via `make balance-sim`) — 100-run procedural sweep with deterministic seed; CSV output. Latest sweep: legendary rate 1.60% (target band 1-3%), no perk dominating
+- Auto-bumping versionCode on every `make apk` (`tools/bump_version.py`)
+- Memory rules:  feedback_apk_release_workflow.md (always push APK), feedback_autonomous_operation.md (don't pause to summarize)
+
 ## v0.1.0 — Multiclass core + test harness (in progress)
 
 ### Added
