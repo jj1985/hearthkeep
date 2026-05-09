@@ -100,6 +100,9 @@ func _on_died() -> void:
     EventBus.hit_stop.emit(0.5)
     EventBus.boss_defeated.emit("aethyrnax")
     GameState.add_gold(800)
+    var arr := get_tree().get_nodes_in_group("player")
+    if not arr.is_empty() and arr[0].has_method("gain_xp"):
+        arr[0].gain_xp(800.0 * RunState.enemy_scaling())
     if Engine.has_singleton("VendorSystem"):
         VendorSystem.add_currency("dragon_shards", 15)
     for i in range(10):
