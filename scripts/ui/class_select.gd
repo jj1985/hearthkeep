@@ -25,7 +25,7 @@ const CLASS_TINT := {
 @onready var safe_area: MarginContainer = $SafeArea
 @onready var headline: Label = $SafeArea/V/Headline
 @onready var preview: PanelContainer = $SafeArea/V/Preview
-@onready var preview_portrait: ColorRect = $SafeArea/V/Preview/Margin/H/PortraitFrame/Portrait
+@onready var preview_portrait: Control = $SafeArea/V/Preview/Margin/H/PortraitFrame/Portrait
 @onready var preview_name: Label = $SafeArea/V/Preview/Margin/H/Info/Name
 @onready var preview_pitch: Label = $SafeArea/V/Preview/Margin/H/Info/Pitch
 @onready var preview_tags: HBoxContainer = $SafeArea/V/Preview/Margin/H/Info/Tags
@@ -113,7 +113,8 @@ func _select_tab(tab: String) -> void:
 func _refresh() -> void:
     var preview_id: String = pending_primary if current_tab == "primary" else (pending_secondary if pending_secondary != "" else pending_primary)
     var pdef: Dictionary = Classes.get_class_def(preview_id)
-    preview_portrait.color = CLASS_TINT.get(preview_id, T.SURFACE_OVERLAY)
+    if preview_portrait.has_method("set"):
+        preview_portrait.set("class_id", preview_id)
     preview_name.text = pdef.get("name", "?")
     preview_pitch.text = pdef.get("blurb", "")
     _populate_tags(pdef)

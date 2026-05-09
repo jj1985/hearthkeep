@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/ui/class_select.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/ui/safe_area_margin.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/ui/class_portrait.gd" id="3"]
 
 [node name="ClassSelect" type="Control"]
 anchor_right = 1.0
@@ -37,10 +38,10 @@ theme_override_constants/separation = 16
 [node name="PortraitFrame" type="Control" parent="SafeArea/V/Preview/Margin/H"]
 custom_minimum_size = Vector2(240, 240)
 
-[node name="Portrait" type="ColorRect" parent="SafeArea/V/Preview/Margin/H/PortraitFrame"]
+[node name="Portrait" type="Control" parent="SafeArea/V/Preview/Margin/H/PortraitFrame"]
 anchor_right = 1.0
 anchor_bottom = 1.0
-color = Color(0.17, 0.16, 0.20, 1)
+script = ExtResource("3")
 
 [node name="Info" type="VBoxContainer" parent="SafeArea/V/Preview/Margin/H"]
 size_flags_horizontal = 3
