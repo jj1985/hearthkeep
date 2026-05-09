@@ -30,6 +30,7 @@ const SCENES := {
     "tutorial_overlay": "res://scenes/ui/tutorial_overlay.tscn",
     "bandit": "res://scenes/enemies/bandit.tscn",
     "drake": "res://scenes/enemies/drake.tscn",
+    "krrik": "res://scenes/enemies/krrik.tscn",
 }
 
 func test_scenes_load_as_packed_scenes() -> void:

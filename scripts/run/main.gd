@@ -6,6 +6,7 @@ const PlayerScene := preload("res://scenes/player/player.tscn")
 const GoblinScene := preload("res://scenes/enemies/goblin.tscn")
 const BanditScene := preload("res://scenes/enemies/bandit.tscn")
 const DrakeScene := preload("res://scenes/enemies/drake.tscn")
+const KrrikScene := preload("res://scenes/enemies/krrik.tscn")
 const LootScene := preload("res://scenes/fx/loot_drop.tscn")
 
 @onready var player_layer: Node3D = $World/PlayerLayer
@@ -112,6 +113,9 @@ func _enter_room() -> void:
     # Drake elite on floors 3 and 4 (the ones leading into a dragon at floor 5)
     if RunState.floor_index in [3, 4]:
         _spawn_drake(_random_spawn_pos())
+    # Krrik III warband-king encounter on floor 7+, one-shot per save.
+    if RunState.floor_index == 7 and not GameState.krrik_defeated:
+        _spawn_krrik(_random_spawn_pos())
 
 func _maybe_spawn_wave() -> void:
     if player == null or not is_instance_valid(player):
@@ -158,6 +162,12 @@ func _spawn_drake(pos: Vector3) -> void:
     d.position = pos + Vector3(0, 4.0, 0)
     d.stats_scale = RunState.enemy_scaling()
     enemy_layer.add_child(d)
+
+func _spawn_krrik(pos: Vector3) -> void:
+    var k = KrrikScene.instantiate()
+    k.position = pos
+    k.stats_scale = RunState.enemy_scaling()
+    enemy_layer.add_child(k)
 
 func _random_spawn_pos() -> Vector3:
     if player == null or not is_instance_valid(player):

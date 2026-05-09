@@ -29,6 +29,7 @@ var run_count: int = 0
 var deepest_floor: int = 0
 var lifetime_kills: int = 0
 var lifetime_legendaries: int = 0
+var krrik_defeated: bool = false
 
 func add_gold(amount: int) -> void:
     gold = max(0, gold + amount)
