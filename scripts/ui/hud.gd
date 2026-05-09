@@ -61,6 +61,7 @@ func _ready() -> void:
     _wire_skill_button(skill_3, "skill_2")
     _wire_skill_button(skill_4, "skill_3")
     _wire_skill_button(skill_5, "skill_4")
+    call_deferred("_relabel_skill_buttons")
     _wire_skill_button(potion_hp_btn, "potion_hp")
     _wire_skill_button(potion_mp_btn, "potion_mp")
     _wire_skill_button(dodge_btn, "dodge")
@@ -138,6 +139,67 @@ func _wire_skill_button(b: Button, action: String) -> void:
     b.button_up.connect(func(): Input.action_release(action))
 
 var _pause_menu: Node = null
+
+const SKILL_GLYPHS := {
+    "cleave":         "⚔",
+    "whirlwind":      "✦",
+    "shield_charge":  "⛨",
+    "battlecry":      "❗",
+    "execute":        "✖",
+    "earthshatter":   "≣",
+    "backstab":       "🗡",
+    "shadow_step":    "✦",
+    "poison_strike":  "☠",
+    "fan_of_knives":  "✷",
+    "smoke_bomb":     "✺",
+    "death_mark":     "✖",
+    "fireball":       "🔥",
+    "frost_nova":     "❄",
+    "chain_lightning":"⚡",
+    "arcane_orb":     "○",
+    "blink":          "⤴",
+    "meteor":         "☄",
+    "raise_skeleton": "☠",
+    "corpse_explosion":"✺",
+    "bone_spear":     "ǁ",
+    "life_tap":       "♥",
+    "soul_drain":     "✦",
+    "bone_prison":    "▣",
+    "dissonance":     "♫",
+    "heroic_anthem":  "♪",
+    "sonic_arrow":    "♫",
+    "crescendo":      "♬",
+    "mirror_image":   "❖",
+    "encore":         "♩",
+    "smite":          "✝",
+    "consecrate":     "◯",
+    "blessing_of_might":"✷",
+    "divine_shield":  "⛨",
+    "hammer_of_wrath":"⚒",
+    "lay_on_hands":   "✚",
+    "volley":         "⫶",
+    "aimed_shot":     "→",
+    "beast_companion":"♕",
+    "hunters_mark":   "✥",
+    "trap":           "▣",
+    "explosive_arrow":"☄",
+}
+
+func _relabel_skill_buttons() -> void:
+    skill_primary.text = "ATK"
+    var def: Dictionary = Classes.get_class_def(RunState.class_primary)
+    var skills: Array = def.get("skills", [])
+    var slot_buttons := [skill_2, skill_3, skill_4, skill_5]
+    for i in range(slot_buttons.size()):
+        var btn: Button = slot_buttons[i]
+        if i < skills.size():
+            var sid: String = String(skills[i])
+            var glyph: String = String(SKILL_GLYPHS.get(sid, "?"))
+            btn.text = glyph
+            btn.tooltip_text = sid.replace("_", " ").capitalize()
+        else:
+            btn.text = "—"
+            btn.tooltip_text = ""
 
 func _create_cd_label(btn: Button) -> void:
     var lbl := Label.new()
