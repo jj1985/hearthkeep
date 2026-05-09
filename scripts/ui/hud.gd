@@ -34,6 +34,9 @@ const UiAnim_ := preload("res://scripts/ui/ui_anim.gd")
 @onready var skill_4: Button = $SkillCluster/S4
 @onready var skill_5: Button = $SkillCluster/S5
 
+# Cooldown overlay labels (one per skill button) drawn as small dimmers
+var _cd_labels: Dictionary = {}    # button → Label
+
 @onready var potion_hp_btn: Button = $Potions/PotionHP
 @onready var potion_mp_btn: Button = $Potions/PotionMP
 @onready var dodge_btn: Button = $Dodge
@@ -63,6 +66,10 @@ func _ready() -> void:
     _wire_skill_button(dodge_btn, "dodge")
     pause_btn.pressed.connect(_on_pause)
     journal_btn.pressed.connect(_on_journal)
+    _create_cd_label(skill_2)
+    _create_cd_label(skill_3)
+    _create_cd_label(skill_4)
+    _create_cd_label(skill_5)
     bond_btn.button_down.connect(_on_bond_down)
     bond_btn.button_up.connect(_on_bond_up)
     bond_btn.mouse_exited.connect(_on_bond_up)
@@ -131,6 +138,38 @@ func _wire_skill_button(b: Button, action: String) -> void:
     b.button_up.connect(func(): Input.action_release(action))
 
 var _pause_menu: Node = null
+
+func _create_cd_label(btn: Button) -> void:
+    var lbl := Label.new()
+    lbl.text = ""
+    lbl.add_theme_font_size_override("font_size", T.FS_LABEL_LG)
+    lbl.add_theme_color_override("font_color", T.PRIMARY)
+    lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+    lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
+    lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    btn.add_child(lbl)
+    _cd_labels[btn] = lbl
+
+func _refresh_skill_cooldowns() -> void:
+    if player == null or not is_instance_valid(player):
+        return
+    var slot_buttons := [skill_2, skill_3, skill_4, skill_5]
+    var skill_cds: Variant = (player as Object).get("skill_cds")
+    if typeof(skill_cds) != TYPE_DICTIONARY:
+        return
+    for i in range(slot_buttons.size()):
+        var btn: Button = slot_buttons[i]
+        var cd: float = float(skill_cds.get(i, 0.0))
+        var lbl: Label = _cd_labels.get(btn, null)
+        if lbl == null: continue
+        if cd > 0.05:
+            lbl.text = "%.1f" % cd
+            lbl.modulate.a = 1.0
+            btn.modulate = Color(0.6, 0.6, 0.6, 0.85)
+        else:
+            lbl.text = ""
+            btn.modulate = Color(1, 1, 1, 1)
 
 func _on_bond_down() -> void:
     if TravelSystem.channeling:
@@ -223,6 +262,7 @@ func _process(delta: float) -> void:
     lvl_label.text = "Lv %d" % RunState.player_level
     floor_label.text = "F%d" % (RunState.floor_index + 1)
     gold_label.text = "%d g" % GameState.gold
+    _refresh_skill_cooldowns()
 
 func _on_perk_chosen(id: String) -> void:
     var pill := _make_buff_pill(id, false)
