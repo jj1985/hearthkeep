@@ -21,6 +21,7 @@ const UiAnim_ := preload("res://scripts/ui/ui_anim.gd")
 @onready var floor_label: Label = $TopLeft/Bars/Header/FloorLabel
 @onready var gold_label: Label = $TopRight/GoldLabel
 @onready var pause_btn: Button = $TopRight/PauseButton
+@onready var journal_btn: Button = $TopRight/JournalButton
 @onready var minimap_stub: PanelContainer = $TopRight/Minimap
 @onready var perk_strip: HBoxContainer = $BuffRow/Strip
 @onready var virtual_stick: Control = $VirtualStick
@@ -59,7 +60,8 @@ func _ready() -> void:
     _wire_skill_button(potion_mp_btn, "potion_mp")
     _wire_skill_button(dodge_btn, "dodge")
     pause_btn.pressed.connect(_on_pause)
-    for b in [skill_primary, skill_2, skill_3, skill_4, skill_5, potion_hp_btn, potion_mp_btn, dodge_btn, pause_btn]:
+    journal_btn.pressed.connect(_on_journal)
+    for b in [skill_primary, skill_2, skill_3, skill_4, skill_5, potion_hp_btn, potion_mp_btn, dodge_btn, pause_btn, journal_btn]:
         UiAnim_.bind_press_feedback(b, 0.92)
 
 func _style_bars() -> void:
@@ -124,6 +126,15 @@ func _wire_skill_button(b: Button, action: String) -> void:
     b.button_up.connect(func(): Input.action_release(action))
 
 var _pause_menu: Node = null
+
+func _on_journal() -> void:
+    # Bubble up to the running scene (run/main has the journal-overlay
+    # routine). On the villa scene we just scene-change.
+    var scene := get_tree().current_scene
+    if scene != null and scene.has_method("_open_journal_overlay"):
+        scene._open_journal_overlay()
+    else:
+        get_tree().change_scene_to_file("res://scenes/ui/journal.tscn")
 
 func _on_pause() -> void:
     if _pause_menu != null and is_instance_valid(_pause_menu):
