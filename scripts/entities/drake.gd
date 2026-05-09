@@ -114,6 +114,12 @@ func _die(source) -> void:
     # Guaranteed Epic+ drop
     var item: Dictionary = LootSystem.roll_item(3, RunState.enemy_scaling() * 1.3)
     EventBus.loot_dropped.emit(item, Vector2(global_position.x, global_position.z))
+    # Drakes drop a rare dye 25% of the time (filter to rarity >= 2 colors)
+    if randf() < 0.25:
+        var rare_drop: String = DyeSystem.random_drop_color()
+        DyeSystem.unlock_color(rare_drop)
+        GameState.add_dye(rare_drop, 2)
+        EventBus.floating_text.emit("DYE: " + rare_drop + " ×2", Vector2(global_position.x, global_position.z), Color(1, 0.7, 1))
     queue_free()
 
 func _find_player() -> Node3D:

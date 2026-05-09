@@ -110,6 +110,11 @@ func _die(source) -> void:
     if randf() < 0.65:
         var item: Dictionary = LootSystem.roll_item(-1, RunState.enemy_scaling() * 1.1)
         EventBus.loot_dropped.emit(item, Vector2(global_position.x, global_position.z))
+    if randf() < 0.08:
+        var color_id: String = DyeSystem.random_drop_color()
+        DyeSystem.unlock_color(color_id)
+        GameState.add_dye(color_id, 1)
+        EventBus.floating_text.emit("DYE: " + color_id, Vector2(global_position.x, global_position.z), Color(1, 0.7, 1))
     queue_free()
 
 func _find_player() -> Node3D:
