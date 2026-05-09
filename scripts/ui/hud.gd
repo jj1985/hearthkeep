@@ -203,13 +203,24 @@ const SKILL_GLYPHS := {
 
 func _relabel_skill_buttons() -> void:
     skill_primary.text = "ATK"
-    var def: Dictionary = Classes.get_class_def(RunState.class_primary)
-    var skills: Array = def.get("skills", [])
+    # Mirror player.gd _cast_skill routing:
+    #   2 classes — all 4 slots from primary[0..3].
+    #   3 classes — slot 0/1 = primary[0/1], slot 2 = secondary[0], slot 3 = tertiary[0].
     var slot_buttons := [skill_2, skill_3, skill_4, skill_5]
+    var triple: bool = RunState.class_tertiary != ""
+    var p_skills: Array = Classes.get_class_def(RunState.class_primary).get("skills", [])
+    var s_skills: Array = Classes.get_class_def(RunState.class_secondary).get("skills", [])
+    var t_skills: Array = Classes.get_class_def(RunState.class_tertiary).get("skills", [])
     for i in range(slot_buttons.size()):
         var btn: Button = slot_buttons[i]
-        if i < skills.size():
-            var sid: String = String(skills[i])
+        var sid: String = ""
+        if triple and i == 2 and s_skills.size() > 0:
+            sid = String(s_skills[0])
+        elif triple and i == 3 and t_skills.size() > 0:
+            sid = String(t_skills[0])
+        elif i < p_skills.size():
+            sid = String(p_skills[i])
+        if sid != "":
             var glyph: String = String(SKILL_GLYPHS.get(sid, "?"))
             btn.text = glyph
             btn.tooltip_text = sid.replace("_", " ").capitalize()
