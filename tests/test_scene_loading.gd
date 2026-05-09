@@ -17,6 +17,10 @@ const SCENES := {
     "vyxhasis_arena": "res://scenes/boss/vyxhasis_arena.tscn",
     "journal": "res://scenes/ui/journal.tscn",
     "forge_ui": "res://scenes/crafting/forge_ui.tscn",
+    "talent_tree": "res://scenes/ui/talent_tree.tscn",
+    "pause_menu": "res://scenes/ui/pause_menu.tscn",
+    "game_over": "res://scenes/ui/game_over.tscn",
+    "boss_bar": "res://scenes/ui/boss_bar.tscn",
 }
 
 func test_scenes_load_as_packed_scenes() -> void:

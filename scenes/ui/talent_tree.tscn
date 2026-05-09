@@ -1,0 +1,45 @@
+[gd_scene load_steps=3 format=3 uid="uid://hk_talent_tree"]
+
+[ext_resource type="Script" path="res://scripts/ui/talent_tree.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/ui/safe_area_margin.gd" id="2"]
+
+[node name="TalentTree" type="Control"]
+script = ExtResource("1")
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Bg" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="SafeArea" type="MarginContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("2")
+
+[node name="V" type="VBoxContainer" parent="SafeArea"]
+theme_override_constants/separation = 12
+
+[node name="Headline" type="Label" parent="SafeArea/V"]
+text = "TALENTS"
+horizontal_alignment = 1
+
+[node name="Subhead" type="Label" parent="SafeArea/V"]
+text = ""
+horizontal_alignment = 1
+
+[node name="Scroll" type="ScrollContainer" parent="SafeArea/V"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="List" type="VBoxContainer" parent="SafeArea/V/Scroll"]
+theme_override_constants/separation = 10
+size_flags_horizontal = 3
+
+[node name="Footer" type="HBoxContainer" parent="SafeArea/V"]
+alignment = 1
+
+[node name="Close" type="Button" parent="SafeArea/V/Footer"]
+custom_minimum_size = Vector2(220, 56)
+text = "CLOSE"

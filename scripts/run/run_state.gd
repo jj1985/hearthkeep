@@ -10,6 +10,8 @@ var floor_index: int = 0
 var class_primary: String = "warrior"
 var class_secondary: String = ""
 var boss_dragon_id: String = ""
+var talent_points: int = 0
+var allocated_talents: Dictionary = {}    # node_id -> true
 var run_time: float = 0.0
 var player_level: int = 1
 var xp: float = 0.0
@@ -76,6 +78,7 @@ func add_xp(amount: float) -> void:
         player_level += 1
         xp_to_next = xp_to_next * xp_curve_factor
         pending_level_ups += 1
+        talent_points += 1
         EventBus.player_leveled_up.emit(player_level)
         level_up_pending.emit(player_level)
 
