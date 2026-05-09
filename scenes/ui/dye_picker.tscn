@@ -1,0 +1,52 @@
+[gd_scene load_steps=3 format=3 uid="uid://hk_dye_picker"]
+
+[ext_resource type="Script" path="res://scripts/ui/dye_picker.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/ui/safe_area_margin.gd" id="2"]
+
+[node name="DyePicker" type="Control"]
+script = ExtResource("1")
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Bg" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="SafeArea" type="MarginContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("2")
+
+[node name="V" type="VBoxContainer" parent="SafeArea"]
+theme_override_constants/separation = 14
+
+[node name="Headline" type="Label" parent="SafeArea/V"]
+horizontal_alignment = 1
+
+[node name="SlotRow" type="HFlowContainer" parent="SafeArea/V"]
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 8
+
+[node name="PaletteScroll" type="ScrollContainer" parent="SafeArea/V"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Palette" type="GridContainer" parent="SafeArea/V/PaletteScroll"]
+columns = 5
+size_flags_horizontal = 3
+
+[node name="SetsRow" type="HBoxContainer" parent="SafeArea/V"]
+theme_override_constants/separation = 8
+
+[node name="Footer" type="HBoxContainer" parent="SafeArea/V"]
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="SaveSet" type="Button" parent="SafeArea/V/Footer"]
+custom_minimum_size = Vector2(160, 56)
+text = "SAVE SET"
+
+[node name="Close" type="Button" parent="SafeArea/V/Footer"]
+custom_minimum_size = Vector2(160, 56)
+text = "CLOSE"

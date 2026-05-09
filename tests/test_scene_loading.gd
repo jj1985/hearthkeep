@@ -31,6 +31,7 @@ const SCENES := {
     "bandit": "res://scenes/enemies/bandit.tscn",
     "drake": "res://scenes/enemies/drake.tscn",
     "krrik": "res://scenes/enemies/krrik.tscn",
+    "dye_picker": "res://scenes/ui/dye_picker.tscn",
 }
 
 func test_scenes_load_as_packed_scenes() -> void:
