@@ -157,7 +157,9 @@ func _on_new_run() -> void:
     get_tree().change_scene_to_file("res://scenes/ui/class_select.tscn")
 
 func _on_continue() -> void:
-    get_tree().change_scene_to_file("res://scenes/run.tscn")
+    # Run state is per-run (not persisted). CONTINUE returns to the
+    # villa where saved gold / dyes / trophies / unlocks are usable.
+    get_tree().change_scene_to_file("res://scenes/villa/villa.tscn")
 
 func _on_villa() -> void:
     get_tree().change_scene_to_file("res://scenes/villa/villa.tscn")
