@@ -53,8 +53,24 @@ func _wire_buttons() -> void:
     btn_codex.pressed.connect(_on_codex)
     btn_settings.pressed.connect(_on_settings)
     btn_continue.visible = _has_save()
+    _refresh_meta_subtitle()
     for b in [btn_new_run, btn_continue, btn_villa, btn_codex, btn_settings]:
         UiAnim_.bind_press_feedback(b)
+
+func _refresh_meta_subtitle() -> void:
+    # Replace the static "of the Sundered Realms" subtitle with a
+    # progress-aware line once meaningful meta progression has occurred.
+    # Pre-progress: keep the lore tagline.
+    var dragons: int = GameState.defeated_dragons.size()
+    var triple: bool = bool(GameState.meta_unlocks.get("triple_class", false))
+    if dragons == 0 and not triple:
+        return
+    var parts: Array = []
+    if dragons > 0:
+        parts.append("%d / 3 dragons felled" % dragons)
+    if triple:
+        parts.append("Triple-class is yours")
+    title_subtitle.text = " · ".join(parts)
 
 func _apply_typography() -> void:
     splash_logo.add_theme_font_size_override("font_size", T.FS_DISPLAY_LG)
