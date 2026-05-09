@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://scripts/run/main.gd" id="1"]
 [ext_resource type="PackedScene" uid="uid://b1norrath_hud" path="res://scenes/ui/hud.tscn" id="2"]
 [ext_resource type="PackedScene" uid="uid://b1norrath_perks" path="res://scenes/ui/perk_picker.tscn" id="3"]
+[ext_resource type="Script" path="res://scripts/fx/floating_text_layer.gd" id="4"]
 
 [sub_resource type="PlaneMesh" id="PM_floor"]
 size = Vector2(60, 60)
@@ -91,6 +92,9 @@ fov = 55.0
 [node name="HUD" type="CanvasLayer" parent="."]
 
 [node name="Root" parent="HUD" instance=ExtResource("2")]
+
+[node name="FloatingText" type="CanvasLayer" parent="."]
+script = ExtResource("4")
 
 [node name="PerkOverlay" type="CanvasLayer" parent="."]
 visible = false
