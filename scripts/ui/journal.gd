@@ -202,24 +202,59 @@ func _populate_quests() -> void:
         c.queue_free()
     var actives: Array = QuestSystem.get_active_list()
     var completed: Array = QuestSystem.completed
-    if actives.is_empty() and completed.is_empty():
+    var bounties: Array = QuestSystem.bounty_board().filter(func(b):
+        return not QuestSystem.active.has(b["id"]) and not QuestSystem.completed.has(b["id"]))
+    if not actives.is_empty():
+        quests_list.add_child(_section_header("ACTIVE", T.PRIMARY))
+        for q in actives:
+            quests_list.add_child(_quest_card(q, true))
+    if not bounties.is_empty():
+        quests_list.add_child(_section_header("BOUNTY BOARD", T.SECONDARY))
+        for b in bounties:
+            quests_list.add_child(_bounty_card(b))
+    if not completed.is_empty():
+        quests_list.add_child(_section_header("COMPLETED", T.ON_SURFACE_MUTED))
+        for qid in completed:
+            var q: Dictionary = QuestSystem.registry.get(qid, {"id": qid, "title": qid, "objectives": []})
+            quests_list.add_child(_quest_card(q, false))
+    if actives.is_empty() and completed.is_empty() and bounties.is_empty():
         var empty := Label.new()
         empty.text = "No quests yet. The world watches."
         empty.add_theme_color_override("font_color", T.ON_SURFACE_MUTED)
         empty.add_theme_font_size_override("font_size", T.FS_BODY_LG)
         quests_list.add_child(empty)
-        return
-    if not actives.is_empty():
-        var hdr := _section_header("ACTIVE", T.PRIMARY)
-        quests_list.add_child(hdr)
-        for q in actives:
-            quests_list.add_child(_quest_card(q, true))
-    if not completed.is_empty():
-        var hdr2 := _section_header("COMPLETED", T.ON_SURFACE_MUTED)
-        quests_list.add_child(hdr2)
-        for qid in completed:
-            var q: Dictionary = QuestSystem.registry.get(qid, {"id": qid, "title": qid, "objectives": []})
-            quests_list.add_child(_quest_card(q, false))
+
+func _bounty_card(b: Dictionary) -> Control:
+    var panel := PanelContainer.new()
+    panel.add_theme_stylebox_override("panel", UiStyle_.card_resting())
+    var v := VBoxContainer.new()
+    v.add_theme_constant_override("separation", 6)
+    panel.add_child(v)
+    var head := HBoxContainer.new()
+    v.add_child(head)
+    var title := Label.new()
+    title.text = String(b.get("title", b.get("id", "?")))
+    title.add_theme_font_size_override("font_size", T.FS_TITLE_LG)
+    title.add_theme_color_override("font_color", T.SECONDARY)
+    title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    head.add_child(title)
+    var btn := Button.new()
+    btn.text = "ACCEPT (%d g)" % int(b.get("reward_gold", 0))
+    btn.custom_minimum_size = Vector2(160, 40)
+    UiStyle_.apply_primary(btn)
+    UiAnim_.bind_press_feedback(btn)
+    btn.pressed.connect(func():
+        if QuestSystem.accept_bounty(String(b["id"])):
+            EventBus.floating_text.emit("Bounty accepted: %s" % String(b["title"]), Vector2.ZERO, T.SUCCESS)
+            _populate_quests())
+    head.add_child(btn)
+    var desc := Label.new()
+    desc.text = String(b.get("desc", ""))
+    desc.add_theme_font_size_override("font_size", T.FS_BODY_MD)
+    desc.add_theme_color_override("font_color", T.ON_SURFACE_MUTED)
+    desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    v.add_child(desc)
+    return panel
 
 func _section_header(text: String, color: Color) -> Label:
     var lbl := Label.new()

@@ -205,7 +205,23 @@ func mark_location_reached(location_id: String) -> void:
 
 func bounty_board() -> Array:
     return [
-        {"id":"bounty_skirmishers","title":"Bounty: Goblin Skirmishers","desc":"Slay 8 skirmishers.","reward_gold":120},
-        {"id":"bounty_chieftain","title":"Bounty: A Warchief","desc":"Slay 1 Goblin Warchief.","reward_gold":300},
-        {"id":"bounty_drakes","title":"Bounty: Drake Scales","desc":"Bring back 5 Drake Scales.","reward_gold":250,"reward_dragon_shards":2},
+        {"id":"bounty_skirmishers","title":"Bounty: Goblin Skirmishers","desc":"Slay 8 skirmishers.","reward_gold":120,
+         "objectives":[{"id":"slay","kind":"kill","target_id":"goblin","text":"Slay goblins","needed":8,"current":0}]},
+        {"id":"bounty_chieftain","title":"Bounty: A Warchief","desc":"Slay 1 Goblin Warchief.","reward_gold":300,
+         "objectives":[{"id":"slay","kind":"kill","target_id":"goblin_warchief","text":"Slay a Warchief","needed":1,"current":0}]},
+        {"id":"bounty_drakes","title":"Bounty: Drake Bounty","desc":"Slay 2 drakes.","reward_gold":250,"reward_dragon_shards":2,
+         "objectives":[{"id":"slay","kind":"kill","target_id":"drake","text":"Slay drakes","needed":2,"current":0}]},
+        {"id":"bounty_bandits","title":"Bounty: Bandits","desc":"Clear 5 bandits from the road.","reward_gold":150,
+         "objectives":[{"id":"slay","kind":"kill","target_id":"bandit","text":"Slay bandits","needed":5,"current":0}]},
     ]
+
+func accept_bounty(bounty_id: String) -> bool:
+    for b in bounty_board():
+        if b["id"] == bounty_id:
+            var def: Dictionary = b.duplicate(true)
+            def["reward"] = {"gold": int(b.get("reward_gold", 0))}
+            if b.has("reward_dragon_shards"):
+                def["reward"]["dragon_shards"] = int(b["reward_dragon_shards"])
+            register(def)
+            return start(bounty_id)
+    return false
