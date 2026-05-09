@@ -8,16 +8,17 @@ const UiStyle_ := preload("res://scripts/ui/ui_style.gd")
 const UiAnim_ := preload("res://scripts/ui/ui_anim.gd")
 
 const STOCK := [
-    {"id":"hp_potion",    "name":"HP Potion",       "price": 25,  "tags":["potion","heal"], "kind":"consumable"},
-    {"id":"mp_potion",    "name":"MP Potion",       "price": 25,  "tags":["potion","mana"], "kind":"consumable"},
-    {"id":"hp_potion_lg", "name":"Large HP Potion", "price": 90,  "tags":["potion","heal"], "kind":"consumable"},
-    {"id":"mp_potion_lg", "name":"Large MP Potion", "price": 90,  "tags":["potion","mana"], "kind":"consumable"},
-    {"id":"scroll_haste", "name":"Scroll of Haste",  "price":120, "tags":["scroll","buff"], "kind":"scroll"},
-    {"id":"scroll_might", "name":"Scroll of Might",  "price":120, "tags":["scroll","buff"], "kind":"scroll"},
-    {"id":"oil_fire",     "name":"Flame Oil",        "price":150, "tags":["oil","fire"],    "kind":"weapon_buff"},
-    {"id":"oil_frost",    "name":"Frost Oil",        "price":150, "tags":["oil","frost"],   "kind":"weapon_buff"},
-    {"id":"whetstone",    "name":"Whetstone",        "price": 80, "tags":["oil","sharp"],   "kind":"weapon_buff"},
-    {"id":"identify",     "name":"Scroll of Lore",   "price": 60, "tags":["scroll","identify"], "kind":"scroll"},
+    {"id":"hp_potion",       "name":"HP Potion",        "price": 25, "tags":["potion","heal"], "kind":"consumable"},
+    {"id":"mp_potion",       "name":"MP Potion",        "price": 25, "tags":["potion","mana"], "kind":"consumable"},
+    {"id":"hp_potion_lg",    "name":"Large HP Potion",  "price": 90, "tags":["potion","heal"], "kind":"consumable"},
+    {"id":"mp_potion_lg",    "name":"Large MP Potion",  "price": 90, "tags":["potion","mana"], "kind":"consumable"},
+    {"id":"haste",           "name":"Scroll of Haste",  "price":120, "tags":["scroll","buff"], "kind":"buff_scroll"},
+    {"id":"blessing_might",  "name":"Scroll of Might",  "price":120, "tags":["scroll","buff"], "kind":"buff_scroll"},
+    {"id":"whetstone_flame", "name":"Whetstone of Flame","price":150, "tags":["oil","fire"],   "kind":"weapon_buff"},
+    {"id":"frost_oil",       "name":"Frost Oil",        "price":150, "tags":["oil","frost"],   "kind":"weapon_buff"},
+    {"id":"lightning_coat",  "name":"Lightning Coating","price":180, "tags":["oil","lightning"],"kind":"weapon_buff"},
+    {"id":"poison_vial",     "name":"Poison Vial",      "price":140, "tags":["oil","poison"],  "kind":"weapon_buff"},
+    {"id":"holy_oil",        "name":"Holy Oil",         "price":160, "tags":["oil","holy"],    "kind":"weapon_buff"},
 ]
 
 @onready var bg: ColorRect = $Bg
@@ -104,17 +105,30 @@ func _buy(entry: Dictionary) -> void:
     if GameState.gold < int(entry["price"]):
         return
     GameState.add_gold(-int(entry["price"]))
+    SfxBus.play("pickup", -3.0)
+    var kind: String = String(entry["kind"])
+    # Instant-consume buff scrolls and weapon buffs — they apply now,
+    # don't sit in inventory waiting for a chest UI use button.
+    if kind == "buff_scroll":
+        BuffSystem.apply(String(entry["id"]), BuffSystem.SOURCE_CONSUMABLE)
+        EventBus.floating_text.emit("APPLIED  %s" % entry["name"], Vector2.ZERO, T.SUCCESS)
+        _refresh()
+        return
+    if kind == "weapon_buff":
+        BuffSystem.apply_weapon_buff(String(entry["id"]))
+        EventBus.floating_text.emit("WEAPON COATED — %s" % entry["name"], Vector2.ZERO, T.SECONDARY)
+        _refresh()
+        return
     var item := {
         "id": entry["id"],
         "name": entry["name"],
         "tags": entry["tags"].duplicate(),
         "rarity": 0,
         "ilvl": 1,
-        "kind": entry["kind"],
+        "kind": kind,
         "stack": 1,
     }
     ChestManager.deposit(item)
-    SfxBus.play("pickup", -3.0)
     EventBus.floating_text.emit("BOUGHT  %s" % entry["name"], Vector2.ZERO, T.SUCCESS)
     _refresh()
 
