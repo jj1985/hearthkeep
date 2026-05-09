@@ -107,7 +107,27 @@ func current_damage() -> float:
     return d + weapon_dmg
 
 func current_attack_speed() -> float:
-    return stats.attack_speed * RunState.atk_speed_mult * (1.0 + BuffSystem.aggregate_mod("atk_speed_mult"))
+    var atk: float = stats.attack_speed * RunState.atk_speed_mult * (1.0 + BuffSystem.aggregate_mod("atk_speed_mult"))
+    # Berserker hybrid: below 50% HP, +30% atk speed
+    if _has_hybrid("berserker") and stats.hp < stats.max_hp * 0.5:
+        atk *= 1.30
+    return atk
+
+func current_crit_chance() -> float:
+    var c: float = stats.crit_chance + RunState.crit_chance_bonus
+    # Berserker hybrid: below 50% HP, +40% crit chance
+    if _has_hybrid("berserker") and stats.hp < stats.max_hp * 0.5:
+        c += 0.40
+    return clampf(c, 0.0, 1.0)
+
+func _has_hybrid(id: String) -> bool:
+    if class_secondary == "":
+        return false
+    var h: Dictionary = Classes.hybrid_for(class_primary, class_secondary)
+    return String(h.get("id", "")) == id
+
+func _has_talent(node_id: String) -> bool:
+    return bool(RunState.allocated_talents.get(node_id, false))
 
 func current_move_speed() -> float:
     return stats.move_speed * RunState.move_speed_mult
@@ -165,8 +185,16 @@ func _attack() -> void:
     var damage_dealt := false
     for body in hits:
         if body.is_in_group("enemy") and body.has_method("take_damage"):
-            var roll_crit: bool = randf() < (stats.crit_chance + RunState.crit_chance_bonus)
+            var roll_crit: bool = randf() < current_crit_chance()
             var dmg: float = current_damage() * (stats.crit_damage + RunState.crit_damage_bonus if roll_crit else 1.0)
+            # Execute: Ender (warrior keystone) — below 35% HP, one-shot non-elites
+            if _has_talent("w_key2") and (body as Object).get("stats") != null:
+                var es: Object = (body as Object).stats
+                var hp_pct: float = float(es.hp) / max(1.0, float(es.max_hp))
+                var is_elite: bool = String((body as Object).get("monster_id_value")) == "warchief"
+                if hp_pct < 0.35 and not is_elite:
+                    dmg = float(es.max_hp) + 1.0
+                    EventBus.floating_text.emit("EXECUTE", (body as Node3D).global_position, Color(1, 0.4, 0.3))
             (body as Object).call("take_damage", dmg, self, roll_crit)
             damage_dealt = true
     if damage_dealt:

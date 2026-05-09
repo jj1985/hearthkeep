@@ -1,4 +1,4 @@
-.PHONY: run test apk apk-clean apk-bump assets-audit balance-sim clean install-hooks
+.PHONY: run test lint apk apk-clean apk-bump assets-audit balance-sim clean install-hooks
 
 GODOT ?= $(HOME)/bin/godot
 PROJECT_PATH ?= .
@@ -9,6 +9,11 @@ run:
 
 test:
 	$(GODOT) --headless --path $(PROJECT_PATH) -s addons/gut/gut_cmdln.gd -gdir=res://tests -gexit
+
+# Re-import all assets/scripts; surfaces parse errors and any
+# resource-loading issues across the whole tree.
+lint:
+	$(GODOT) --headless --path $(PROJECT_PATH) --import 2>&1 | grep -E "ERROR|WARNING|SCRIPT ERROR" || echo "[lint] clean (no errors or warnings reported)"
 
 # Bumps Android versionCode in export_presets.cfg by +1.
 # Required before every APK build so Android treats it as a real upgrade.

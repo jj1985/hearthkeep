@@ -350,6 +350,15 @@ func _lightning_chain() -> void:
 func _die(source) -> void:
     if not is_instance_valid(self): return
     EventBus.entity_killed.emit(self, source)
+    # Death Knight hybrid: killing an enemy heals 4% max HP.
+    if source != null and source.has_method("_has_hybrid") and source._has_hybrid("death_knight"):
+        var ss: Object = source.stats
+        if ss != null:
+            var heal: float = float(ss.max_hp) * 0.04
+            ss.hp = min(float(ss.max_hp), float(ss.hp) + heal)
+            EventBus.floating_text.emit("+%d (Death Knight)" % int(round(heal)),
+                Vector2((source as Node3D).global_position.x, (source as Node3D).global_position.z),
+                Color(0.6, 0.4, 0.85))
     VFX.spawn_death_burst_3d(global_position + Vector3.UP * 0.5, Color(0.7, 0.2, 0.2))
     # Death feels chunky regardless of variant. Warchief gets a longer
     # ceremonial freeze + roar.
