@@ -127,30 +127,59 @@ func combined_tags(primary: String, secondary: String = "") -> Array:
 # Single-class call (or empty secondary) passes through the primary profile.
 const _PRIMARY_WEIGHT := 0.6
 const _SECONDARY_WEIGHT := 0.4
+# Triple-class weights — only used when secondary AND tertiary are set.
+# 50 / 30 / 20 splits the influence so the primary class still dominates
+# while keeping the secondary meaningful (vs. token tertiary).
+const _TRIPLE_PRIMARY := 0.50
+const _TRIPLE_SECONDARY := 0.30
+const _TRIPLE_TERTIARY := 0.20
 
-func combined_stat_profile(primary: String, secondary: String = "") -> Dictionary:
+func combined_stat_profile(primary: String, secondary: String = "", tertiary: String = "") -> Dictionary:
     var pp: Dictionary = CLASSES.get(primary, {}).get("stat_profile", {})
     if secondary == "" or not CLASSES.has(secondary):
         return pp.duplicate()
     var sp: Dictionary = CLASSES[secondary]["stat_profile"]
+    if tertiary != "" and CLASSES.has(tertiary) and tertiary != primary and tertiary != secondary:
+        var tp: Dictionary = CLASSES[tertiary]["stat_profile"]
+        var out3: Dictionary = {}
+        for k in pp.keys():
+            var blended: float = float(pp[k]) * _TRIPLE_PRIMARY \
+                + float(sp.get(k, pp[k])) * _TRIPLE_SECONDARY \
+                + float(tp.get(k, pp[k])) * _TRIPLE_TERTIARY
+            out3[k] = int(round(blended))
+        return out3
     var out: Dictionary = {}
     for k in pp.keys():
         var blended: float = float(pp[k]) * _PRIMARY_WEIGHT + float(sp.get(k, pp[k])) * _SECONDARY_WEIGHT
         out[k] = int(round(blended))
     return out
 
-func combined_resources(primary: String, secondary: String = "") -> Dictionary:
+func combined_resources(primary: String, secondary: String = "", tertiary: String = "") -> Dictionary:
     var p: Dictionary = CLASSES.get(primary, {})
     if p.is_empty():
         return {}
     if secondary == "" or not CLASSES.has(secondary):
         return {"hp": float(p["base_hp"]), "mp": float(p["base_mp"]), "armor": float(p["base_armor"])}
     var s: Dictionary = CLASSES[secondary]
+    if tertiary != "" and CLASSES.has(tertiary) and tertiary != primary and tertiary != secondary:
+        var t: Dictionary = CLASSES[tertiary]
+        return {
+            "hp":    float(p["base_hp"]) * _TRIPLE_PRIMARY + float(s["base_hp"]) * _TRIPLE_SECONDARY + float(t["base_hp"]) * _TRIPLE_TERTIARY,
+            "mp":    float(p["base_mp"]) * _TRIPLE_PRIMARY + float(s["base_mp"]) * _TRIPLE_SECONDARY + float(t["base_mp"]) * _TRIPLE_TERTIARY,
+            "armor": float(p["base_armor"]) * _TRIPLE_PRIMARY + float(s["base_armor"]) * _TRIPLE_SECONDARY + float(t["base_armor"]) * _TRIPLE_TERTIARY,
+        }
     return {
         "hp": float(p["base_hp"]) * _PRIMARY_WEIGHT + float(s["base_hp"]) * _SECONDARY_WEIGHT,
         "mp": float(p["base_mp"]) * _PRIMARY_WEIGHT + float(s["base_mp"]) * _SECONDARY_WEIGHT,
         "armor": float(p["base_armor"]) * _PRIMARY_WEIGHT + float(s["base_armor"]) * _SECONDARY_WEIGHT,
     }
+
+func combined_tags_three(primary: String, secondary: String = "", tertiary: String = "") -> Array:
+    var tags: Array = combined_tags(primary, secondary)
+    if tertiary != "" and CLASSES.has(tertiary):
+        for t in CLASSES[tertiary].get("tags", []):
+            if not tags.has(t): tags.append(t)
+    return tags
 
 func has_tag(primary: String, secondary: String, tag: String) -> bool:
     return combined_tags(primary, secondary).has(tag)

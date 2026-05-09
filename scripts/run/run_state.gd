@@ -9,6 +9,7 @@ var seed: int = 0
 var floor_index: int = 0
 var class_primary: String = "warrior"
 var class_secondary: String = ""
+var class_tertiary: String = ""
 var boss_dragon_id: String = ""
 var talent_points: int = 0
 var allocated_talents: Dictionary = {}    # node_id -> true
@@ -112,15 +113,20 @@ func enemy_scaling() -> float:
     var floor_contribution: float = 0.30 * float(min(floor_index, 10)) + 0.15 * float(max(0, floor_index - 10))
     return 1.0 + floor_contribution + 0.05 * float(player_level)
 
-func set_classes(primary: String, secondary: String) -> bool:
+func set_classes(primary: String, secondary: String, tertiary: String = "") -> bool:
     if not Classes.CLASSES.has(primary):
         return false
     if secondary != "" and not Classes.CLASSES.has(secondary):
         return false
+    if tertiary != "" and not Classes.CLASSES.has(tertiary):
+        return false
     if secondary == primary:
         secondary = ""
+    if tertiary == primary or tertiary == secondary:
+        tertiary = ""
     class_primary = primary
     class_secondary = secondary
+    class_tertiary = tertiary
     return true
 
 func hybrid_prestige() -> Dictionary:

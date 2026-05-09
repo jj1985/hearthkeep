@@ -8,6 +8,7 @@ extends GutTest
 func before_each() -> void:
     RunState.class_primary = "warrior"
     RunState.class_secondary = ""
+    RunState.class_tertiary = ""
     RunState.start_run(0)
 
 # ---- RunState carries class selection -------------------------------------
@@ -43,3 +44,18 @@ func test_run_state_exposes_hybrid_prestige_when_pair_matches() -> void:
 func test_run_state_hybrid_prestige_empty_when_no_secondary() -> void:
     RunState.set_classes("warrior", "")
     assert_true(RunState.hybrid_prestige().is_empty())
+
+# ---- Triple-class slot ----------------------------------------------------
+
+func test_run_state_set_classes_accepts_three_classes() -> void:
+    var ok: bool = RunState.set_classes("warrior", "wizard", "rogue")
+    assert_true(ok)
+    assert_eq(RunState.class_tertiary, "rogue")
+
+func test_run_state_set_classes_drops_tertiary_when_dupes_primary() -> void:
+    RunState.set_classes("warrior", "wizard", "warrior")
+    assert_eq(RunState.class_tertiary, "", "Tertiary equal to primary must be dropped")
+
+func test_run_state_set_classes_rejects_unknown_tertiary() -> void:
+    var ok: bool = RunState.set_classes("warrior", "wizard", "bogus")
+    assert_false(ok)

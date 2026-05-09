@@ -1,5 +1,23 @@
 # HEARTHKEEP — Changelog
 
+## v0.2.5 — Triple-class slot (meta-unlock)
+
+### New
+- **Triple-class composition** unlocked once all three dragons have been
+  felled. `class_select` shows a third **TERTIARY** tab gated on
+  `GameState.meta_unlocks.triple_class`. Picking a third class blends
+  stats and resources at **50/30/20** (primary/secondary/tertiary).
+- `Classes.combined_stat_profile` and `combined_resources` now accept
+  an optional `tertiary` argument; falls back to 60/40 two-class blend
+  when tertiary is empty / dupes primary or secondary.
+- `RunState.set_classes(primary, secondary, tertiary="")` validates and
+  persists all three slots; tertiary is dropped if it duplicates an
+  earlier slot.
+
+### Tests
+- 7 new tests in `test_class_db.gd` (triple-class math) and
+  `test_class_selection_flow.gd` (3-arg set_classes). 128 tests total.
+
 ## v0.2.4 — All 7 crafting station UIs + HUD polish
 
 ### New UIs

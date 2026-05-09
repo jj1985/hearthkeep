@@ -120,3 +120,37 @@ func test_has_tag_checks_combined_set() -> void:
     assert_true(Classes.has_tag("warrior", "necromancer", "shadow"))
     assert_true(Classes.has_tag("warrior", "necromancer", "physical"))
     assert_false(Classes.has_tag("warrior", "necromancer", "holy"))
+
+# ---- triple-class blend (50/30/20) ----------------------------------------
+
+func test_triple_class_stat_profile_50_30_20() -> void:
+    # warrior(12/7/4/11) + wizard(4/6/15/6) + rogue(7/13/7/7)
+    # str = 12*.5 + 4*.3 + 7*.2  = 6.0 + 1.2 + 1.4 = 8.6  → 9
+    # agi = 7*.5  + 6*.3 + 13*.2 = 3.5 + 1.8 + 2.6 = 7.9  → 8
+    # int = 4*.5  + 15*.3 + 7*.2 = 2.0 + 4.5 + 1.4 = 7.9  → 8
+    # sta = 11*.5 + 6*.3 + 7*.2  = 5.5 + 1.8 + 1.4 = 8.7  → 9
+    var p: Dictionary = Classes.combined_stat_profile("warrior", "wizard", "rogue")
+    assert_eq(int(p["str"]), 9)
+    assert_eq(int(p["agi"]), 8)
+    assert_eq(int(p["int"]), 8)
+    assert_eq(int(p["sta"]), 9)
+
+func test_triple_class_falls_back_to_60_40_when_tertiary_missing() -> void:
+    var ab: Dictionary = Classes.combined_stat_profile("warrior", "wizard", "")
+    var ab_2: Dictionary = Classes.combined_stat_profile("warrior", "wizard")
+    assert_eq(int(ab["str"]), int(ab_2["str"]))
+    assert_eq(int(ab["int"]), int(ab_2["int"]))
+
+func test_triple_class_resources_50_30_20() -> void:
+    # warrior(160/40/8) + wizard(85/120/2) + rogue(110/50/4)
+    # hp = 160*.5 + 85*.3 + 110*.2 = 80 + 25.5 + 22 = 127.5
+    # mp = 40*.5  + 120*.3 + 50*.2 = 20 + 36 + 10 = 66
+    var r: Dictionary = Classes.combined_resources("warrior", "wizard", "rogue")
+    assert_almost_eq(float(r["hp"]), 127.5, 0.1)
+    assert_almost_eq(float(r["mp"]), 66.0, 0.1)
+
+func test_triple_class_ignores_duplicate_tertiary() -> void:
+    # If tertiary == primary, it should fall back to two-class blend.
+    var dup: Dictionary = Classes.combined_stat_profile("warrior", "wizard", "warrior")
+    var pair: Dictionary = Classes.combined_stat_profile("warrior", "wizard")
+    assert_eq(int(dup["str"]), int(pair["str"]))
