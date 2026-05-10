@@ -36,6 +36,7 @@ const HERO_RANGE := 220.0
 @onready var arena: Control = $Arena
 @onready var floor_rect: ColorRect = $Arena/Floor
 @onready var hero: Panel = $Arena/Hero
+@onready var range_ring: Panel = $Arena/RangeRing
 @onready var hero_label: Label = $Arena/Hero/Label
 @onready var enemies_layer: Control = $Arena/Enemies
 @onready var fx_layer: Control = $Arena/FX
@@ -191,6 +192,23 @@ func _layout_hero() -> void:
     hero_label.text = _hero_initials()
     _style_hero()
     _start_hero_pulse()
+    _style_range_ring()
+
+func _style_range_ring() -> void:
+    if range_ring == null: return
+    var r: float = _hero_range()
+    var diameter: float = r * 2.0
+    range_ring.size = Vector2(diameter, diameter)
+    var hero_center: Vector2 = hero.position + hero.size * 0.5
+    range_ring.position = hero_center - Vector2(r, r)
+    var sb := StyleBoxFlat.new()
+    sb.bg_color = Color(0, 0, 0, 0)
+    sb.border_color = Color(0.85, 0.78, 0.45, 0.18)
+    sb.border_width_top = 2; sb.border_width_bottom = 2
+    sb.border_width_left = 2; sb.border_width_right = 2
+    sb.corner_radius_top_left = int(r); sb.corner_radius_top_right = int(r)
+    sb.corner_radius_bottom_left = int(r); sb.corner_radius_bottom_right = int(r)
+    range_ring.add_theme_stylebox_override("panel", sb)
 
 func _style_hero() -> void:
     var sb := StyleBoxFlat.new()
@@ -935,6 +953,7 @@ func _on_perk_chosen(perk: Dictionary) -> void:
     _floating_text("+ %s" % String(perk["label"]),
         Vector2(arena.size.x * 0.5 - 80, 100), T.PRIMARY)
     _refresh_perk_row()
+    _style_range_ring()
     _close_milestone()
 
 func _refresh_perk_row() -> void:

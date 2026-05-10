@@ -19,6 +19,10 @@ const ALL_PERKS := [
     {"id":"ember_in",    "label":"Ember Within",  "desc":"+15%% damage globally.", "tags":["any"], "kind":"dmg_mult", "value":0.15},
     {"id":"hoarder",     "label":"Hoarder",       "desc":"+30%% wave-clear bonus.","tags":["any"], "kind":"wave_bonus_mult", "value":0.3},
     {"id":"fleet_foot",  "label":"Fleet Foot",    "desc":"Spawn cadence -10%%.",   "tags":["any"], "kind":"spawn_slow", "value":0.10},
+    {"id":"bloodlust",   "label":"Bloodlust",     "desc":"+0.4 atk/sec.",       "tags":["warrior","melee"], "kind":"atk_speed", "value":0.4},
+    {"id":"phantom",     "label":"Phantom",       "desc":"+10%% crit + +50 range.", "tags":["rogue","crit"], "kind":"crit_range", "value":0.10},
+    {"id":"frostbite",   "label":"Frostbite",     "desc":"-15%% spawn cadence + +20%% damage.", "tags":["wizard","arcane"], "kind":"frostbite", "value":0.15},
+    {"id":"chime",       "label":"Resonant Chime","desc":"+30%% wave-clear + +20%% gold drops.", "tags":["bard","support"], "kind":"chime", "value":0.20},
 ]
 
 # Run-scoped accumulators. Reset by reset_for_run().
@@ -75,4 +79,13 @@ func apply(perk: Dictionary) -> void:
         "wave_bonus_mult": wave_bonus_mult *= 1.0 + v
         "crit": crit_bonus += v
         "spawn_slow": spawn_slow = clamp(spawn_slow + v, 0.0, 0.6)
+        "crit_range":
+            crit_bonus += v
+            range_bonus += 50.0
+        "frostbite":
+            spawn_slow = clamp(spawn_slow + v, 0.0, 0.6)
+            dmg_mult *= 1.20
+        "chime":
+            wave_bonus_mult *= 1.30
+            gold_mult *= 1.20
     perk_taken.emit(perk)

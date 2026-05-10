@@ -34,6 +34,12 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
 
+[node name="RangeRing" type="Panel" parent="Arena"]
+custom_minimum_size = Vector2(440, 440)
+size = Vector2(440, 440)
+position = Vector2(60, 140)
+mouse_filter = 2
+
 [node name="Hero" type="Panel" parent="Arena"]
 custom_minimum_size = Vector2(44, 44)
 size = Vector2(44, 44)

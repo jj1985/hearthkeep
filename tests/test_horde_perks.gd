@@ -49,6 +49,21 @@ func test_taken_perks_are_skipped_in_next_roll() -> void:
     for p in rolls:
         assert_ne(String((p as Dictionary)["id"]), "hot_steel")
 
+func test_phantom_grants_crit_and_range() -> void:
+    HordePerks.apply({"id":"phantom", "kind":"crit_range", "value":0.10})
+    assert_almost_eq(HordePerks.crit_bonus, 0.10, 0.001)
+    assert_almost_eq(HordePerks.range_bonus, 50.0, 0.001)
+
+func test_frostbite_combines_spawn_slow_and_dmg() -> void:
+    HordePerks.apply({"id":"frostbite", "kind":"frostbite", "value":0.15})
+    assert_almost_eq(HordePerks.spawn_slow, 0.15, 0.001)
+    assert_almost_eq(HordePerks.dmg_mult, 1.20, 0.001)
+
+func test_chime_boosts_wave_and_gold() -> void:
+    HordePerks.apply({"id":"chime", "kind":"chime", "value":0.20})
+    assert_almost_eq(HordePerks.wave_bonus_mult, 1.30, 0.001)
+    assert_almost_eq(HordePerks.gold_mult, 1.20, 0.001)
+
 func test_class_tagged_perks_weighted_higher() -> void:
     # warrior-only — over many rolls hot_steel should appear most often.
     HordeState.primary = "warrior"
@@ -60,9 +75,11 @@ func test_class_tagged_perks_weighted_higher() -> void:
         var picks := HordePerks.roll(rng, 1)
         var id := String((picks[0] as Dictionary)["id"])
         counts[id] = int(counts.get(id, 0)) + 1
-    # warrior-tagged hot_steel should be the most-picked single-roll outcome
+    # warrior-tagged perks (hot_steel, bloodlust) should dominate the top.
     var top: String = ""
     var top_n: int = 0
     for k in counts.keys():
         if counts[k] > top_n: top = k; top_n = counts[k]
-    assert_eq(top, "hot_steel")
+    var warrior_perks: Array = ["hot_steel", "bloodlust"]
+    assert_true(warrior_perks.has(top),
+        "expected a warrior-tagged perk to top the count, got %s" % top)
