@@ -80,3 +80,9 @@ func test_ember_damage_mult_scales_with_rank() -> void:
 func test_ember_gold_mult_scales_with_rank() -> void:
     GameState.meta_unlocks["upgrades"] = {"ember_gold": 4}
     assert_almost_eq(Upgrades.ember_gold_mult(), 2.0, 0.001)
+
+func test_max_revives_equals_ember_revive_rank() -> void:
+    GameState.meta_unlocks["upgrades"] = {"ember_revive": 3}
+    assert_eq(Upgrades.max_revives(), 3)
+    GameState.meta_unlocks["upgrades"] = {}
+    assert_eq(Upgrades.max_revives(), 0)

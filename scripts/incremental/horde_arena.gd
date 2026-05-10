@@ -663,6 +663,20 @@ func _hero_take_damage(amount: int) -> void:
 var dead_screen_open: bool = false
 
 func _on_hero_died() -> void:
+    # Spend a Second Wind revive if any are left.
+    if HordeState.revives_used < Upgrades.max_revives():
+        HordeState.revives_used += 1
+        HordeState.hero_hp = HordeState.hero_max_hp / 2
+        for e in enemies:
+            var n: Panel = e.get("node")
+            if n != null and is_instance_valid(n): n.queue_free()
+        enemies.clear()
+        _flash_screen(T.PRIMARY, 0.7, 0.5)
+        _slow_mo(0.4, 0.4)
+        SfxBus.play("levelup", -2.0)
+        _floating_text("SECOND WIND", hero.position + hero.size * 0.5, T.PRIMARY)
+        _refresh_hud()
+        return
     dead_screen_open = true
     paused_for_milestone = true
     overlay_scrim.visible = true

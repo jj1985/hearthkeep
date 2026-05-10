@@ -14,8 +14,9 @@ const UPGRADES := [
     {"id":"range",      "label":"Long Reach",     "desc":"+30 hero range per rank.",         "base":60,   "growth":1.5,  "currency":"gold"},
     {"id":"idle",       "label":"Hearthstone",    "desc":"+25%% idle gold/sec per rank.",    "base":120,  "growth":1.7,  "currency":"gold"},
     {"id":"crit",       "label":"Lucky Strike",   "desc":"+5%% crit chance per rank (×2 dmg)","base":160,  "growth":1.9,  "currency":"gold"},
-    {"id":"ember_dmg",  "label":"Ember Edge",     "desc":"+10%% global damage per rank.",    "base":1,    "growth":1.6,  "currency":"embers"},
-    {"id":"ember_gold", "label":"Hoard Pact",     "desc":"+25%% gold from kills per rank.",  "base":2,    "growth":1.55, "currency":"embers"},
+    {"id":"ember_dmg",   "label":"Ember Edge",   "desc":"+10%% global damage per rank.",      "base":1, "growth":1.6,  "currency":"embers"},
+    {"id":"ember_gold",  "label":"Hoard Pact",   "desc":"+25%% gold from kills per rank.",    "base":2, "growth":1.55, "currency":"embers"},
+    {"id":"ember_revive","label":"Second Wind",  "desc":"+1 free revive per run (50%% HP).",  "base":4, "growth":2.0,  "currency":"embers"},
 ]
 const MAX_RANK := 30
 
@@ -84,6 +85,9 @@ func ember_damage_mult() -> float:
 
 func ember_gold_mult() -> float:
     return 1.0 + rank("ember_gold") * 0.25
+
+func max_revives() -> int:
+    return rank("ember_revive")
 
 func _ups() -> Dictionary:
     if "upgrades" not in GameState.meta_unlocks:

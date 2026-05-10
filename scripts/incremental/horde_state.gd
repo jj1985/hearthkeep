@@ -29,6 +29,7 @@ var gold_per_sec: float = 0.0 # idle gold yield (lifetime)
 const HERO_HP_BASE := 50
 var hero_hp: int = HERO_HP_BASE
 var hero_max_hp: int = HERO_HP_BASE
+var revives_used: int = 0
 
 func max_hp() -> int:
     var hp := HERO_HP_BASE
@@ -69,6 +70,7 @@ func reset_run() -> void:
     primary = "warrior"
     hero_max_hp = max_hp()
     hero_hp = hero_max_hp
+    revives_used = 0
     wave_changed.emit(wave)
     kills_changed.emit(0)
 
