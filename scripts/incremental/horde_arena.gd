@@ -14,12 +14,15 @@ const T := preload("res://scripts/ui/ui_tokens.gd")
 const UiStyle_ := preload("res://scripts/ui/ui_style.gd")
 
 const ENEMY_TYPES := {
-    "skeleton":   {"label": "Skeleton",   "color": Color(0.85, 0.85, 0.78), "hp_base": 6,  "speed": 70.0,  "gold": 1, "size": 28},
-    "goblin":     {"label": "Goblin",     "color": Color(0.45, 0.75, 0.35), "hp_base": 10, "speed": 95.0,  "gold": 2, "size": 28},
-    "skel_brute": {"label": "Bone Brute", "color": Color(0.75, 0.7, 0.55),  "hp_base": 24, "speed": 55.0,  "gold": 5, "size": 32},
-    "drake":      {"label": "Drake",      "color": Color(0.85, 0.35, 0.25), "hp_base": 60, "speed": 75.0,  "gold": 14, "size": 36},
-    "boss_warchief":{"label":"Krrik III",  "color": Color(0.95, 0.75, 0.25), "hp_base": 240,"speed": 50.0,  "gold": 60, "size": 56, "boss": true},
-    "boss_dragon":{"label":"Vyxhasis",     "color": Color(0.85, 0.25, 0.55), "hp_base": 600,"speed": 45.0,  "gold": 200,"size": 72, "boss": true},
+    "skeleton":   {"label": "Skeleton",   "color": Color(0.85, 0.85, 0.78), "hp_base": 6,   "speed": 70.0,  "gold": 1,  "size": 28, "min_wave": 1},
+    "goblin":     {"label": "Goblin",     "color": Color(0.45, 0.75, 0.35), "hp_base": 10,  "speed": 95.0,  "gold": 2,  "size": 28, "min_wave": 3},
+    "skel_brute": {"label": "Bone Brute", "color": Color(0.75, 0.70, 0.55), "hp_base": 24,  "speed": 55.0,  "gold": 5,  "size": 32, "min_wave": 6},
+    "ghoul":      {"label": "Ghoul",      "color": Color(0.55, 0.70, 0.50), "hp_base": 40,  "speed": 110.0, "gold": 9,  "size": 30, "min_wave": 9},
+    "drake":      {"label": "Drake",      "color": Color(0.85, 0.35, 0.25), "hp_base": 60,  "speed": 75.0,  "gold": 14, "size": 36, "min_wave": 12},
+    "wraith":     {"label": "Wraith",     "color": Color(0.55, 0.45, 0.85), "hp_base": 90,  "speed": 130.0, "gold": 24, "size": 30, "min_wave": 16},
+    "ogre":       {"label": "Ogre",       "color": Color(0.55, 0.55, 0.30), "hp_base": 220, "speed": 40.0,  "gold": 55, "size": 44, "min_wave": 20},
+    "boss_warchief":{"label":"Krrik III", "color": Color(0.95, 0.75, 0.25), "hp_base": 240, "speed": 50.0,  "gold": 60, "size": 56, "boss": true},
+    "boss_dragon":{"label":"Vyxhasis",    "color": Color(0.85, 0.25, 0.55), "hp_base": 600, "speed": 45.0,  "gold": 200,"size": 72, "boss": true},
 }
 
 const HERO_RADIUS := 22.0
@@ -137,10 +140,13 @@ func _process(delta: float) -> void:
 
 func _spawn_enemy() -> void:
     var size := arena.size
-    var pool: Array = ["skeleton"]
-    if HordeState.wave >= 3: pool.append("goblin")
-    if HordeState.wave >= 6: pool.append("skel_brute")
-    if HordeState.wave >= 12: pool.append("drake")
+    var pool: Array = []
+    for k in ENEMY_TYPES.keys():
+        var def: Dictionary = ENEMY_TYPES[k]
+        if bool(def.get("boss", false)): continue
+        if HordeState.wave >= int(def.get("min_wave", 1)):
+            pool.append(k)
+    if pool.is_empty(): pool.append("skeleton")
     var id: String = pool[rng.randi_range(0, pool.size() - 1)]
     var def: Dictionary = ENEMY_TYPES[id]
     var sz: int = int(def.get("size", 28))
@@ -217,8 +223,10 @@ func _hero_attack() -> void:
             best_d = d; best = e
     if best.is_empty():
         return
-    _damage_enemy(best, _hero_damage())
+    var dmg: int = _hero_damage()
+    _damage_enemy(best, dmg)
     _spawn_strike(best["node"].position + best["node"].size * 0.5)
+    SfxBus.play("crit" if dmg > HERO_DAMAGE_BASE * 3 else "hit", -10.0)
 
 func _hero_damage() -> int:
     var d: int = HERO_DAMAGE_BASE
@@ -264,6 +272,8 @@ func _damage_enemy(e: Dictionary, amount: int) -> void:
                 Vector2(arena.size.x * 0.5 - 50, arena.size.y * 0.4), T.SECONDARY)
             _boss_burst(death_pos)
             _pop(hud_embers)
+            SfxBus.play("dragon_roar", 0.0)
+            SfxBus.play("levelup", -3.0)
             SaveSystem.save()
         else:
             wave_kills_progress += 1
@@ -289,6 +299,7 @@ func _on_player_strike() -> void:
     _damage_enemy(best, _hero_damage() * 4)
     _spawn_strike(best["node"].position + best["node"].size * 0.5)
     _shake(8)
+    SfxBus.play("hit_heavy", -4.0)
 
 func _next_wave() -> void:
     HordeState.advance_wave()
@@ -297,6 +308,7 @@ func _next_wave() -> void:
     SaveSystem.save()
     _refresh_hud()
     _floating_text("WAVE %d" % HordeState.wave, hero.position + hero.size * 0.5, T.PRIMARY)
+    SfxBus.play("levelup", -8.0)
     if HordeState.wave % 10 == 0:
         _spawn_boss()
 
