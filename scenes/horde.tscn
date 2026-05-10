@@ -80,6 +80,22 @@ text = "0 ember"
 custom_minimum_size = Vector2(180, 14)
 size_flags_horizontal = 3
 
+[node name="MilestoneRow" type="HBoxContainer" parent="HUD"]
+anchor_right = 1.0
+offset_left = 16.0
+offset_top = 60.0
+offset_right = -16.0
+offset_bottom = 92.0
+theme_override_constants/separation = 8
+
+[node name="Label" type="Label" parent="HUD/MilestoneRow"]
+text = ""
+
+[node name="Bar" type="ProgressBar" parent="HUD/MilestoneRow"]
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0, 10)
+show_percentage = false
+
 [node name="Bottom" type="HBoxContainer" parent="HUD"]
 anchor_left = 0.0
 anchor_top = 1.0

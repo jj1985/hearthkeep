@@ -51,4 +51,8 @@ release-attach:
 	@APK="build/HearthkeepDemo-v$(VERSION_NAME).apk"; \
 	if [ ! -f "$$APK" ]; then echo "[ship] missing $$APK"; exit 1; fi; \
 	echo "[ship] uploading $$APK to release $(TAG)"; \
-	gh release upload "$(TAG)" "$$APK" --clobber
+	for i in 1 2 3; do \
+	    if gh release upload "$(TAG)" "$$APK" --clobber 2>&1; then break; fi; \
+	    echo "[ship] retry $$i ..."; sleep 3; \
+	done; \
+	gh release view "$(TAG)" --json assets --jq '.assets[] | "[ship] attached: \(.name) (\(.size) bytes)"'

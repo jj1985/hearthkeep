@@ -41,6 +41,8 @@ const HERO_RANGE := 220.0
 @onready var hud_gold: Label = $HUD/Top/Gold
 @onready var hud_loadout: Label = $HUD/Top/Loadout
 @onready var dps_bar: ProgressBar = $HUD/Top/Wavebar
+@onready var milestone_row_label: Label = $HUD/MilestoneRow/Label
+@onready var milestone_row_bar: ProgressBar = $HUD/MilestoneRow/Bar
 @onready var overlay_scrim: ColorRect = $Overlay/Scrim
 @onready var milestone_overlay: Panel = $Overlay/Milestone
 @onready var milestone_title: Label = $Overlay/Milestone/V/Title
@@ -126,6 +128,19 @@ func _refresh_hud() -> void:
     hud_embers.text = "%d ember" % GameState.embers
     dps_bar.max_value = max(1, wave_kills_target)
     dps_bar.value = wave_kills_progress
+    _refresh_milestone_row()
+
+func _refresh_milestone_row() -> void:
+    var km: Dictionary = HordeState.next_kill_milestone()
+    if km.is_empty():
+        milestone_row_label.text = "All classes unlocked"
+        milestone_row_bar.max_value = 1; milestone_row_bar.value = 1
+        return
+    var need: int = int(km["kills"])
+    var have: int = GameState.lifetime_kills
+    milestone_row_label.text = "Next: %s" % String(km["class"]).capitalize()
+    milestone_row_bar.max_value = need
+    milestone_row_bar.value = clamp(have, 0, need)
 
 func _loadout_text() -> String:
     var parts := [HordeState.primary.capitalize()]
