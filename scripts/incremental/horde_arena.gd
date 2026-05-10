@@ -32,6 +32,7 @@ const HERO_RANGE := 220.0
 
 @onready var bg: ColorRect = $Bg
 @onready var arena: Control = $Arena
+@onready var floor_rect: ColorRect = $Arena/Floor
 @onready var hero: Panel = $Arena/Hero
 @onready var hero_label: Label = $Arena/Hero/Label
 @onready var enemies_layer: Control = $Arena/Enemies
@@ -153,6 +154,20 @@ func _ready() -> void:
     _hide_milestone()
     _maybe_show_tutorial()
 
+const ZONES := [
+    {"min":1,  "name":"Greenmarch", "floor": Color(0.07, 0.10, 0.07)},
+    {"min":11, "name":"Ashen Vale", "floor": Color(0.11, 0.09, 0.07)},
+    {"min":21, "name":"Frostwatch", "floor": Color(0.07, 0.09, 0.13)},
+    {"min":31, "name":"Emberlands", "floor": Color(0.13, 0.06, 0.05)},
+    {"min":41, "name":"The Void",   "floor": Color(0.05, 0.04, 0.10)},
+]
+
+static func _zone_for_wave(w: int) -> Dictionary:
+    var current: Dictionary = ZONES[0]
+    for z in ZONES:
+        if w >= int(z["min"]): current = z
+    return current
+
 const CLASS_COLORS := {
     "warrior":     Color(0.85, 0.55, 0.30),
     "rogue":       Color(0.50, 0.85, 0.55),
@@ -198,7 +213,13 @@ func _hero_initials() -> String:
     return s
 
 func _refresh_hud() -> void:
-    hud_wave.text = "WAVE %d" % HordeState.wave
+    var z: Dictionary = _zone_for_wave(HordeState.wave)
+    hud_wave.text = "WAVE %d · %s" % [HordeState.wave, String(z["name"])]
+    if floor_rect != null:
+        var target: Color = z["floor"]
+        if floor_rect.color != target:
+            var tw := create_tween()
+            tw.tween_property(floor_rect, "color", target, 0.6)
     hud_kills.text = "%d kills" % GameState.lifetime_kills
     hud_gold.text = "%d gold" % GameState.gold
     hud_loadout.text = _loadout_text()
