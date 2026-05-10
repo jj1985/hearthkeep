@@ -406,6 +406,11 @@ func _move_enemies(delta: float) -> void:
         if node == null or not is_instance_valid(node):
             dead.append(e); continue
         var ep: Vector2 = node.position + node.size * 0.5
+        # Stagger: skip movement entirely for the brief window after a hit.
+        var stg: float = float(e.get("stagger", 0.0))
+        if stg > 0.0:
+            e["stagger"] = stg - delta
+            continue
         if bool(e.get("boss", false)):
             _boss_tick(e, delta)
         # Shamans hold distance and tick a heal cooldown.
@@ -484,6 +489,17 @@ func _damage_enemy(e: Dictionary, amount: int) -> void:
     var now: float = Time.get_ticks_msec() / 1000.0
     dps_log.append([now, amount])
     e["hp"] -= amount
+    # Hit-stop stagger: skip movement for 0.08s and shove back 4px from
+    # the hero. Bosses get a softer 0.04s/2px so they don't lock up.
+    var nh: Panel = e.get("node")
+    if nh != null and is_instance_valid(nh):
+        var hero_center: Vector2 = hero.position + hero.size * 0.5
+        var ep: Vector2 = nh.position + nh.size * 0.5
+        var back: Vector2 = (ep - hero_center).normalized()
+        var is_boss: bool = bool(e.get("boss", false))
+        var dist: float = 2.0 if is_boss else 4.0
+        nh.position += back * dist
+        e["stagger"] = 0.04 if is_boss else 0.08
     var bar: ProgressBar = e.get("hp_bar")
     if bar != null and is_instance_valid(bar):
         bar.value = float(max(0, e["hp"])) / float(max(1, int(e["max_hp"])))
