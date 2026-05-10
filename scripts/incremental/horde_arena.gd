@@ -86,6 +86,10 @@ var combo_decay: float = 0.0
 var combo_peak: int = 0
 var run_embers_earned: int = 0
 
+# Rolling DPS — list of [t, damage] entries within the last 3s.
+var dps_log: Array = []
+const DPS_WINDOW := 3.0
+
 # Mid-run merchant buffs — apply through wave N, then expire.
 var temp_dmg_until: int = -1
 var temp_atk_until: int = -1
@@ -256,7 +260,11 @@ func _refresh_hud() -> void:
         hud_combo.add_theme_color_override("font_color",
             T.PRIMARY if combo >= 10 else T.ON_SURFACE)
     else:
-        hud_combo.text = ""
+        var sum: int = 0
+        for e in dps_log: sum += int(e[1])
+        var dps: float = float(sum) / DPS_WINDOW
+        hud_combo.text = "%d dps" % int(round(dps)) if dps > 0.5 else ""
+        hud_combo.add_theme_color_override("font_color", T.ON_SURFACE_MUTED)
     dps_bar.max_value = max(1, wave_kills_target)
     dps_bar.value = wave_kills_progress
     _refresh_milestone_row()
@@ -297,6 +305,11 @@ func _process(delta: float) -> void:
         if combo_decay <= 0.0:
             combo = 0
             _refresh_hud()
+    # Trim the DPS log to the last 3s so the on-HUD number is "live".
+    if dps_log.size() > 0:
+        var cutoff: float = (Time.get_ticks_msec() / 1000.0) - DPS_WINDOW
+        while dps_log.size() > 0 and float(dps_log[0][0]) < cutoff:
+            dps_log.pop_front()
     if spawn_timer <= 0.0:
         _spawn_enemy()
         # Slower start for the first 5 waves, then standard ramp.
@@ -467,6 +480,8 @@ func _damage_enemy(e: Dictionary, amount: int) -> void:
         if n0 != null and is_instance_valid(n0):
             _floating_text("MISS", n0.position + n0.size * 0.5, T.ON_SURFACE_MUTED)
         return
+    var now: float = Time.get_ticks_msec() / 1000.0
+    dps_log.append([now, amount])
     e["hp"] -= amount
     var bar: ProgressBar = e.get("hp_bar")
     if bar != null and is_instance_valid(bar):
