@@ -34,6 +34,8 @@ func _ready() -> void:
 func play(name: String, volume_db: float = -6.0) -> void:
     if not _generated.has(name):
         return
+    if Settings.sfx_volume <= 0.001:
+        return
     var p := AudioStreamPlayer.new()
     p.stream = _generated[name]
     p.volume_db = volume_db

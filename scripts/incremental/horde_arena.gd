@@ -55,6 +55,7 @@ const HERO_RANGE := 220.0
 @onready var pause_overlay: Panel = $Overlay/Pause
 @onready var btn_resume: Button = $Overlay/Pause/V/Resume
 @onready var btn_pause_home: Button = $Overlay/Pause/V/Home
+@onready var mute_check: CheckBox = $Overlay/Pause/V/MuteRow/MuteCheck
 @onready var hud_idle: Label = $HUD/Top/Idle
 @onready var hud_embers: Label = $HUD/Top/Embers
 @onready var rng: RandomNumberGenerator = RandomNumberGenerator.new()
@@ -92,6 +93,8 @@ func _ready() -> void:
     btn_pause.pressed.connect(_on_pause)
     btn_resume.pressed.connect(_on_resume)
     btn_pause_home.pressed.connect(_on_quit)
+    mute_check.button_pressed = Settings.sfx_volume <= 0.001
+    mute_check.toggled.connect(_on_mute_toggled)
     milestone_skip.pressed.connect(_close_milestone)
     bg.color = T.SURFACE_DIM
     UiStyle_.apply_secondary(btn_quit)
@@ -504,6 +507,19 @@ func _on_pause() -> void:
     pause_overlay.visible = true
     overlay_scrim.visible = true
     SaveSystem.save()
+
+func _on_mute_toggled(muted: bool) -> void:
+    # Stash the previous level so unchecking restores it instead of
+    # snapping back to 0.
+    if muted:
+        if Settings.sfx_volume > 0.001:
+            Settings.set_meta("prev_sfx_vol", Settings.sfx_volume)
+        Settings.sfx_volume = 0.0
+    else:
+        var prev := float(Settings.get_meta("prev_sfx_vol", 0.8))
+        Settings.sfx_volume = prev if prev > 0.05 else 0.8
+    Settings.apply_audio_buses()
+    Settings.save()
 
 func _on_resume() -> void:
     paused_by_user = false
