@@ -33,6 +33,7 @@ var krrik_defeated: bool = false
 var lifetime_kills_by_type: Dictionary = {}    # monster_id -> count
 var embers: int = 0                              # prestige currency from boss kills
 var bosses_felled: int = 0
+var last_save_unix: int = 0                      # used to award offline idle gold
 
 func tally_kill(monster_id: String) -> void:
     lifetime_kills_by_type[monster_id] = int(lifetime_kills_by_type.get(monster_id, 0)) + 1

@@ -26,6 +26,7 @@ enum State { SPLASH, TITLE, MENU }
 @onready var btn_villa: Button = $SafeArea/Menu/V/Villa
 @onready var btn_codex: Button = $SafeArea/Menu/V/Codex
 @onready var btn_settings: Button = $SafeArea/Menu/V/Settings
+@onready var milestone_hint: Label = $SafeArea/Menu/V/MilestoneHint
 
 var state: int = State.SPLASH
 var pulse_t: float = 0.0
@@ -39,7 +40,19 @@ func _ready() -> void:
     bg.color = T.SURFACE_DIM
     _wire_buttons()
     _apply_typography()
+    _award_offline_progress()
     _enter_splash()
+
+func _award_offline_progress() -> void:
+    var seconds: int = SaveSystem.seconds_since_last_save()
+    if seconds < 30: return
+    var rate: float = HordeState.idle_gold_per_sec()
+    var amount: int = int(round(rate * seconds))
+    if amount <= 0: return
+    GameState.add_gold(amount)
+    SaveSystem.save()
+    var hours: float = seconds / 3600.0
+    title_subtitle.text = "While away (%.1f h): +%d gold" % [hours, amount]
 
 func _wire_buttons() -> void:
     UiStyle_.apply_primary(btn_new_run)
@@ -54,8 +67,29 @@ func _wire_buttons() -> void:
     btn_settings.pressed.connect(_on_settings)
     btn_continue.visible = _has_save()
     _refresh_meta_subtitle()
+    _refresh_milestone_hint()
     for b in [btn_new_run, btn_continue, btn_villa, btn_codex, btn_settings]:
         UiAnim_.bind_press_feedback(b)
+
+func _refresh_milestone_hint() -> void:
+    var lines: Array[String] = []
+    var km: Dictionary = HordeState.next_kill_milestone()
+    if not km.is_empty():
+        var need: int = int(km["kills"])
+        var have: int = GameState.lifetime_kills
+        var cls: String = String(km["class"])
+        lines.append("Next: %s (%d / %d kills)" % [cls.capitalize(), min(have, need), need])
+    var wm: Dictionary = HordeState.next_wave_milestone()
+    if not wm.is_empty():
+        var need_w: int = int(wm["wave"])
+        var have_w: int = GameState.deepest_floor
+        lines.append("Next slot: wave %d (best %d)" % [need_w, have_w])
+    if lines.is_empty():
+        milestone_hint.text = "All paths unlocked. Push deeper for Embers."
+        milestone_hint.add_theme_color_override("font_color", T.PRIMARY)
+    else:
+        milestone_hint.text = " · ".join(lines)
+        milestone_hint.add_theme_color_override("font_color", T.ON_SURFACE_MUTED)
 
 func _refresh_meta_subtitle() -> void:
     # Replace the static "of the Sundered Realms" subtitle with a

@@ -120,6 +120,29 @@ func _milestone_done(id: String) -> bool:
     var ms: Dictionary = GameState.meta_unlocks.get("milestones", {})
     return bool(ms.get(id, false))
 
+# Returns the next pending kill milestone, or {} if all are claimed.
+func next_kill_milestone() -> Dictionary:
+    for m in KILL_UNLOCKS:
+        if not _milestone_done(String(m["id"])):
+            return m
+    return {}
+
+# Returns the next pending wave milestone, or {} if all claimed.
+func next_wave_milestone() -> Dictionary:
+    for m in WAVE_UNLOCKS:
+        if not _milestone_done(String(m["id"])):
+            return m
+    return {}
+
+# Idle gold accrual rate exposed for the title screen offline-reward popup.
+func idle_gold_per_sec() -> float:
+    var base: float = 0.4 + GameState.deepest_floor * 0.15
+    base += float(GameState.lifetime_kills) / 1000.0
+    if secondary != "": base *= 1.4
+    if tertiary != "": base *= 1.5
+    base *= Upgrades.idle_multiplier()
+    return base
+
 func _mark_milestone(id: String) -> void:
     var ms: Dictionary = GameState.meta_unlocks.get("milestones", {})
     ms[id] = true

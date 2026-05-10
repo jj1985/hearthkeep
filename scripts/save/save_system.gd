@@ -28,7 +28,9 @@ func save() -> void:
         "lifetime_kills_by_type": GameState.lifetime_kills_by_type,
         "embers": GameState.embers,
         "bosses_felled": GameState.bosses_felled,
+        "last_save_unix": int(Time.get_unix_time_from_system()),
     }
+    GameState.last_save_unix = int(payload["last_save_unix"])
     f.store_string(JSON.stringify(payload))
 
 func load_save() -> bool:
@@ -66,7 +68,17 @@ func load_save() -> bool:
     GameState.lifetime_kills_by_type = d.get("lifetime_kills_by_type", {})
     GameState.embers = int(d.get("embers", 0))
     GameState.bosses_felled = int(d.get("bosses_felled", 0))
+    GameState.last_save_unix = int(d.get("last_save_unix", 0))
     return true
+
+# Returns the amount of seconds elapsed since last save, capped to 8h.
+# Used to award offline idle gold without letting AFK weeks be a thing.
+const OFFLINE_CAP_SECONDS := 28800   # 8 hours
+
+func seconds_since_last_save() -> int:
+    if GameState.last_save_unix <= 0: return 0
+    var now: int = int(Time.get_unix_time_from_system())
+    return clamp(now - GameState.last_save_unix, 0, OFFLINE_CAP_SECONDS)
 
 func _to_str_array(v: Variant) -> Array[String]:
     var out: Array[String] = []

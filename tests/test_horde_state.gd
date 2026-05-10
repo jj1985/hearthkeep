@@ -58,6 +58,27 @@ func test_advance_wave_updates_deepest_floor() -> void:
     HordeState.advance_wave()
     assert_eq(GameState.deepest_floor, 3)
 
+func test_next_kill_milestone_walks_through_classes() -> void:
+    var first := HordeState.next_kill_milestone()
+    assert_eq(String(first["class"]), "rogue")
+    GameState.lifetime_kills = 100
+    HordeState._check_kill_milestones()
+    var second := HordeState.next_kill_milestone()
+    assert_eq(String(second["class"]), "wizard")
+
+func test_next_wave_milestone_returns_dual_then_triple() -> void:
+    var first := HordeState.next_wave_milestone()
+    assert_eq(String(first["slot"]), "secondary")
+
+func test_next_milestones_empty_when_all_claimed() -> void:
+    GameState.meta_unlocks["milestones"] = {
+        "unlock_rogue": true, "unlock_wizard": true,
+        "unlock_necromancer": true, "unlock_bard": true,
+        "unlock_dual": true, "unlock_triple": true,
+    }
+    assert_true(HordeState.next_kill_milestone().is_empty())
+    assert_true(HordeState.next_wave_milestone().is_empty())
+
 func test_reset_run_clears_run_state_but_not_lifetime() -> void:
     HordeState.record_kill("skeleton", 0)
     HordeState.advance_wave()
