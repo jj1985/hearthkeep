@@ -253,7 +253,10 @@ func _loadout_text() -> String:
     var parts := [HordeState.primary.capitalize()]
     if HordeState.secondary != "": parts.append(HordeState.secondary.capitalize())
     if HordeState.tertiary != "": parts.append(HordeState.tertiary.capitalize())
-    return " / ".join(parts)
+    var s: String = " / ".join(parts)
+    if GameState.rebirths > 0:
+        s += "  ·  Mark %d" % GameState.rebirths
+    return s
 
 func _process(delta: float) -> void:
     if _is_paused():

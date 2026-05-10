@@ -81,6 +81,8 @@ func _wire_buttons() -> void:
 
 func _refresh_milestone_hint() -> void:
     var lines: Array[String] = []
+    if GameState.rebirths > 0:
+        lines.append("Mark %d" % GameState.rebirths)
     if GameState.deepest_floor > 0:
         lines.append("Best wave: %d" % GameState.deepest_floor)
     if GameState.bosses_felled > 0:
