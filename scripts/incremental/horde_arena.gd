@@ -1033,7 +1033,10 @@ func _hero_take_damage(amount: int) -> void:
     HordeState.hero_hp = max(0, HordeState.hero_hp - amount)
     _refresh_hud()
     SfxBus.play("low_hp" if HordeState.hero_hp < HordeState.hero_max_hp / 4 else "hit", -10.0)
-    _flash_screen(T.ERROR, 0.18, 0.18)
+    var alpha: float = clamp(0.15 + amount * 0.04, 0.18, 0.55)
+    var dur: float = 0.18 + clamp(amount * 0.008, 0.0, 0.18)
+    _flash_screen(T.ERROR, alpha, dur)
+    if amount >= 10: _shake(6)
     if HordeState.hero_hp <= 0:
         _on_hero_died()
 
