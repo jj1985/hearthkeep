@@ -38,6 +38,19 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 12
 
+[node name="Stats" type="Label" parent="V"]
+text = ""
+horizontal_alignment = 1
+
+[node name="JumpRow" type="HBoxContainer" parent="V"]
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="Jump" type="Button" parent="V/JumpRow"]
+custom_minimum_size = Vector2(280, 56)
+text = "JUMP TO WAVE 25"
+visible = false
+
 [node name="Back" type="Button" parent="V"]
 custom_minimum_size = Vector2(0, 56)
 text = "BACK"

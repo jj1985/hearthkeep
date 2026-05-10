@@ -10,6 +10,8 @@ const UiStyle_ := preload("res://scripts/ui/ui_style.gd")
 @onready var gold_label: Label = $V/Gold
 @onready var rows: VBoxContainer = $V/Scroll/Rows
 @onready var btn_back: Button = $V/Back
+@onready var stats_label: Label = $V/Stats
+@onready var btn_jump: Button = $V/JumpRow/Jump
 
 var row_widgets: Array = []
 
@@ -18,10 +20,13 @@ func _ready() -> void:
     bg.color = T.SURFACE_DIM
     UiStyle_.apply_secondary(btn_back)
     btn_back.pressed.connect(_on_back)
+    btn_jump.pressed.connect(_on_jump)
+    UiStyle_.apply_secondary(btn_jump)
     Upgrades.upgrade_purchased.connect(_on_purchased)
     EventBus.currency_changed.connect(_on_currency)
     _build_rows()
     _refresh_gold()
+    _refresh_stats()
 
 func _build_rows() -> void:
     for c in rows.get_children():
@@ -88,6 +93,27 @@ func _on_purchased(_id: String, _rank: int) -> void:
 func _on_currency(_kind: String, _delta: int, _now: int) -> void:
     _refresh_rows()
     _refresh_gold()
+
+func _refresh_stats() -> void:
+    var lines: Array[String] = []
+    lines.append("Lifetime: %d kills · %d bosses" % [
+        GameState.lifetime_kills, GameState.bosses_felled,
+    ])
+    if GameState.best_run_wave > 0:
+        lines.append("Best run: wave %d · %d kills" % [
+            GameState.best_run_wave, GameState.best_run_kills,
+        ])
+    if GameState.login_streak > 0:
+        lines.append("Login streak: %d" % GameState.login_streak)
+    stats_label.text = "  ·  ".join(lines)
+    btn_jump.visible = GameState.best_run_wave >= 25
+
+func _on_jump() -> void:
+    HordeState.reset_run()
+    HordePerks.reset_for_run()
+    HordeState.wave = 25
+    SaveSystem.save()
+    get_tree().change_scene_to_file("res://scenes/horde.tscn")
 
 func _on_back() -> void:
     SaveSystem.save()
