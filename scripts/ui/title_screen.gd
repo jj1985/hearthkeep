@@ -170,7 +170,7 @@ func _enter_menu() -> void:
     tw2.tween_property(title_pane, "scale", Vector2(0.78, 0.78), 0.28)
 
 func _on_new_run() -> void:
-    get_tree().change_scene_to_file("res://scenes/ui/class_select.tscn")
+    get_tree().change_scene_to_file("res://scenes/horde.tscn")
 
 func _on_continue() -> void:
     # Run state is per-run (not persisted). CONTINUE returns to the

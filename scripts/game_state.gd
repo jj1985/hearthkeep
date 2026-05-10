@@ -5,7 +5,7 @@ extends Node
 var gold: int = 0
 var gems: int = 0
 var dye_pots: Dictionary = {}                # color_id -> count
-var unlocked_classes: Array[String] = ["warrior", "rogue", "wizard", "necromancer", "bard"]
+var unlocked_classes: Array[String] = ["warrior"]
 var unlocked_dual_classes: Array[String] = []
 var unlocked_dye_colors: Array[String] = ["red","blue","green","gray","white","black","gold","purple","teal","orange","crimson","ivory"]
 var saved_dye_sets: Dictionary = {}          # set_name -> { slot -> color_id }

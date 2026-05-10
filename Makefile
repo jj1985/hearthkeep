@@ -1,4 +1,4 @@
-.PHONY: run test lint apk apk-clean apk-bump assets-audit balance-sim clean install-hooks
+.PHONY: run test lint apk apk-clean apk-bump assets-audit balance-sim clean install-hooks ship release-attach
 
 GODOT ?= $(HOME)/bin/godot
 PROJECT_PATH ?= .
@@ -38,3 +38,17 @@ balance-sim:
 
 clean: apk-clean
 	rm -rf .godot
+
+# `make ship` — one-shot: tests → APK build → push to GitHub release.
+# Defaults to attaching the freshly built APK (with --clobber) to the
+# latest release. Override with TAG=v0.x.y to target a different one.
+TAG ?= $(shell gh release list --limit 1 --json tagName --jq '.[0].tagName')
+
+ship: test apk release-attach
+	@echo "[ship] APK uploaded to release $(TAG)"
+
+release-attach:
+	@APK="build/HearthkeepDemo-v$(VERSION_NAME).apk"; \
+	if [ ! -f "$$APK" ]; then echo "[ship] missing $$APK"; exit 1; fi; \
+	echo "[ship] uploading $$APK to release $(TAG)"; \
+	gh release upload "$(TAG)" "$$APK" --clobber

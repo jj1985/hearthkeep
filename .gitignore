@@ -19,6 +19,7 @@ data_*/
 
 # Imported assets
 *.import
+*.uid
 
 # OS / Editor
 .DS_Store

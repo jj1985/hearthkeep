@@ -1,0 +1,134 @@
+[gd_scene load_steps=2 format=3 uid="uid://hearth_horde_arena"]
+
+[ext_resource type="Script" path="res://scripts/incremental/horde_arena.gd" id="1"]
+
+[node name="HordeArena" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1")
+
+[node name="Bg" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.04, 0.038, 0.06, 1)
+
+[node name="Arena" type="Control" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 96.0
+offset_bottom = -120.0
+clip_contents = true
+
+[node name="Floor" type="ColorRect" parent="Arena"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.09, 0.085, 0.12, 1)
+
+[node name="Enemies" type="Control" parent="Arena"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="FX" type="Control" parent="Arena"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="Hero" type="Panel" parent="Arena"]
+custom_minimum_size = Vector2(44, 44)
+size = Vector2(44, 44)
+position = Vector2(180, 360)
+
+[node name="Label" type="Label" parent="Arena/Hero"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+text = "W"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="HUD" type="Control" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Top" type="HBoxContainer" parent="HUD"]
+anchor_right = 1.0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = 80.0
+theme_override_constants/separation = 12
+
+[node name="Wave" type="Label" parent="HUD/Top"]
+text = "WAVE 1"
+
+[node name="Kills" type="Label" parent="HUD/Top"]
+text = "0 kills"
+
+[node name="Gold" type="Label" parent="HUD/Top"]
+text = "0 gold"
+
+[node name="Loadout" type="Label" parent="HUD/Top"]
+text = "Warrior"
+
+[node name="Wavebar" type="ProgressBar" parent="HUD/Top"]
+custom_minimum_size = Vector2(180, 14)
+size_flags_horizontal = 3
+
+[node name="Bottom" type="HBoxContainer" parent="HUD"]
+anchor_left = 0.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = -96.0
+offset_right = -16.0
+offset_bottom = -16.0
+
+[node name="Quit" type="Button" parent="HUD/Bottom"]
+custom_minimum_size = Vector2(140, 64)
+text = "RETURN HOME"
+
+[node name="Overlay" type="CanvasLayer" parent="."]
+
+[node name="Scrim" type="ColorRect" parent="Overlay"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 0.7)
+visible = false
+
+[node name="Milestone" type="Panel" parent="Overlay"]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -260.0
+offset_top = -240.0
+offset_right = 260.0
+offset_bottom = 240.0
+visible = false
+
+[node name="V" type="VBoxContainer" parent="Overlay/Milestone"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = 24.0
+offset_right = -24.0
+offset_bottom = -24.0
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="Overlay/Milestone/V"]
+text = "Choose your secondary class"
+horizontal_alignment = 1
+
+[node name="Body" type="Label" parent="Overlay/Milestone/V"]
+text = ""
+autowrap_mode = 3
+horizontal_alignment = 1
+
+[node name="Choices" type="VBoxContainer" parent="Overlay/Milestone/V"]
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="Skip" type="Button" parent="Overlay/Milestone/V"]
+custom_minimum_size = Vector2(0, 56)
+text = "Maybe later"
