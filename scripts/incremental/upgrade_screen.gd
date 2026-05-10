@@ -11,7 +11,9 @@ const UiStyle_ := preload("res://scripts/ui/ui_style.gd")
 @onready var rows: VBoxContainer = $V/Scroll/Rows
 @onready var btn_back: Button = $V/Back
 @onready var stats_label: Label = $V/Stats
-@onready var btn_jump: Button = $V/JumpRow/Jump
+@onready var btn_jump_10: Button = $V/JumpRow/Jump10
+@onready var btn_jump_25: Button = $V/JumpRow/Jump25
+@onready var btn_jump_50: Button = $V/JumpRow/Jump50
 
 var row_widgets: Array = []
 
@@ -20,8 +22,12 @@ func _ready() -> void:
     bg.color = T.SURFACE_DIM
     UiStyle_.apply_secondary(btn_back)
     btn_back.pressed.connect(_on_back)
-    btn_jump.pressed.connect(_on_jump)
-    UiStyle_.apply_secondary(btn_jump)
+    btn_jump_10.pressed.connect(_on_jump.bind(10))
+    btn_jump_25.pressed.connect(_on_jump.bind(25))
+    btn_jump_50.pressed.connect(_on_jump.bind(50))
+    UiStyle_.apply_secondary(btn_jump_10)
+    UiStyle_.apply_secondary(btn_jump_25)
+    UiStyle_.apply_secondary(btn_jump_50)
     Upgrades.upgrade_purchased.connect(_on_purchased)
     EventBus.currency_changed.connect(_on_currency)
     _build_rows()
@@ -106,12 +112,14 @@ func _refresh_stats() -> void:
     if GameState.login_streak > 0:
         lines.append("Login streak: %d" % GameState.login_streak)
     stats_label.text = "  ·  ".join(lines)
-    btn_jump.visible = GameState.best_run_wave >= 25
+    btn_jump_10.visible = GameState.best_run_wave >= 10
+    btn_jump_25.visible = GameState.best_run_wave >= 25
+    btn_jump_50.visible = GameState.best_run_wave >= 50
 
-func _on_jump() -> void:
+func _on_jump(target_wave: int) -> void:
     HordeState.reset_run()
     HordePerks.reset_for_run()
-    HordeState.wave = 25
+    HordeState.wave = target_wave
     SaveSystem.save()
     get_tree().change_scene_to_file("res://scenes/horde.tscn")
 

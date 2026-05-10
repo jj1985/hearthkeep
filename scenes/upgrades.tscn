@@ -46,9 +46,19 @@ horizontal_alignment = 1
 theme_override_constants/separation = 8
 alignment = 1
 
-[node name="Jump" type="Button" parent="V/JumpRow"]
-custom_minimum_size = Vector2(280, 56)
-text = "JUMP TO WAVE 25"
+[node name="Jump10" type="Button" parent="V/JumpRow"]
+custom_minimum_size = Vector2(160, 56)
+text = "JUMP W10"
+visible = false
+
+[node name="Jump25" type="Button" parent="V/JumpRow"]
+custom_minimum_size = Vector2(160, 56)
+text = "JUMP W25"
+visible = false
+
+[node name="Jump50" type="Button" parent="V/JumpRow"]
+custom_minimum_size = Vector2(160, 56)
+text = "JUMP W50"
 visible = false
 
 [node name="Back" type="Button" parent="V"]

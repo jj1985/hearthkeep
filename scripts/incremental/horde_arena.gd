@@ -433,6 +433,13 @@ func _next_wave() -> void:
         _spawn_boss()
     if HordeState.wave % 5 == 0:
         _open_perk_picker()
+    if HordeState.wave == 50 and not bool(GameState.meta_unlocks.get("wave_50", false)):
+        GameState.meta_unlocks["wave_50"] = true
+        GameState.add_embers(25)
+        _floating_text("ENDLESS — +25 Embers",
+            Vector2(arena.size.x * 0.5 - 100, 60), T.RARITY_MYTHIC)
+        _flash_screen(T.RARITY_MYTHIC, 0.8, 0.5)
+        SaveSystem.save()
 
 func _spawn_boss() -> void:
     var boss_id: String = "boss_warchief"
