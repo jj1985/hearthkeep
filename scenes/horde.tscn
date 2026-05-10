@@ -190,6 +190,27 @@ theme_override_constants/separation = 8
 custom_minimum_size = Vector2(0, 56)
 text = "Maybe later"
 
+[node name="Tutorial" type="Panel" parent="Overlay"]
+anchor_left = 0.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = -200.0
+offset_right = -16.0
+offset_bottom = -120.0
+visible = false
+
+[node name="Label" type="Label" parent="Overlay/Tutorial"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_right = -16.0
+text = ""
+autowrap_mode = 3
+horizontal_alignment = 1
+vertical_alignment = 1
+
 [node name="Pause" type="Panel" parent="Overlay"]
 anchor_left = 0.5
 anchor_top = 0.5

@@ -61,6 +61,8 @@ const HERO_RANGE := 220.0
 @onready var mute_check: CheckBox = $Overlay/Pause/V/MuteRow/MuteCheck
 @onready var motion_check: CheckBox = $Overlay/Pause/V/MuteRow/MotionCheck
 @onready var btn_restart: Button = $Overlay/Pause/V/Restart
+@onready var tutorial_panel: Panel = $Overlay/Tutorial
+@onready var tutorial_label: Label = $Overlay/Tutorial/Label
 @onready var hud_idle: Label = $HUD/Top/Idle
 @onready var hud_embers: Label = $HUD/Top/Embers
 @onready var hud_hp: ProgressBar = $HUD/Top/HP
@@ -149,6 +151,7 @@ func _ready() -> void:
     _refresh_hud()
     _refresh_perk_row()
     _hide_milestone()
+    _maybe_show_tutorial()
 
 const CLASS_COLORS := {
     "warrior":     Color(0.85, 0.55, 0.30),
@@ -776,6 +779,18 @@ func _close_milestone() -> void:
 func _hide_milestone() -> void:
     milestone_overlay.visible = false
     overlay_scrim.visible = false
+
+func _maybe_show_tutorial() -> void:
+    if Settings.tutorial_seen: return
+    if tutorial_panel == null: return
+    tutorial_label.text = "STRIKE — tap for a heavy hit\nSKILL — class active (6s cd)\nClear waves to unlock paths and pick perks every 5"
+    tutorial_panel.visible = true
+    var t := get_tree().create_timer(7.0, true, false, true)
+    t.timeout.connect(func():
+        if tutorial_panel != null and is_instance_valid(tutorial_panel):
+            tutorial_panel.visible = false)
+    Settings.tutorial_seen = true
+    Settings.save()
 
 func _on_quit() -> void:
     SaveSystem.save()
