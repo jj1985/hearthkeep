@@ -38,12 +38,15 @@ func test_zone_resolution_walks_through_all_five() -> void:
     assert_eq(String(HordeArena._zone_for_wave(35)["name"]), "Emberlands")
     assert_eq(String(HordeArena._zone_for_wave(99)["name"]), "The Void")
 
-func test_eight_normal_enemy_types_present() -> void:
+func test_nine_normal_enemy_types_present() -> void:
     var normals: Array = []
     for k in _enemies().keys():
         if not bool(_enemies()[k].get("boss", false)):
             normals.append(k)
-    assert_eq(normals.size(), 8)
+    assert_eq(normals.size(), 9)
 
 func test_sapper_marked_as_exploding() -> void:
     assert_true(bool(_enemies()["sapper"].get("explodes", false)))
+
+func test_shaman_marked_as_healing() -> void:
+    assert_true(bool(_enemies()["shaman"].get("heals", false)))

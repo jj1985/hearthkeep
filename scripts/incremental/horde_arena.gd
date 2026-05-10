@@ -21,6 +21,7 @@ const ENEMY_TYPES := {
     "drake":      {"label": "Drake",      "color": Color(0.85, 0.35, 0.25), "hp_base": 60,  "speed": 75.0,  "gold": 14, "size": 36, "min_wave": 12},
     "wraith":     {"label": "Wraith",     "color": Color(0.55, 0.45, 0.85), "hp_base": 90,  "speed": 130.0, "gold": 24, "size": 30, "min_wave": 16},
     "sapper":     {"label": "Sapper",     "color": Color(0.95, 0.45, 0.20), "hp_base": 30,  "speed": 50.0,  "gold": 8,  "size": 30, "min_wave": 14, "explodes": true},
+    "shaman":     {"label": "Shaman",     "color": Color(0.45, 0.85, 0.55), "hp_base": 50,  "speed": 60.0,  "gold": 16, "size": 30, "min_wave": 18, "heals": true},
     "ogre":       {"label": "Ogre",       "color": Color(0.55, 0.55, 0.30), "hp_base": 220, "speed": 40.0,  "gold": 55, "size": 44, "min_wave": 20},
     "boss_warchief":{"label":"Krrik III", "color": Color(0.95, 0.75, 0.25), "hp_base": 240, "speed": 50.0,  "gold": 60, "size": 56, "boss": true},
     "boss_dragon":{"label":"Vyxhasis",    "color": Color(0.85, 0.25, 0.55), "hp_base": 600, "speed": 45.0,  "gold": 200,"size": 72, "boss": true},
@@ -358,6 +359,8 @@ func _spawn_enemy() -> void:
         "id": id,
         "mythic": is_mythic,
         "explodes": bool(def.get("explodes", false)),
+        "heals": bool(def.get("heals", false)),
+        "heal_cd": 3.0,
     })
     if is_mythic:
         _floating_text("MYTHIC %s" % String(def.get("label", "Foe")).to_upper(),
@@ -371,6 +374,19 @@ func _move_enemies(delta: float) -> void:
         if node == null or not is_instance_valid(node):
             dead.append(e); continue
         var ep: Vector2 = node.position + node.size * 0.5
+        # Shamans hold distance and tick a heal cooldown.
+        if bool(e.get("heals", false)):
+            e["heal_cd"] = float(e.get("heal_cd", 3.0)) - delta
+            if float(e["heal_cd"]) <= 0.0:
+                _shaman_heal(e, ep)
+                e["heal_cd"] = 4.0
+            var dist: float = ep.distance_to(hero_center)
+            var dir_h: Vector2 = (hero_center - ep).normalized()
+            if dist < 220.0:
+                node.position -= dir_h * float(e["speed"]) * delta  # back away
+            else:
+                node.position += dir_h * float(e["speed"]) * 0.4 * delta
+            continue
         var dir: Vector2 = (hero_center - ep).normalized()
         node.position += dir * float(e["speed"]) * delta
         # Contact: enemy bites the hero for chip damage and dies (so the
@@ -521,6 +537,40 @@ func _next_wave() -> void:
             Vector2(arena.size.x * 0.5 - 100, 60), T.RARITY_MYTHIC)
         _flash_screen(T.RARITY_MYTHIC, 0.8, 0.5)
         SaveSystem.save()
+
+func _shaman_heal(shaman: Dictionary, sp: Vector2) -> void:
+    # Heal nearest non-shaman ally for 20% of its missing HP.
+    var best: Dictionary = {}
+    var best_d: float = 1e9
+    for e in enemies:
+        if e == shaman or bool(e.get("heals", false)): continue
+        var n: Panel = e.get("node")
+        if n == null or not is_instance_valid(n): continue
+        if int(e["hp"]) >= int(e["max_hp"]): continue
+        var d: float = (n.position + n.size * 0.5).distance_to(sp)
+        if d < best_d: best_d = d; best = e
+    if best.is_empty(): return
+    var amount: int = int(round((int(best["max_hp"]) - int(best["hp"])) * 0.2))
+    if amount <= 0: return
+    best["hp"] = min(int(best["max_hp"]), int(best["hp"]) + amount)
+    var bar: ProgressBar = best.get("hp_bar")
+    if bar != null and is_instance_valid(bar):
+        bar.value = float(best["hp"]) / float(max(1, int(best["max_hp"])))
+    var bn: Panel = best["node"]
+    if bn != null and is_instance_valid(bn):
+        _floating_text("+%d" % amount, bn.position + bn.size * 0.5, T.RARITY_UNCOMMON)
+    # Tether visual: a thin green line via short ColorRect.
+    var line := ColorRect.new()
+    line.color = Color(0.45, 0.85, 0.55, 0.7)
+    var dest: Vector2 = bn.position + bn.size * 0.5 if bn != null else sp
+    var mid: Vector2 = (sp + dest) * 0.5
+    line.size = Vector2(sp.distance_to(dest), 2)
+    line.position = mid - line.size * 0.5
+    line.rotation = (dest - sp).angle()
+    fx_layer.add_child(line)
+    var tw := create_tween()
+    tw.tween_property(line, "modulate:a", 0.0, 0.4)
+    tw.tween_callback(line.queue_free)
 
 func _detonate_at(pos: Vector2, radius: float, damage: int) -> void:
     # Visual ring
