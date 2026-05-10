@@ -1,5 +1,48 @@
 # HEARTHKEEP — Changelog
 
+## v0.3.0 — Incremental horde pivot
+
+The 3D run flow was crashing on device, so the core loop pivoted to a
+stable 2D incremental horde survival arena. The 3D scenes still live
+in the tree but are no longer in the active flow.
+
+### New
+- **Horde Arena** (`scenes/horde.tscn`): hero auto-attacks the closest
+  enemy in range; waves of skeletons, goblins, bone brutes, ghouls,
+  drakes, wraiths, and ogres spawn from arena edges and chase the
+  hero. All `Control` nodes — no physics, no 3D, no preloaded meshes.
+- **Milestone-gated multiclass**: at game start, only Warrior is
+  unlocked. Rogue, Wizard, Necromancer, and Bard unlock at 100, 500,
+  1500, and 5000 cumulative kills. The secondary class slot opens at
+  wave 10, the tertiary at wave 25.
+- **Persistent upgrades** (`scenes/upgrades.tscn`): five gold-priced
+  tracks (Sharper Steel, Practiced Form, Long Reach, Hearthstone,
+  Lucky Strike) ranked 0–30 with geometric cost growth.
+- **Embers** prestige currency dropped by bosses (every 10th wave
+  spawns a Krrik III; from wave 30 a Vyxhasis). Two ember-priced
+  upgrade tracks (Ember Edge, Hoard Pact).
+- **Offline progress**: idle gold accrues for up to 8 hours between
+  sessions and is awarded on next title-screen entry.
+- **Visible progression**: title screen surfaces best wave, bosses
+  felled, and the next milestone (kill count + slot wave).
+- **In-arena polish**: damage popups on each hit, HUD counter pop on
+  kills, 8-petal radial burst on boss death, screen shake.
+- **Mid-run pause + mute**: pause menu with Resume / Return Home /
+  Mute SFX checkbox; Settings persists the toggle.
+- **Auto-ship pipeline**: every commit on `main` runs `make ship`
+  (tests → APK → upload to latest GitHub release with retry) via a
+  background post-commit hook, plus a manual `make ship` target.
+
+### Tests
+- 26 new tests across `test_horde_state.gd`, `test_upgrades.gd`,
+  `test_horde_enemies.gd`, `test_balance.gd`,
+  `test_offline_progress.gd`. **167 / 167 passing.**
+
+### Shelved (still in tree, not in flow)
+- `scenes/run.tscn`, `scenes/villa/villa.tscn`, `scenes/ui/class_select.tscn`,
+  most crafting station scenes. The CONTINUE / VILLA buttons on the
+  title screen now route to the horde arena and upgrade screen.
+
 ## v0.2.5 — Triple-class slot (meta-unlock)
 
 ### New
