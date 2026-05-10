@@ -29,6 +29,11 @@ func save() -> void:
         "embers": GameState.embers,
         "bosses_felled": GameState.bosses_felled,
         "last_save_unix": int(Time.get_unix_time_from_system()),
+        "run_wave": HordeState.wave,
+        "run_perks": HordePerks.taken_ids,
+        "run_primary": HordeState.primary,
+        "run_secondary": HordeState.secondary,
+        "run_tertiary": HordeState.tertiary,
     }
     GameState.last_save_unix = int(payload["last_save_unix"])
     f.store_string(JSON.stringify(payload))
@@ -69,6 +74,17 @@ func load_save() -> bool:
     GameState.embers = int(d.get("embers", 0))
     GameState.bosses_felled = int(d.get("bosses_felled", 0))
     GameState.last_save_unix = int(d.get("last_save_unix", 0))
+    HordeState.wave = int(d.get("run_wave", 1))
+    HordeState.primary = String(d.get("run_primary", "warrior"))
+    HordeState.secondary = String(d.get("run_secondary", ""))
+    HordeState.tertiary = String(d.get("run_tertiary", ""))
+    HordePerks.reset_for_run()
+    var perks: Array = d.get("run_perks", [])
+    for pid in perks:
+        for p in HordePerks.ALL_PERKS:
+            if String((p as Dictionary)["id"]) == String(pid):
+                HordePerks.apply(p)
+                break
     return true
 
 # Returns the amount of seconds elapsed since last save, capped to 8h.

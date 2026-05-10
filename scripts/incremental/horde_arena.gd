@@ -58,6 +58,7 @@ const HERO_RANGE := 220.0
 @onready var btn_resume: Button = $Overlay/Pause/V/Resume
 @onready var btn_pause_home: Button = $Overlay/Pause/V/Home
 @onready var mute_check: CheckBox = $Overlay/Pause/V/MuteRow/MuteCheck
+@onready var btn_restart: Button = $Overlay/Pause/V/Restart
 @onready var hud_idle: Label = $HUD/Top/Idle
 @onready var hud_embers: Label = $HUD/Top/Embers
 @onready var rng: RandomNumberGenerator = RandomNumberGenerator.new()
@@ -86,8 +87,11 @@ func _idle_gold_per_sec() -> float:
 
 func _ready() -> void:
     rng.randomize()
-    HordeState.reset_run()
-    HordePerks.reset_for_run()
+    SaveSystem.load_save()
+    # Run state is now restored by load_save (perks + wave + class loadout).
+    # The title screen's NEW RUN handler resets HordeState/HordePerks before
+    # changing scene, so we don't blow away an in-progress run on every load.
+    if HordeState.wave < 1: HordeState.wave = 1
     HordeState.milestone_reached.connect(_on_milestone)
     HordeState.slot_unlocked.connect(_on_slot_unlocked)
     HordeState.class_unlocked.connect(_on_class_unlocked)
@@ -96,6 +100,8 @@ func _ready() -> void:
     btn_pause.pressed.connect(_on_pause)
     btn_resume.pressed.connect(_on_resume)
     btn_pause_home.pressed.connect(_on_quit)
+    btn_restart.pressed.connect(_on_restart)
+    UiStyle_.apply_secondary(btn_restart)
     mute_check.button_pressed = Settings.sfx_volume <= 0.001
     mute_check.toggled.connect(_on_mute_toggled)
     milestone_skip.pressed.connect(_close_milestone)
@@ -109,6 +115,7 @@ func _ready() -> void:
     pause_overlay.visible = false
     _layout_hero()
     _refresh_hud()
+    _refresh_perk_row()
     _hide_milestone()
 
 const CLASS_COLORS := {
@@ -631,6 +638,12 @@ func _hide_milestone() -> void:
 func _on_quit() -> void:
     SaveSystem.save()
     get_tree().change_scene_to_file("res://scenes/title.tscn")
+
+func _on_restart() -> void:
+    HordeState.reset_run()
+    HordePerks.reset_for_run()
+    SaveSystem.save()
+    get_tree().reload_current_scene()
 
 func _on_pause() -> void:
     paused_by_user = true

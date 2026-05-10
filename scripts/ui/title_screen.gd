@@ -207,6 +207,9 @@ func _enter_menu() -> void:
     tw2.tween_property(title_pane, "scale", Vector2(0.78, 0.78), 0.28)
 
 func _on_new_run() -> void:
+    HordeState.reset_run()
+    HordePerks.reset_for_run()
+    SaveSystem.save()
     get_tree().change_scene_to_file("res://scenes/horde.tscn")
 
 func _on_continue() -> void:
