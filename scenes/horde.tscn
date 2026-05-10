@@ -80,6 +80,9 @@ text = "0 ember"
 custom_minimum_size = Vector2(120, 14)
 show_percentage = false
 
+[node name="Combo" type="Label" parent="HUD/Top"]
+text = ""
+
 [node name="Wavebar" type="ProgressBar" parent="HUD/Top"]
 custom_minimum_size = Vector2(180, 14)
 size_flags_horizontal = 3

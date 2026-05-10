@@ -64,6 +64,7 @@ const HERO_RANGE := 220.0
 @onready var hud_idle: Label = $HUD/Top/Idle
 @onready var hud_embers: Label = $HUD/Top/Embers
 @onready var hud_hp: ProgressBar = $HUD/Top/HP
+@onready var hud_combo: Label = $HUD/Top/Combo
 @onready var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
 var enemies: Array = []          # Array of { node, hp, max_hp, hp_bar, speed, gold, id }
@@ -73,6 +74,17 @@ var idle_timer: float = 0.0
 var skill_cd: float = 0.0
 const SKILL_COOLDOWN := 6.0
 var reroll_cost: int = 0
+
+var combo: int = 0
+var combo_decay: float = 0.0
+const COMBO_WINDOW := 1.5
+const COMBO_MAX_BONUS := 1.0  # +100% at peak
+const COMBO_HALF_AT := 30     # streak length where you hit half of max bonus
+
+func _combo_mult() -> float:
+    if combo <= 0: return 1.0
+    var t: float = float(combo) / float(combo + COMBO_HALF_AT)  # 0..1 saturating
+    return 1.0 + COMBO_MAX_BONUS * t
 var wave_kills_target: int = 8
 var wave_kills_progress: int = 0
 var paused_for_milestone: bool = false
@@ -184,6 +196,12 @@ func _refresh_hud() -> void:
     hud_embers.text = "%d ember" % GameState.embers
     hud_hp.max_value = max(1, HordeState.hero_max_hp)
     hud_hp.value = HordeState.hero_hp
+    if combo > 1:
+        hud_combo.text = "x%d combo · %.2f×" % [combo, _combo_mult()]
+        hud_combo.add_theme_color_override("font_color",
+            T.PRIMARY if combo >= 10 else T.ON_SURFACE)
+    else:
+        hud_combo.text = ""
     dps_bar.max_value = max(1, wave_kills_target)
     dps_bar.value = wave_kills_progress
     _refresh_milestone_row()
@@ -216,6 +234,11 @@ func _process(delta: float) -> void:
         skill_cd -= delta
         if skill_cd <= 0.0:
             btn_skill.text = _skill_label()
+    if combo > 0:
+        combo_decay -= delta
+        if combo_decay <= 0.0:
+            combo = 0
+            _refresh_hud()
     if spawn_timer <= 0.0:
         _spawn_enemy()
         # Slower start for the first 5 waves, then standard ramp.
@@ -372,7 +395,9 @@ func _damage_enemy(e: Dictionary, amount: int) -> void:
             n.queue_free()
         enemies.erase(e)
         var was_boss: bool = bool(e.get("boss", false))
-        var gold_amt: int = int(round(int(e.get("gold", 1)) * Upgrades.ember_gold_mult() * HordePerks.gold_mult))
+        combo += 1
+        combo_decay = COMBO_WINDOW
+        var gold_amt: int = int(round(int(e.get("gold", 1)) * Upgrades.ember_gold_mult() * HordePerks.gold_mult * _combo_mult()))
         HordeState.record_kill(String(e.get("id", "skeleton")), gold_amt)
         _pop(hud_kills); _pop(hud_gold)
         if was_boss:
