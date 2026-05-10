@@ -119,8 +119,12 @@ offset_top = -96.0
 offset_right = -16.0
 offset_bottom = -16.0
 
+[node name="Skill" type="Button" parent="HUD/Bottom"]
+custom_minimum_size = Vector2(140, 64)
+text = "SKILL"
+
 [node name="Strike" type="Button" parent="HUD/Bottom"]
-custom_minimum_size = Vector2(220, 64)
+custom_minimum_size = Vector2(180, 64)
 size_flags_horizontal = 3
 text = "STRIKE"
 

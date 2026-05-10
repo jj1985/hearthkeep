@@ -53,6 +53,7 @@ const HERO_RANGE := 220.0
 @onready var milestone_skip: Button = $Overlay/Milestone/V/Skip
 @onready var btn_quit: Button = $HUD/Bottom/Quit
 @onready var btn_strike: Button = $HUD/Bottom/Strike
+@onready var btn_skill: Button = $HUD/Bottom/Skill
 @onready var btn_pause: Button = $HUD/Bottom/Pause
 @onready var pause_overlay: Panel = $Overlay/Pause
 @onready var btn_resume: Button = $Overlay/Pause/V/Resume
@@ -68,6 +69,8 @@ var enemies: Array = []          # Array of { node, hp, max_hp, hp_bar, speed, g
 var spawn_timer: float = 0.0
 var attack_timer: float = 0.0
 var idle_timer: float = 0.0
+var skill_cd: float = 0.0
+const SKILL_COOLDOWN := 6.0
 var wave_kills_target: int = 8
 var wave_kills_progress: int = 0
 var paused_for_milestone: bool = false
@@ -100,6 +103,9 @@ func _ready() -> void:
     HordeState.class_unlocked.connect(_on_class_unlocked)
     btn_quit.pressed.connect(_on_quit)
     btn_strike.pressed.connect(_on_player_strike)
+    btn_skill.pressed.connect(_on_skill_used)
+    UiStyle_.apply_secondary(btn_skill)
+    btn_skill.text = _skill_label()
     btn_pause.pressed.connect(_on_pause)
     btn_resume.pressed.connect(_on_resume)
     btn_pause_home.pressed.connect(_on_quit)
@@ -202,6 +208,10 @@ func _process(delta: float) -> void:
     spawn_timer -= delta
     attack_timer -= delta
     idle_timer -= delta
+    if skill_cd > 0.0:
+        skill_cd -= delta
+        if skill_cd <= 0.0:
+            btn_skill.text = _skill_label()
     if spawn_timer <= 0.0:
         _spawn_enemy()
         # Slower start for the first 5 waves, then standard ramp.
@@ -580,6 +590,7 @@ func _pick_extra_class(slot: String, cid: String) -> void:
     _close_milestone()
     hero_label.text = _hero_initials()
     _style_hero()
+    btn_skill.text = _skill_label()
     _refresh_hud()
 
 func _open_perk_picker() -> void:
@@ -709,6 +720,61 @@ func _on_restart() -> void:
     HordePerks.reset_for_run()
     SaveSystem.save()
     get_tree().reload_current_scene()
+
+const SKILL_BY_CLASS := {
+    "warrior":     {"label": "CLEAVE",  "kind": "aoe"},
+    "rogue":       {"label": "BLINK",   "kind": "heal_invuln"},
+    "wizard":      {"label": "FIREBALL","kind": "single_huge"},
+    "necromancer": {"label": "REAP",    "kind": "drain_aoe"},
+    "bard":        {"label": "ANTHEM",  "kind": "atk_buff"},
+}
+
+func _skill_def() -> Dictionary:
+    return SKILL_BY_CLASS.get(HordeState.primary, SKILL_BY_CLASS["warrior"])
+
+func _skill_label() -> String:
+    if skill_cd > 0.0: return "%s (%.1fs)" % [String(_skill_def()["label"]), skill_cd]
+    return String(_skill_def()["label"])
+
+func _on_skill_used() -> void:
+    if skill_cd > 0.0 or _is_paused(): return
+    var kind: String = String(_skill_def()["kind"])
+    var dmg := _hero_damage()
+    match kind:
+        "aoe":
+            for e in enemies.duplicate():
+                _damage_enemy(e, dmg * 2)
+            _flash_screen(T.WARNING, 0.4, 0.25)
+            _shake(10)
+        "heal_invuln":
+            HordeState.hero_hp = HordeState.hero_max_hp
+            _flash_screen(T.RARITY_UNCOMMON, 0.4, 0.25)
+            _refresh_hud()
+        "single_huge":
+            # Find biggest-HP enemy and atomize.
+            var best: Dictionary = {}
+            var best_hp: int = 0
+            for e in enemies:
+                if int(e["hp"]) > best_hp: best_hp = int(e["hp"]); best = e
+            if not best.is_empty():
+                _damage_enemy(best, dmg * 12)
+                _spawn_strike(best["node"].position + best["node"].size * 0.5)
+                _flash_screen(T.RARITY_RARE, 0.5, 0.25)
+        "drain_aoe":
+            for e in enemies.duplicate():
+                _damage_enemy(e, dmg)
+            HordeState.hero_hp = min(HordeState.hero_max_hp,
+                HordeState.hero_hp + dmg)
+            _flash_screen(T.RARITY_EPIC, 0.4, 0.25)
+            _refresh_hud()
+        "atk_buff":
+            HordePerks.atk_speed_bonus += 0.5
+            var t := get_tree().create_timer(8.0, true, false, true)
+            t.timeout.connect(func(): HordePerks.atk_speed_bonus = max(0.0, HordePerks.atk_speed_bonus - 0.5))
+            _flash_screen(T.SECONDARY, 0.3, 0.25)
+    skill_cd = SKILL_COOLDOWN
+    btn_skill.text = _skill_label()
+    SfxBus.play("perk_pick", -4.0)
 
 func _on_pause() -> void:
     paused_by_user = true
