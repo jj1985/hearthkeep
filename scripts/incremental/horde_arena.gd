@@ -499,7 +499,7 @@ func _next_wave() -> void:
     _flash_screen(T.PRIMARY, 0.18, 0.22)
     SfxBus.play("levelup", -8.0)
     if HordeState.wave % 10 == 0:
-        _spawn_boss()
+        _telegraph_boss()
     if HordeState.wave % 5 == 0:
         _open_perk_picker()
     elif HordeState.wave % 7 == 0:
@@ -511,6 +511,24 @@ func _next_wave() -> void:
             Vector2(arena.size.x * 0.5 - 100, 60), T.RARITY_MYTHIC)
         _flash_screen(T.RARITY_MYTHIC, 0.8, 0.5)
         SaveSystem.save()
+
+func _telegraph_boss() -> void:
+    var boss_id: String = "boss_warchief"
+    if HordeState.wave >= 30: boss_id = "boss_dragon"
+    var def: Dictionary = ENEMY_TYPES[boss_id]
+    var name: String = String(def["label"])
+    # Three quick floating warnings + a screen flash, then spawn.
+    for i in 3:
+        var t := get_tree().create_timer(float(i) * 0.9, true, false, true)
+        t.timeout.connect(func():
+            if not is_instance_valid(self): return
+            _floating_text("INCOMING: %s — %ds" % [name, 3 - i],
+                Vector2(arena.size.x * 0.5 - 140, 60), T.SECONDARY)
+            _flash_screen(T.ERROR, 0.25, 0.18)
+            SfxBus.play("low_hp", -10.0))
+    var spawn_t := get_tree().create_timer(2.7, true, false, true)
+    spawn_t.timeout.connect(func():
+        if is_instance_valid(self): _spawn_boss())
 
 func _spawn_boss() -> void:
     var boss_id: String = "boss_warchief"
