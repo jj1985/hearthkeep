@@ -80,6 +80,8 @@ var reroll_cost: int = 0
 
 var combo: int = 0
 var combo_decay: float = 0.0
+var combo_peak: int = 0
+var run_embers_earned: int = 0
 
 # Mid-run merchant buffs — apply through wave N, then expire.
 var temp_dmg_until: int = -1
@@ -115,6 +117,8 @@ func _idle_gold_per_sec() -> float:
 
 func _ready() -> void:
     rng.randomize()
+    combo_peak = 0
+    run_embers_earned = 0
     SaveSystem.load_save()
     # Run state is now restored by load_save (perks + wave + class loadout).
     # The title screen's NEW RUN handler resets HordeState/HordePerks before
@@ -435,6 +439,7 @@ func _damage_enemy(e: Dictionary, amount: int) -> void:
         var was_boss: bool = bool(e.get("boss", false))
         combo += 1
         combo_decay = COMBO_WINDOW
+        if combo > combo_peak: combo_peak = combo
         var gold_amt: int = int(round(int(e.get("gold", 1))
             * Upgrades.ember_gold_mult() * HordePerks.gold_mult * _combo_mult()
             * (1.0 + GameState.rebirths * 0.25)))
@@ -443,6 +448,7 @@ func _damage_enemy(e: Dictionary, amount: int) -> void:
         if was_boss:
             var ember_reward: int = 1 + HordeState.wave / 10
             GameState.add_embers(ember_reward)
+            run_embers_earned += ember_reward
             GameState.bosses_felled += 1
             _floating_text("+%d Embers" % ember_reward,
                 Vector2(arena.size.x * 0.5 - 50, arena.size.y * 0.4), T.SECONDARY)
@@ -878,16 +884,32 @@ func _on_hero_died() -> void:
     GameState.gold = max(0, GameState.gold - lost)
     SaveSystem.save()
     milestone_title.text = "FALLEN ON WAVE %d" % HordeState.wave
-    milestone_body.text = "%d kills · -%d gold spilled. Embers and upgrades persist." % [
-        HordeState.kills_this_run, lost,
-    ]
+    var perk_count: int = HordePerks.taken_ids.size()
+    var lines: Array[String] = []
+    lines.append("Kills:   %d" % HordeState.kills_this_run)
+    lines.append("Gold:    -%d (spilled)" % lost)
+    if combo_peak >= 5:
+        lines.append("Peak combo: x%d  (%.2f×)" % [combo_peak,
+            1.0 + (float(combo_peak) / float(combo_peak + COMBO_HALF_AT))])
+    if run_embers_earned > 0:
+        lines.append("Embers:  +%d" % run_embers_earned)
+    lines.append("Perks taken: %d" % perk_count)
+    if HordeState.wave > GameState.best_run_wave:
+        lines.append("⚑ NEW BEST WAVE")
+    milestone_body.text = "\n".join(lines)
     for c in milestone_choices.get_children(): c.queue_free()
     var b := Button.new()
-    b.text = "RETURN HOME"
-    b.custom_minimum_size = Vector2(0, 64)
+    b.text = "VIEW UPGRADES"
+    b.custom_minimum_size = Vector2(0, 56)
     UiStyle_.apply_primary(b)
-    b.pressed.connect(_on_return_after_death)
+    b.pressed.connect(_on_death_view_upgrades)
     milestone_choices.add_child(b)
+    var h := Button.new()
+    h.text = "RETURN HOME"
+    h.custom_minimum_size = Vector2(0, 56)
+    UiStyle_.apply_secondary(h)
+    h.pressed.connect(_on_return_after_death)
+    milestone_choices.add_child(h)
     milestone_overlay.visible = true
     milestone_skip.visible = false
     SfxBus.play("dragon_phase_enraged", 0.0)
@@ -897,6 +919,12 @@ func _on_return_after_death() -> void:
     HordePerks.reset_for_run()
     SaveSystem.save()
     get_tree().change_scene_to_file("res://scenes/title.tscn")
+
+func _on_death_view_upgrades() -> void:
+    HordeState.reset_run()
+    HordePerks.reset_for_run()
+    SaveSystem.save()
+    get_tree().change_scene_to_file("res://scenes/upgrades.tscn")
 
 func _on_restart() -> void:
     HordeState.reset_run()
