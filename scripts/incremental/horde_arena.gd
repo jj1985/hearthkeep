@@ -68,6 +68,7 @@ const HERO_RANGE := 220.0
 @onready var mute_check: CheckBox = $Overlay/Pause/V/MuteRow/MuteCheck
 @onready var motion_check: CheckBox = $Overlay/Pause/V/MuteRow/MotionCheck
 @onready var btn_restart: Button = $Overlay/Pause/V/Restart
+@onready var pause_stats: Label = $Overlay/Pause/V/Stats
 @onready var tutorial_panel: Panel = $Overlay/Tutorial
 @onready var tutorial_label: Label = $Overlay/Tutorial/Label
 @onready var hud_idle: Label = $HUD/Top/Idle
@@ -1328,7 +1329,21 @@ func _on_pause() -> void:
     paused_by_user = true
     pause_overlay.visible = true
     overlay_scrim.visible = true
+    _refresh_pause_stats()
     SaveSystem.save()
+
+func _refresh_pause_stats() -> void:
+    if pause_stats == null: return
+    var crit_pct: float = (Upgrades.crit_chance() + HordePerks.crit_bonus) * 100.0
+    var lines: Array[String] = [
+        "Damage: %d   ·   Atk/sec: %.1f" % [_hero_damage(), _hero_atk_rate()],
+        "Range: %d   ·   Crit: %.0f%%" % [int(_hero_range()), crit_pct],
+        "Gold mult: %.2f×   ·   Wave bonus: %.2f×" % [
+            Upgrades.ember_gold_mult() * HordePerks.gold_mult * (1.0 + GameState.rebirths * 0.25),
+            HordePerks.wave_bonus_mult,
+        ],
+    ]
+    pause_stats.text = "\n".join(lines)
 
 func _on_motion_toggled(reduced: bool) -> void:
     if reduced:

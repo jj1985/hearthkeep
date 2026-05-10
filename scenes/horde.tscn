@@ -246,6 +246,10 @@ theme_override_constants/separation = 12
 text = "PAUSED"
 horizontal_alignment = 1
 
+[node name="Stats" type="Label" parent="Overlay/Pause/V"]
+text = ""
+horizontal_alignment = 1
+
 [node name="Resume" type="Button" parent="Overlay/Pause/V"]
 custom_minimum_size = Vector2(0, 64)
 text = "RESUME"
