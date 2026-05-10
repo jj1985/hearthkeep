@@ -39,6 +39,14 @@ func test_tertiary_slot_locked_until_wave_25() -> void:
         HordeState.advance_wave()
     assert_true(HordeState.can_pick_tertiary())
 
+func test_slot_unlock_signal_fires_with_correct_slot() -> void:
+    var seen: Array[String] = []
+    HordeState.slot_unlocked.connect(func(s: String): seen.append(s))
+    for i in 9: HordeState.advance_wave()  # wave 10
+    assert_true(seen.has("secondary"))
+    for i in 15: HordeState.advance_wave()  # wave 25
+    assert_true(seen.has("tertiary"))
+
 func test_available_classes_excludes_already_picked() -> void:
     GameState.unlocked_classes = ["warrior", "rogue", "wizard"] as Array[String]
     HordeState.primary = "warrior"

@@ -95,6 +95,10 @@ custom_minimum_size = Vector2(220, 64)
 size_flags_horizontal = 3
 text = "STRIKE"
 
+[node name="Pause" type="Button" parent="HUD/Bottom"]
+custom_minimum_size = Vector2(120, 64)
+text = "PAUSE"
+
 [node name="Quit" type="Button" parent="HUD/Bottom"]
 custom_minimum_size = Vector2(140, 64)
 text = "RETURN HOME"
@@ -143,3 +147,35 @@ theme_override_constants/separation = 8
 [node name="Skip" type="Button" parent="Overlay/Milestone/V"]
 custom_minimum_size = Vector2(0, 56)
 text = "Maybe later"
+
+[node name="Pause" type="Panel" parent="Overlay"]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -160.0
+offset_right = 200.0
+offset_bottom = 160.0
+visible = false
+
+[node name="V" type="VBoxContainer" parent="Overlay/Pause"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = 24.0
+offset_right = -24.0
+offset_bottom = -24.0
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="Overlay/Pause/V"]
+text = "PAUSED"
+horizontal_alignment = 1
+
+[node name="Resume" type="Button" parent="Overlay/Pause/V"]
+custom_minimum_size = Vector2(0, 64)
+text = "RESUME"
+
+[node name="Home" type="Button" parent="Overlay/Pause/V"]
+custom_minimum_size = Vector2(0, 56)
+text = "RETURN HOME"

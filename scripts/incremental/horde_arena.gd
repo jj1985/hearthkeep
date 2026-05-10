@@ -49,6 +49,10 @@ const HERO_RANGE := 220.0
 @onready var milestone_skip: Button = $Overlay/Milestone/V/Skip
 @onready var btn_quit: Button = $HUD/Bottom/Quit
 @onready var btn_strike: Button = $HUD/Bottom/Strike
+@onready var btn_pause: Button = $HUD/Bottom/Pause
+@onready var pause_overlay: Panel = $Overlay/Pause
+@onready var btn_resume: Button = $Overlay/Pause/V/Resume
+@onready var btn_pause_home: Button = $Overlay/Pause/V/Home
 @onready var hud_idle: Label = $HUD/Top/Idle
 @onready var hud_embers: Label = $HUD/Top/Embers
 @onready var rng: RandomNumberGenerator = RandomNumberGenerator.new()
@@ -60,7 +64,11 @@ var idle_timer: float = 0.0
 var wave_kills_target: int = 8
 var wave_kills_progress: int = 0
 var paused_for_milestone: bool = false
+var paused_by_user: bool = false
 var pending_slot: String = ""    # "secondary" | "tertiary" | ""
+
+func _is_paused() -> bool:
+    return paused_for_milestone or paused_by_user
 
 # Idle gold/sec scales with deepest_floor + lifetime kills tier.
 func _idle_gold_per_sec() -> float:
@@ -79,11 +87,18 @@ func _ready() -> void:
     HordeState.class_unlocked.connect(_on_class_unlocked)
     btn_quit.pressed.connect(_on_quit)
     btn_strike.pressed.connect(_on_player_strike)
+    btn_pause.pressed.connect(_on_pause)
+    btn_resume.pressed.connect(_on_resume)
+    btn_pause_home.pressed.connect(_on_quit)
     milestone_skip.pressed.connect(_close_milestone)
     bg.color = T.SURFACE_DIM
     UiStyle_.apply_secondary(btn_quit)
     UiStyle_.apply_primary(btn_strike)
+    UiStyle_.apply_secondary(btn_pause)
+    UiStyle_.apply_primary(btn_resume)
+    UiStyle_.apply_secondary(btn_pause_home)
     UiStyle_.apply_secondary(milestone_skip)
+    pause_overlay.visible = false
     _layout_hero()
     _refresh_hud()
     _hide_milestone()
@@ -119,7 +134,7 @@ func _loadout_text() -> String:
     return " / ".join(parts)
 
 func _process(delta: float) -> void:
-    if paused_for_milestone:
+    if _is_paused():
         return
     spawn_timer -= delta
     attack_timer -= delta
@@ -282,7 +297,7 @@ func _damage_enemy(e: Dictionary, amount: int) -> void:
             _next_wave()
 
 func _on_player_strike() -> void:
-    if paused_for_milestone:
+    if _is_paused():
         return
     # Tap deals a fat hit on the closest enemy and visibly shakes the arena.
     var hero_center: Vector2 = hero.position + hero.size * 0.5
@@ -409,6 +424,9 @@ func _on_milestone(_id: String, label: String) -> void:
 
 func _on_class_unlocked(class_id: String) -> void:
     _show_milestone_toast("%s class unlocked" % class_id.capitalize())
+    # If a slot milestone fired earlier without options, re-open the picker.
+    if pending_slot != "":
+        _open_slot_picker(pending_slot)
 
 func _on_slot_unlocked(slot: String) -> void:
     pending_slot = slot
@@ -418,15 +436,20 @@ func _show_milestone_toast(label: String) -> void:
     _floating_text(label, Vector2(arena.size.x * 0.5 - 80, 80), T.PRIMARY)
 
 func _open_slot_picker(slot: String) -> void:
-    var label: String = "Choose your %s class" % slot
-    milestone_title.text = label
+    var options: Array[String] = HordeState.available_classes_for_extra_slot()
+    if options.is_empty():
+        # No second class unlocked yet — defer the picker until one is.
+        # The milestone is already marked done, so we re-fire when the next
+        # class_unlocked signal arrives.
+        pending_slot = slot
+        _floating_text("Slot ready — unlock a class to fill it",
+            Vector2(arena.size.x * 0.5 - 140, 80), T.WARNING)
+        return
+    pending_slot = ""
+    milestone_title.text = "Choose your %s class" % slot
     milestone_body.text = "Your power has grown. Pick another path to fuse with %s." % HordeState.primary.capitalize()
     for c in milestone_choices.get_children():
         c.queue_free()
-    var options: Array[String] = HordeState.available_classes_for_extra_slot()
-    if options.is_empty():
-        # Nothing else unlocked yet — milestone fired but no class to pick.
-        milestone_body.text += "\n\nUnlock another class first by stacking kills."
     for cid in options:
         var b := Button.new()
         b.text = cid.capitalize()
@@ -460,3 +483,15 @@ func _hide_milestone() -> void:
 func _on_quit() -> void:
     SaveSystem.save()
     get_tree().change_scene_to_file("res://scenes/title.tscn")
+
+func _on_pause() -> void:
+    paused_by_user = true
+    pause_overlay.visible = true
+    overlay_scrim.visible = true
+    SaveSystem.save()
+
+func _on_resume() -> void:
+    paused_by_user = false
+    pause_overlay.visible = false
+    if not paused_for_milestone:
+        overlay_scrim.visible = false
