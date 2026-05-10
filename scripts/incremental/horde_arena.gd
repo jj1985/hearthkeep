@@ -72,6 +72,7 @@ var attack_timer: float = 0.0
 var idle_timer: float = 0.0
 var skill_cd: float = 0.0
 const SKILL_COOLDOWN := 6.0
+var reroll_cost: int = 0
 var wave_kills_target: int = 8
 var wave_kills_progress: int = 0
 var paused_for_milestone: bool = false
@@ -607,6 +608,14 @@ func _pick_extra_class(slot: String, cid: String) -> void:
     _refresh_hud()
 
 func _open_perk_picker() -> void:
+    reroll_cost = 50
+    _populate_perk_picker()
+    paused_for_milestone = true
+    milestone_overlay.visible = true
+    overlay_scrim.visible = true
+    SfxBus.play("perk_pick", -6.0)
+
+func _populate_perk_picker() -> void:
     var picks: Array = HordePerks.roll(rng, 3)
     if picks.is_empty(): return
     milestone_title.text = "Perk pick — wave %d" % HordeState.wave
@@ -623,10 +632,21 @@ func _open_perk_picker() -> void:
         UiStyle_.apply_primary(b)
         b.pressed.connect(_on_perk_chosen.bind(d))
         milestone_choices.add_child(b)
-    paused_for_milestone = true
-    milestone_overlay.visible = true
-    overlay_scrim.visible = true
-    SfxBus.play("perk_pick", -6.0)
+    var rb := Button.new()
+    rb.text = "Reroll (%d g)" % reroll_cost
+    rb.custom_minimum_size = Vector2(0, 48)
+    rb.disabled = GameState.gold < reroll_cost
+    UiStyle_.apply_secondary(rb)
+    rb.pressed.connect(_on_perk_reroll)
+    milestone_choices.add_child(rb)
+
+func _on_perk_reroll() -> void:
+    if GameState.gold < reroll_cost: return
+    GameState.gold -= reroll_cost
+    EventBus.currency_changed.emit("gold", -reroll_cost, GameState.gold)
+    reroll_cost = int(round(reroll_cost * 1.6))
+    _populate_perk_picker()
+    _refresh_hud()
 
 func _on_perk_chosen(perk: Dictionary) -> void:
     HordePerks.apply(perk)
