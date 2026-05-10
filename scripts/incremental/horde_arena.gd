@@ -164,6 +164,7 @@ func _ready() -> void:
     _refresh_perk_row()
     _hide_milestone()
     _maybe_show_tutorial()
+    MusicDirector.set_layer(MusicDirector.Layer.COMBAT)
 
 const ZONES := [
     {"min":1,  "name":"Greenmarch", "floor": Color(0.07, 0.10, 0.07)},
@@ -577,6 +578,10 @@ func _next_wave() -> void:
     SfxBus.play("levelup", -8.0)
     if HordeState.wave % 10 == 0:
         _telegraph_boss()
+        MusicDirector.set_layer(MusicDirector.Layer.BOSS)
+    elif HordeState.wave % 10 == 1 and HordeState.wave > 1:
+        # The wave just after a boss returns to combat layer.
+        MusicDirector.set_layer(MusicDirector.Layer.COMBAT)
     if HordeState.wave % 5 == 0:
         _open_perk_picker()
     elif HordeState.wave % 7 == 0:
@@ -1181,15 +1186,20 @@ func _on_motion_toggled(reduced: bool) -> void:
     Settings.save()
 
 func _on_mute_toggled(muted: bool) -> void:
-    # Stash the previous level so unchecking restores it instead of
-    # snapping back to 0.
+    # Mute SFX *and* music together — single switch matches UX expectation
+    # (one "mute everything" checkbox).
     if muted:
         if Settings.sfx_volume > 0.001:
             Settings.set_meta("prev_sfx_vol", Settings.sfx_volume)
+        if Settings.music_volume > 0.001:
+            Settings.set_meta("prev_music_vol", Settings.music_volume)
         Settings.sfx_volume = 0.0
+        Settings.music_volume = 0.0
     else:
-        var prev := float(Settings.get_meta("prev_sfx_vol", 0.8))
-        Settings.sfx_volume = prev if prev > 0.05 else 0.8
+        var prev_sfx := float(Settings.get_meta("prev_sfx_vol", 0.8))
+        var prev_music := float(Settings.get_meta("prev_music_vol", 0.7))
+        Settings.sfx_volume = prev_sfx if prev_sfx > 0.05 else 0.8
+        Settings.music_volume = prev_music if prev_music > 0.05 else 0.7
     Settings.apply_audio_buses()
     Settings.save()
 
