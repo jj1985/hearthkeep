@@ -1128,6 +1128,9 @@ func _on_hero_died() -> void:
         GameState.best_run_wave = HordeState.wave
     if HordeState.kills_this_run > GameState.best_run_kills:
         GameState.best_run_kills = HordeState.kills_this_run
+    var class_best: int = int(GameState.best_wave_by_class.get(HordeState.primary, 0))
+    if HordeState.wave > class_best:
+        GameState.best_wave_by_class[HordeState.primary] = HordeState.wave
     var lost: int = GameState.gold / 2
     GameState.gold = max(0, GameState.gold - lost)
     SaveSystem.save()

@@ -43,6 +43,7 @@ var login_streak: int = 0
 var last_login_day: int = 0                      # unix-day of last daily reward
 var best_run_wave: int = 0
 var best_run_kills: int = 0
+var best_wave_by_class: Dictionary = {}    # primary class id -> best wave
 
 func tally_kill(monster_id: String) -> void:
     lifetime_kills_by_type[monster_id] = int(lifetime_kills_by_type.get(monster_id, 0)) + 1

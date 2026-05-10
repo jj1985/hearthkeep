@@ -43,6 +43,7 @@ func save() -> void:
         "last_login_day": GameState.last_login_day,
         "best_run_wave": GameState.best_run_wave,
         "best_run_kills": GameState.best_run_kills,
+        "best_wave_by_class": GameState.best_wave_by_class,
     }
     GameState.last_save_unix = int(payload["last_save_unix"])
     f.store_string(JSON.stringify(payload))
@@ -96,6 +97,7 @@ func load_save() -> bool:
     GameState.last_login_day = int(d.get("last_login_day", 0))
     GameState.best_run_wave = int(d.get("best_run_wave", 0))
     GameState.best_run_kills = int(d.get("best_run_kills", 0))
+    GameState.best_wave_by_class = d.get("best_wave_by_class", {})
     HordePerks.reset_for_run()
     var perks: Array = d.get("run_perks", [])
     for pid in perks:

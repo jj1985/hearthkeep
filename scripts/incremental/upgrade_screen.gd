@@ -121,6 +121,12 @@ func _refresh_stats() -> void:
         ])
     if GameState.login_streak > 0:
         lines.append("Login streak: %d" % GameState.login_streak)
+    if not GameState.best_wave_by_class.is_empty():
+        var by_class: Array = []
+        for cid in GameState.best_wave_by_class.keys():
+            by_class.append("%s W%d" % [String(cid).capitalize(),
+                int(GameState.best_wave_by_class[cid])])
+        lines.append("  ·  ".join(by_class))
     stats_label.text = "  ·  ".join(lines)
     btn_jump_10.visible = GameState.best_run_wave >= 10
     btn_jump_25.visible = GameState.best_run_wave >= 25
