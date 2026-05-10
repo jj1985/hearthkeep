@@ -47,3 +47,17 @@ func test_daily_login_break_resets_streak() -> void:
     GameState.embers = 0
     SaveSystem.process_daily_login()
     assert_eq(GameState.login_streak, 1)
+
+func test_daily_login_assigns_a_curse() -> void:
+    GameState.last_login_day = 0
+    GameState.daily_curse = ""
+    SaveSystem.process_daily_login()
+    assert_ne(GameState.daily_curse, "")
+    assert_true(HordeState.CURSES.has(GameState.daily_curse))
+
+func test_daily_login_clears_active_challenge_flag() -> void:
+    GameState.last_login_day = 0
+    GameState.challenge_active = true
+    SaveSystem.process_daily_login()
+    # Each new login day requires re-opting in.
+    assert_false(GameState.challenge_active)

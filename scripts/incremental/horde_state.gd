@@ -36,11 +36,24 @@ func max_hp() -> int:
     hp += GameState.deepest_floor / 2
     if secondary != "": hp += 15
     if tertiary != "": hp += 20
+    if GameState.challenge_active and GameState.daily_curse == "glass_cannon":
+        hp = max(10, hp / 2)
     return hp
 
 # --- Milestones ---------------------------------------------------------
 # kills: cumulative across runs (uses GameState.lifetime_kills)
 # A milestone fires once. Achieved IDs are persisted via GameState.meta_unlocks.
+const CURSES := {
+    "bare_hands":   {"label": "Bare Hands",   "desc": "SKILL button is disabled."},
+    "glass_cannon": {"label": "Glass Cannon", "desc": "Hero HP is halved."},
+    "spendthrift":  {"label": "Spendthrift",  "desc": "No merchant access."},
+    "steady_pace":  {"label": "Steady Pace",  "desc": "No STRIKE — auto-attack only."},
+    "no_strike":    {"label": "Pacifist",     "desc": "STRIKE is disabled."},
+}
+
+func curse_def(id: String) -> Dictionary:
+    return CURSES.get(id, {})
+
 const KILL_UNLOCKS := [
     {"id":"unlock_rogue",       "kills": 100,   "class":"rogue",       "label":"Rogue path opens"},
     {"id":"unlock_wizard",      "kills": 500,   "class":"wizard",      "label":"Wizard path opens"},

@@ -462,11 +462,12 @@ func _damage_enemy(e: Dictionary, amount: int) -> void:
         if combo > combo_peak: combo_peak = combo
         var gold_amt: int = int(round(int(e.get("gold", 1))
             * Upgrades.ember_gold_mult() * HordePerks.gold_mult * _combo_mult()
-            * (1.0 + GameState.rebirths * 0.25)))
+            * (1.0 + GameState.rebirths * 0.25)
+            * _challenge_reward_mult()))
         HordeState.record_kill(String(e.get("id", "skeleton")), gold_amt)
         _pop(hud_kills); _pop(hud_gold)
         if was_boss:
-            var ember_reward: int = 1 + HordeState.wave / 10
+            var ember_reward: int = int(round((1 + HordeState.wave / 10) * _challenge_reward_mult()))
             GameState.add_embers(ember_reward)
             run_embers_earned += ember_reward
             GameState.bosses_felled += 1
@@ -485,8 +486,16 @@ func _damage_enemy(e: Dictionary, amount: int) -> void:
         if wave_kills_progress >= wave_kills_target:
             _next_wave()
 
+func _challenge_disables(curse: String) -> bool:
+    return GameState.challenge_active and GameState.daily_curse == curse
+
+func _challenge_reward_mult() -> float:
+    return 2.0 if GameState.challenge_active else 1.0
+
 func _on_player_strike() -> void:
     if _is_paused():
+        return
+    if _challenge_disables("steady_pace") or _challenge_disables("no_strike"):
         return
     # Tap deals a fat hit on the closest enemy and visibly shakes the arena.
     var hero_center: Vector2 = hero.position + hero.size * 0.5
@@ -529,7 +538,8 @@ func _next_wave() -> void:
     if HordeState.wave % 5 == 0:
         _open_perk_picker()
     elif HordeState.wave % 7 == 0:
-        _open_merchant()
+        if not _challenge_disables("spendthrift"):
+            _open_merchant()
     if HordeState.wave == 50 and not bool(GameState.meta_unlocks.get("wave_50", false)):
         GameState.meta_unlocks["wave_50"] = true
         GameState.add_embers(25)
@@ -1028,6 +1038,7 @@ func _skill_label() -> String:
 
 func _on_skill_used() -> void:
     if skill_cd > 0.0 or _is_paused(): return
+    if _challenge_disables("bare_hands"): return
     var kind: String = String(_skill_def()["kind"])
     var dmg := _hero_damage()
     match kind:

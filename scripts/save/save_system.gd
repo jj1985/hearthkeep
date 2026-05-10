@@ -35,6 +35,8 @@ func save() -> void:
         "run_secondary": HordeState.secondary,
         "run_tertiary": HordeState.tertiary,
         "rebirths": GameState.rebirths,
+        "daily_curse": GameState.daily_curse,
+        "challenge_active": GameState.challenge_active,
         "login_streak": GameState.login_streak,
         "last_login_day": GameState.last_login_day,
         "best_run_wave": GameState.best_run_wave,
@@ -84,6 +86,8 @@ func load_save() -> bool:
     HordeState.secondary = String(d.get("run_secondary", ""))
     HordeState.tertiary = String(d.get("run_tertiary", ""))
     GameState.rebirths = int(d.get("rebirths", 0))
+    GameState.daily_curse = String(d.get("daily_curse", ""))
+    GameState.challenge_active = bool(d.get("challenge_active", false))
     GameState.login_streak = int(d.get("login_streak", 0))
     GameState.last_login_day = int(d.get("last_login_day", 0))
     GameState.best_run_wave = int(d.get("best_run_wave", 0))
@@ -119,8 +123,14 @@ func process_daily_login() -> Dictionary:
     GameState.last_login_day = day
     var bonus: int = 1 + min(6, GameState.login_streak / 2)  # caps at 7 ember/day
     GameState.add_embers(bonus)
+    var curses: Array = ["bare_hands", "glass_cannon", "spendthrift", "steady_pace", "no_strike"]
+    var rng := RandomNumberGenerator.new()
+    rng.seed = day
+    GameState.daily_curse = String(curses[rng.randi_range(0, curses.size() - 1)])
+    GameState.challenge_active = false  # require explicit opt-in each day
     save()
-    return {"ember": bonus, "streak": GameState.login_streak}
+    return {"ember": bonus, "streak": GameState.login_streak,
+        "curse": GameState.daily_curse}
 
 func _to_str_array(v: Variant) -> Array[String]:
     var out: Array[String] = []

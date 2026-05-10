@@ -27,6 +27,7 @@ enum State { SPLASH, TITLE, MENU }
 @onready var btn_codex: Button = $SafeArea/Menu/V/Codex
 @onready var btn_settings: Button = $SafeArea/Menu/V/Settings
 @onready var milestone_hint: Label = $SafeArea/Menu/V/MilestoneHint
+@onready var challenge_check: CheckBox = $SafeArea/Menu/V/ChallengeRow/ChallengeCheck
 
 var state: int = State.SPLASH
 var pulse_t: float = 0.0
@@ -76,6 +77,26 @@ func _wire_buttons() -> void:
     btn_continue.visible = _has_save()
     _refresh_meta_subtitle()
     _refresh_milestone_hint()
+    _refresh_challenge_row()
+    challenge_check.toggled.connect(_on_challenge_toggled)
+
+func _refresh_challenge_row() -> void:
+    if GameState.daily_curse == "":
+        challenge_check.visible = false
+        return
+    var def: Dictionary = HordeState.curse_def(GameState.daily_curse)
+    if def.is_empty():
+        challenge_check.visible = false
+        return
+    challenge_check.visible = true
+    challenge_check.button_pressed = GameState.challenge_active
+    challenge_check.text = "Daily: %s — %s  ·  ×2 rewards" % [
+        String(def["label"]), String(def["desc"]),
+    ]
+
+func _on_challenge_toggled(on: bool) -> void:
+    GameState.challenge_active = on
+    SaveSystem.save()
     for b in [btn_new_run, btn_continue, btn_villa, btn_codex, btn_settings]:
         UiAnim_.bind_press_feedback(b)
 
