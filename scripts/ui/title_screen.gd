@@ -73,6 +73,10 @@ func _wire_buttons() -> void:
 
 func _refresh_milestone_hint() -> void:
     var lines: Array[String] = []
+    if GameState.deepest_floor > 0:
+        lines.append("Best wave: %d" % GameState.deepest_floor)
+    if GameState.bosses_felled > 0:
+        lines.append("Bosses felled: %d" % GameState.bosses_felled)
     var km: Dictionary = HordeState.next_kill_milestone()
     if not km.is_empty():
         var need: int = int(km["kills"])
@@ -82,13 +86,12 @@ func _refresh_milestone_hint() -> void:
     var wm: Dictionary = HordeState.next_wave_milestone()
     if not wm.is_empty():
         var need_w: int = int(wm["wave"])
-        var have_w: int = GameState.deepest_floor
-        lines.append("Next slot: wave %d (best %d)" % [need_w, have_w])
+        lines.append("Next slot: wave %d" % need_w)
     if lines.is_empty():
         milestone_hint.text = "All paths unlocked. Push deeper for Embers."
         milestone_hint.add_theme_color_override("font_color", T.PRIMARY)
     else:
-        milestone_hint.text = " · ".join(lines)
+        milestone_hint.text = "  ·  ".join(lines)
         milestone_hint.add_theme_color_override("font_color", T.ON_SURFACE_MUTED)
 
 func _refresh_meta_subtitle() -> void:
