@@ -41,7 +41,15 @@ func _ready() -> void:
     _wire_buttons()
     _apply_typography()
     _award_offline_progress()
+    _award_daily_login()
     _enter_splash()
+
+func _award_daily_login() -> void:
+    var res: Dictionary = SaveSystem.process_daily_login()
+    var bonus: int = int(res.get("ember", 0))
+    if bonus <= 0: return
+    var streak: int = int(res.get("streak", 1))
+    title_subtitle.text += "  ·  Day %d streak: +%d ember" % [streak, bonus]
 
 func _award_offline_progress() -> void:
     var seconds: int = SaveSystem.seconds_since_last_save()

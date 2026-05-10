@@ -20,3 +20,30 @@ func test_offline_capped_at_8_hours() -> void:
     GameState.last_save_unix = now - 86400 * 3
     var s := SaveSystem.seconds_since_last_save()
     assert_eq(s, SaveSystem.OFFLINE_CAP_SECONDS)
+
+func test_daily_login_first_time_awards_one_ember() -> void:
+    GameState.embers = 0
+    GameState.last_login_day = 0
+    GameState.login_streak = 0
+    var r := SaveSystem.process_daily_login()
+    assert_eq(int(r["ember"]), 1)
+    assert_eq(int(r["streak"]), 1)
+    assert_eq(GameState.embers, 1)
+
+func test_daily_login_second_call_same_day_no_double_dip() -> void:
+    GameState.embers = 0
+    GameState.last_login_day = 0
+    GameState.login_streak = 0
+    SaveSystem.process_daily_login()
+    var balance := GameState.embers
+    var r := SaveSystem.process_daily_login()
+    assert_eq(int(r["ember"]), 0)
+    assert_eq(GameState.embers, balance)
+
+func test_daily_login_break_resets_streak() -> void:
+    var today: int = int(Time.get_unix_time_from_system() / 86400)
+    GameState.last_login_day = today - 5  # five-day gap
+    GameState.login_streak = 4
+    GameState.embers = 0
+    SaveSystem.process_daily_login()
+    assert_eq(GameState.login_streak, 1)

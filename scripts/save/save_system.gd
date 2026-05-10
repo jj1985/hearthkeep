@@ -34,6 +34,10 @@ func save() -> void:
         "run_primary": HordeState.primary,
         "run_secondary": HordeState.secondary,
         "run_tertiary": HordeState.tertiary,
+        "login_streak": GameState.login_streak,
+        "last_login_day": GameState.last_login_day,
+        "best_run_wave": GameState.best_run_wave,
+        "best_run_kills": GameState.best_run_kills,
     }
     GameState.last_save_unix = int(payload["last_save_unix"])
     f.store_string(JSON.stringify(payload))
@@ -78,6 +82,10 @@ func load_save() -> bool:
     HordeState.primary = String(d.get("run_primary", "warrior"))
     HordeState.secondary = String(d.get("run_secondary", ""))
     HordeState.tertiary = String(d.get("run_tertiary", ""))
+    GameState.login_streak = int(d.get("login_streak", 0))
+    GameState.last_login_day = int(d.get("last_login_day", 0))
+    GameState.best_run_wave = int(d.get("best_run_wave", 0))
+    GameState.best_run_kills = int(d.get("best_run_kills", 0))
     HordePerks.reset_for_run()
     var perks: Array = d.get("run_perks", [])
     for pid in perks:
@@ -95,6 +103,22 @@ func seconds_since_last_save() -> int:
     if GameState.last_save_unix <= 0: return 0
     var now: int = int(Time.get_unix_time_from_system())
     return clamp(now - GameState.last_save_unix, 0, OFFLINE_CAP_SECONDS)
+
+# Returns the embers awarded if this session is a new login day, plus the
+# new streak length. Resets streak to 1 if more than one day has passed.
+func process_daily_login() -> Dictionary:
+    var day: int = int(Time.get_unix_time_from_system() / 86400)
+    if day == GameState.last_login_day:
+        return {"ember": 0, "streak": GameState.login_streak}
+    if GameState.last_login_day == 0 or day - GameState.last_login_day > 1:
+        GameState.login_streak = 1
+    else:
+        GameState.login_streak += 1
+    GameState.last_login_day = day
+    var bonus: int = 1 + min(6, GameState.login_streak / 2)  # caps at 7 ember/day
+    GameState.add_embers(bonus)
+    save()
+    return {"ember": bonus, "streak": GameState.login_streak}
 
 func _to_str_array(v: Variant) -> Array[String]:
     var out: Array[String] = []

@@ -691,6 +691,10 @@ func _on_hero_died() -> void:
     dead_screen_open = true
     paused_for_milestone = true
     overlay_scrim.visible = true
+    if HordeState.wave > GameState.best_run_wave:
+        GameState.best_run_wave = HordeState.wave
+    if HordeState.kills_this_run > GameState.best_run_kills:
+        GameState.best_run_kills = HordeState.kills_this_run
     var lost: int = GameState.gold / 2
     GameState.gold = max(0, GameState.gold - lost)
     SaveSystem.save()
