@@ -4,6 +4,7 @@ extends GutTest
 
 func before_each() -> void:
     GameState.gold = 0
+    GameState.embers = 0
     GameState.meta_unlocks["upgrades"] = {}
 
 func test_initial_rank_zero_for_all_upgrades() -> void:
@@ -56,3 +57,26 @@ func test_max_rank_blocks_further_purchase() -> void:
     GameState.gold = 999999999
     assert_false(Upgrades.can_buy("damage"))
     assert_eq(Upgrades.cost("damage"), -1)
+
+func test_ember_upgrade_spends_embers_not_gold() -> void:
+    GameState.embers = 100
+    GameState.gold = 0
+    var c := Upgrades.cost("ember_dmg")
+    assert_true(Upgrades.can_buy("ember_dmg"))
+    assert_true(Upgrades.buy("ember_dmg"))
+    assert_eq(GameState.embers, 100 - c)
+    assert_eq(GameState.gold, 0)
+    assert_eq(Upgrades.rank("ember_dmg"), 1)
+
+func test_ember_upgrade_blocks_when_only_gold_held() -> void:
+    GameState.embers = 0
+    GameState.gold = 999999
+    assert_false(Upgrades.can_buy("ember_dmg"))
+
+func test_ember_damage_mult_scales_with_rank() -> void:
+    GameState.meta_unlocks["upgrades"] = {"ember_dmg": 3}
+    assert_almost_eq(Upgrades.ember_damage_mult(), 1.30, 0.001)
+
+func test_ember_gold_mult_scales_with_rank() -> void:
+    GameState.meta_unlocks["upgrades"] = {"ember_gold": 4}
+    assert_almost_eq(Upgrades.ember_gold_mult(), 2.0, 0.001)

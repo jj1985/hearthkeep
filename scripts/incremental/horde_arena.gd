@@ -14,10 +14,12 @@ const T := preload("res://scripts/ui/ui_tokens.gd")
 const UiStyle_ := preload("res://scripts/ui/ui_style.gd")
 
 const ENEMY_TYPES := {
-    "skeleton":   {"label": "Skeleton",   "color": Color(0.85, 0.85, 0.78), "hp_base": 6,  "speed": 70.0,  "gold": 1},
-    "goblin":     {"label": "Goblin",     "color": Color(0.45, 0.75, 0.35), "hp_base": 10, "speed": 95.0,  "gold": 2},
-    "skel_brute": {"label": "Bone Brute", "color": Color(0.75, 0.7, 0.55),  "hp_base": 24, "speed": 55.0,  "gold": 5},
-    "drake":      {"label": "Drake",      "color": Color(0.85, 0.35, 0.25), "hp_base": 60, "speed": 75.0,  "gold": 14},
+    "skeleton":   {"label": "Skeleton",   "color": Color(0.85, 0.85, 0.78), "hp_base": 6,  "speed": 70.0,  "gold": 1, "size": 28},
+    "goblin":     {"label": "Goblin",     "color": Color(0.45, 0.75, 0.35), "hp_base": 10, "speed": 95.0,  "gold": 2, "size": 28},
+    "skel_brute": {"label": "Bone Brute", "color": Color(0.75, 0.7, 0.55),  "hp_base": 24, "speed": 55.0,  "gold": 5, "size": 32},
+    "drake":      {"label": "Drake",      "color": Color(0.85, 0.35, 0.25), "hp_base": 60, "speed": 75.0,  "gold": 14, "size": 36},
+    "boss_warchief":{"label":"Krrik III",  "color": Color(0.95, 0.75, 0.25), "hp_base": 240,"speed": 50.0,  "gold": 60, "size": 56, "boss": true},
+    "boss_dragon":{"label":"Vyxhasis",     "color": Color(0.85, 0.25, 0.55), "hp_base": 600,"speed": 45.0,  "gold": 200,"size": 72, "boss": true},
 }
 
 const HERO_RADIUS := 22.0
@@ -45,6 +47,7 @@ const HERO_RANGE := 220.0
 @onready var btn_quit: Button = $HUD/Bottom/Quit
 @onready var btn_strike: Button = $HUD/Bottom/Strike
 @onready var hud_idle: Label = $HUD/Top/Idle
+@onready var hud_embers: Label = $HUD/Top/Embers
 @onready var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
 var enemies: Array = []          # Array of { node, hp, max_hp, hp_bar, speed, gold, id }
@@ -102,6 +105,7 @@ func _refresh_hud() -> void:
     hud_gold.text = "%d gold" % GameState.gold
     hud_loadout.text = _loadout_text()
     hud_idle.text = "+%.1f g/s" % _idle_gold_per_sec()
+    hud_embers.text = "%d ember" % GameState.embers
     dps_bar.max_value = max(1, wave_kills_target)
     dps_bar.value = wave_kills_progress
 
@@ -139,9 +143,10 @@ func _spawn_enemy() -> void:
     if HordeState.wave >= 12: pool.append("drake")
     var id: String = pool[rng.randi_range(0, pool.size() - 1)]
     var def: Dictionary = ENEMY_TYPES[id]
+    var sz: int = int(def.get("size", 28))
     var p := Panel.new()
-    p.custom_minimum_size = Vector2(28, 28)
-    p.size = Vector2(28, 28)
+    p.custom_minimum_size = Vector2(sz, sz)
+    p.size = Vector2(sz, sz)
     var sb := StyleBoxFlat.new()
     sb.bg_color = def["color"]
     sb.corner_radius_top_left = 6
@@ -221,9 +226,10 @@ func _hero_damage() -> int:
     if HordeState.tertiary != "": d += 4
     d += HordeState.wave / 2
     d += Upgrades.bonus_damage()
+    var f: float = float(d) * Upgrades.ember_damage_mult()
     if rng.randf() < Upgrades.crit_chance():
-        d *= 2
-    return d
+        f *= 2.0
+    return int(round(f))
 
 func _hero_atk_rate() -> float:
     return HERO_ATTACK_RATE + Upgrades.bonus_atk_speed()
@@ -241,8 +247,18 @@ func _damage_enemy(e: Dictionary, amount: int) -> void:
         if n != null and is_instance_valid(n):
             n.queue_free()
         enemies.erase(e)
-        HordeState.record_kill(String(e.get("id", "skeleton")), int(e.get("gold", 1)))
-        wave_kills_progress += 1
+        var was_boss: bool = bool(e.get("boss", false))
+        var gold_amt: int = int(round(int(e.get("gold", 1)) * Upgrades.ember_gold_mult()))
+        HordeState.record_kill(String(e.get("id", "skeleton")), gold_amt)
+        if was_boss:
+            var ember_reward: int = 1 + HordeState.wave / 10
+            GameState.add_embers(ember_reward)
+            GameState.bosses_felled += 1
+            _floating_text("+%d Embers" % ember_reward,
+                Vector2(arena.size.x * 0.5 - 50, arena.size.y * 0.4), T.SECONDARY)
+            SaveSystem.save()
+        else:
+            wave_kills_progress += 1
         _refresh_hud()
         if wave_kills_progress >= wave_kills_target:
             _next_wave()
@@ -273,6 +289,47 @@ func _next_wave() -> void:
     SaveSystem.save()
     _refresh_hud()
     _floating_text("WAVE %d" % HordeState.wave, hero.position + hero.size * 0.5, T.PRIMARY)
+    if HordeState.wave % 10 == 0:
+        _spawn_boss()
+
+func _spawn_boss() -> void:
+    var boss_id: String = "boss_warchief"
+    if HordeState.wave >= 30: boss_id = "boss_dragon"
+    var def: Dictionary = ENEMY_TYPES[boss_id]
+    var sz: int = int(def["size"])
+    var p := Panel.new()
+    p.custom_minimum_size = Vector2(sz, sz)
+    p.size = Vector2(sz, sz)
+    var sb := StyleBoxFlat.new()
+    sb.bg_color = def["color"]
+    sb.corner_radius_top_left = 10
+    sb.corner_radius_top_right = 10
+    sb.corner_radius_bottom_left = 10
+    sb.corner_radius_bottom_right = 10
+    sb.border_color = T.PRIMARY
+    sb.border_width_top = 3
+    sb.border_width_bottom = 3
+    sb.border_width_left = 3
+    sb.border_width_right = 3
+    p.add_theme_stylebox_override("panel", sb)
+    p.position = Vector2(arena.size.x * 0.5 - sz * 0.5, -sz - 4)
+    enemies_layer.add_child(p)
+    var bar := ProgressBar.new()
+    bar.show_percentage = false
+    bar.custom_minimum_size = Vector2(sz, 5)
+    bar.size = Vector2(sz, 5)
+    bar.position = Vector2(0, -10)
+    bar.max_value = 1.0; bar.value = 1.0
+    p.add_child(bar)
+    var hp_scale: float = 1.0 + (HordeState.wave - 1) * 0.18
+    var max_hp: int = int(round(int(def["hp_base"]) * hp_scale))
+    enemies.append({
+        "node": p, "hp": max_hp, "max_hp": max_hp, "hp_bar": bar,
+        "speed": float(def["speed"]),
+        "gold": int(def["gold"]),
+        "id": boss_id, "boss": true,
+    })
+    _floating_text("%s appears!" % String(def["label"]), Vector2(arena.size.x * 0.5 - 80, 80), T.SECONDARY)
 
 func _spawn_strike(pos: Vector2) -> void:
     var c := ColorRect.new()

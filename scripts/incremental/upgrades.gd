@@ -9,11 +9,13 @@ extends Node
 signal upgrade_purchased(id: String, rank: int)
 
 const UPGRADES := [
-    {"id":"damage",     "label":"Sharper Steel",  "desc":"+2 base damage per rank.",        "base":40,   "growth":1.55},
-    {"id":"atk_speed",  "label":"Practiced Form", "desc":"+0.20 atk/sec per rank.",          "base":80,   "growth":1.65},
-    {"id":"range",      "label":"Long Reach",     "desc":"+30 hero range per rank.",         "base":60,   "growth":1.5},
-    {"id":"idle",       "label":"Hearthstone",    "desc":"+25%% idle gold/sec per rank.",    "base":120,  "growth":1.7},
-    {"id":"crit",       "label":"Lucky Strike",   "desc":"+5%% crit chance per rank (×2 dmg)","base":160,  "growth":1.9},
+    {"id":"damage",     "label":"Sharper Steel",  "desc":"+2 base damage per rank.",        "base":40,   "growth":1.55, "currency":"gold"},
+    {"id":"atk_speed",  "label":"Practiced Form", "desc":"+0.20 atk/sec per rank.",          "base":80,   "growth":1.65, "currency":"gold"},
+    {"id":"range",      "label":"Long Reach",     "desc":"+30 hero range per rank.",         "base":60,   "growth":1.5,  "currency":"gold"},
+    {"id":"idle",       "label":"Hearthstone",    "desc":"+25%% idle gold/sec per rank.",    "base":120,  "growth":1.7,  "currency":"gold"},
+    {"id":"crit",       "label":"Lucky Strike",   "desc":"+5%% crit chance per rank (×2 dmg)","base":160,  "growth":1.9,  "currency":"gold"},
+    {"id":"ember_dmg",  "label":"Ember Edge",     "desc":"+10%% global damage per rank.",    "base":1,    "growth":1.6,  "currency":"embers"},
+    {"id":"ember_gold", "label":"Hoard Pact",     "desc":"+25%% gold from kills per rank.",  "base":2,    "growth":1.55, "currency":"embers"},
 ]
 const MAX_RANK := 30
 
@@ -28,16 +30,32 @@ func cost(id: String) -> int:
     if r >= MAX_RANK: return -1   # maxed
     return int(round(float(u["base"]) * pow(float(u["growth"]), r)))
 
+func currency_for(id: String) -> String:
+    var u: Dictionary = _def(id)
+    return String(u.get("currency", "gold"))
+
+func _balance(currency: String) -> int:
+    if currency == "embers": return GameState.embers
+    return GameState.gold
+
+func _spend(currency: String, amount: int) -> void:
+    if currency == "embers":
+        GameState.embers = max(0, GameState.embers - amount)
+        EventBus.currency_changed.emit("embers", -amount, GameState.embers)
+    else:
+        GameState.gold = max(0, GameState.gold - amount)
+        EventBus.currency_changed.emit("gold", -amount, GameState.gold)
+
 func can_buy(id: String) -> bool:
     var c: int = cost(id)
-    return c > 0 and GameState.gold >= c and rank(id) < MAX_RANK
+    if c <= 0 or rank(id) >= MAX_RANK: return false
+    return _balance(currency_for(id)) >= c
 
 func buy(id: String) -> bool:
     if not can_buy(id):
         return false
     var c: int = cost(id)
-    GameState.gold -= c
-    EventBus.currency_changed.emit("gold", -c, GameState.gold)
+    _spend(currency_for(id), c)
     var ups: Dictionary = _ups()
     ups[id] = rank(id) + 1
     GameState.meta_unlocks["upgrades"] = ups
@@ -60,6 +78,12 @@ func idle_multiplier() -> float:
 
 func crit_chance() -> float:
     return clamp(rank("crit") * 0.05, 0.0, 0.95)
+
+func ember_damage_mult() -> float:
+    return 1.0 + rank("ember_dmg") * 0.10
+
+func ember_gold_mult() -> float:
+    return 1.0 + rank("ember_gold") * 0.25
 
 func _ups() -> Dictionary:
     if "upgrades" not in GameState.meta_unlocks:

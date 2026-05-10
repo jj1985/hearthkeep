@@ -31,6 +31,8 @@ var lifetime_kills: int = 0
 var lifetime_legendaries: int = 0
 var krrik_defeated: bool = false
 var lifetime_kills_by_type: Dictionary = {}    # monster_id -> count
+var embers: int = 0                              # prestige currency from boss kills
+var bosses_felled: int = 0
 
 func tally_kill(monster_id: String) -> void:
     lifetime_kills_by_type[monster_id] = int(lifetime_kills_by_type.get(monster_id, 0)) + 1
@@ -51,6 +53,10 @@ func add_gold(amount: int) -> void:
 func add_gems(amount: int) -> void:
     gems = max(0, gems + amount)
     EventBus.currency_changed.emit("gems", amount, gems)
+
+func add_embers(amount: int) -> void:
+    embers = max(0, embers + amount)
+    EventBus.currency_changed.emit("embers", amount, embers)
 
 func add_dye(color_id: String, amount: int = 1) -> void:
     dye_pots[color_id] = dye_pots.get(color_id, 0) + amount

@@ -26,6 +26,8 @@ func save() -> void:
         "lifetime_legendaries": GameState.lifetime_legendaries,
         "krrik_defeated": GameState.krrik_defeated,
         "lifetime_kills_by_type": GameState.lifetime_kills_by_type,
+        "embers": GameState.embers,
+        "bosses_felled": GameState.bosses_felled,
     }
     f.store_string(JSON.stringify(payload))
 
@@ -62,6 +64,8 @@ func load_save() -> bool:
     GameState.lifetime_legendaries = int(d.get("lifetime_legendaries", 0))
     GameState.krrik_defeated = bool(d.get("krrik_defeated", false))
     GameState.lifetime_kills_by_type = d.get("lifetime_kills_by_type", {})
+    GameState.embers = int(d.get("embers", 0))
+    GameState.bosses_felled = int(d.get("bosses_felled", 0))
     return true
 
 func _to_str_array(v: Variant) -> Array[String]:

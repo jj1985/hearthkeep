@@ -63,17 +63,19 @@ func _refresh_rows() -> void:
         var id: String = d["id"]
         var r: int = Upgrades.rank(id)
         var c: int = Upgrades.cost(id)
+        var cur: String = Upgrades.currency_for(id)
         (d["rank"] as Label).text = "Rank %d / %d" % [r, Upgrades.MAX_RANK]
         var btn: Button = d["btn"]
+        var suffix: String = "g" if cur == "gold" else "🜂"
         if c < 0:
             btn.text = "MAXED"
             btn.disabled = true
         else:
-            btn.text = "%d g" % c
+            btn.text = "%d %s" % [c, suffix]
             btn.disabled = not Upgrades.can_buy(id)
 
 func _refresh_gold() -> void:
-    gold_label.text = "%d gold" % GameState.gold
+    gold_label.text = "%d gold  ·  %d ember" % [GameState.gold, GameState.embers]
 
 func _on_buy(id: String) -> void:
     Upgrades.buy(id)
