@@ -109,10 +109,40 @@ func _ready() -> void:
     _refresh_hud()
     _hide_milestone()
 
+const CLASS_COLORS := {
+    "warrior":     Color(0.85, 0.55, 0.30),
+    "rogue":       Color(0.50, 0.85, 0.55),
+    "wizard":      Color(0.45, 0.65, 0.95),
+    "necromancer": Color(0.65, 0.45, 0.85),
+    "bard":        Color(0.95, 0.65, 0.85),
+}
+
+func _class_color(cid: String) -> Color:
+    return CLASS_COLORS.get(cid, T.PRIMARY)
+
 func _layout_hero() -> void:
     var size := arena.size
     hero.position = size * 0.5 - hero.size * 0.5
     hero_label.text = _hero_initials()
+    _style_hero()
+    _start_hero_pulse()
+
+func _style_hero() -> void:
+    var sb := StyleBoxFlat.new()
+    var c: Color = _class_color(HordeState.primary)
+    sb.bg_color = Color(c.r * 0.6, c.g * 0.6, c.b * 0.6)
+    sb.corner_radius_top_left = 12; sb.corner_radius_top_right = 12
+    sb.corner_radius_bottom_left = 12; sb.corner_radius_bottom_right = 12
+    sb.border_color = c
+    sb.border_width_top = 3; sb.border_width_bottom = 3
+    sb.border_width_left = 3; sb.border_width_right = 3
+    hero.add_theme_stylebox_override("panel", sb)
+
+func _start_hero_pulse() -> void:
+    if hero == null: return
+    var tw := create_tween().set_loops()
+    tw.tween_property(hero, "modulate", Color(1.15, 1.15, 1.15, 1), 0.7)
+    tw.tween_property(hero, "modulate", Color(1.0, 1.0, 1.0, 1), 0.7)
 
 func _hero_initials() -> String:
     var parts := [HordeState.primary]
@@ -185,7 +215,10 @@ func _spawn_enemy() -> void:
     if pool.is_empty(): pool.append("skeleton")
     var id: String = pool[rng.randi_range(0, pool.size() - 1)]
     var def: Dictionary = ENEMY_TYPES[id]
+    # ~3% chance for a Mythic — 10× HP, 10× gold, gold border, larger.
+    var is_mythic: bool = HordeState.wave >= 5 and rng.randf() < 0.03
     var sz: int = int(def.get("size", 28))
+    if is_mythic: sz = int(sz * 1.4)
     var p := Panel.new()
     p.custom_minimum_size = Vector2(sz, sz)
     p.size = Vector2(sz, sz)
@@ -195,6 +228,10 @@ func _spawn_enemy() -> void:
     sb.corner_radius_top_right = 6
     sb.corner_radius_bottom_left = 6
     sb.corner_radius_bottom_right = 6
+    if is_mythic:
+        sb.border_color = T.RARITY_MYTHIC
+        sb.border_width_top = 3; sb.border_width_bottom = 3
+        sb.border_width_left = 3; sb.border_width_right = 3
     p.add_theme_stylebox_override("panel", sb)
     var edge := rng.randi_range(0, 3)
     var pos := Vector2.ZERO
@@ -218,16 +255,20 @@ func _spawn_enemy() -> void:
     bar.add_theme_stylebox_override("fill", bar_fg)
     p.add_child(bar)
     var hp_scale: float = 1.0 + (HordeState.wave - 1) * 0.18
-    var max_hp: int = int(round(int(def["hp_base"]) * hp_scale))
+    var max_hp: int = int(round(int(def["hp_base"]) * hp_scale * (10.0 if is_mythic else 1.0)))
     enemies.append({
         "node": p,
         "hp": max_hp,
         "max_hp": max_hp,
         "hp_bar": bar,
         "speed": float(def["speed"]) + HordeState.wave * 1.5,
-        "gold": int(def["gold"]),
+        "gold": int(def["gold"]) * (10 if is_mythic else 1),
         "id": id,
+        "mythic": is_mythic,
     })
+    if is_mythic:
+        _floating_text("MYTHIC %s" % String(def.get("label", "Foe")).to_upper(),
+            Vector2(arena.size.x * 0.5 - 80, 100), T.RARITY_MYTHIC)
 
 func _move_enemies(delta: float) -> void:
     var hero_center: Vector2 = hero.position + hero.size * 0.5
@@ -513,6 +554,7 @@ func _pick_extra_class(slot: String, cid: String) -> void:
     pending_slot = ""
     _close_milestone()
     hero_label.text = _hero_initials()
+    _style_hero()
     _refresh_hud()
 
 func _close_milestone() -> void:
