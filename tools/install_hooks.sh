@@ -68,3 +68,26 @@ exit 0
 EOF
 chmod +x "$HOOKS_DIR/pre-push"
 echo "[install-hooks] pre-push hook installed at $HOOKS_DIR/pre-push"
+
+# post-commit: every commit on main triggers `make ship` in the
+# background (build APK + upload to latest release). Fully async so
+# `git commit` returns immediately. Logs to .git/last-ship.log.
+cat > "$HOOKS_DIR/post-commit" <<'EOF'
+#!/usr/bin/env bash
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+[ "$BRANCH" != "main" ] && exit 0
+LOG="$REPO_ROOT/.git/last-ship.log"
+(
+    sleep 1
+    echo "[ship-bg] $(date) post-commit ship starting on $BRANCH" > "$LOG"
+    make ship >> "$LOG" 2>&1 \
+        && echo "[ship-bg] $(date) OK" >> "$LOG" \
+        || echo "[ship-bg] $(date) FAILED" >> "$LOG"
+) </dev/null >/dev/null 2>&1 &
+disown $! || true
+exit 0
+EOF
+chmod +x "$HOOKS_DIR/post-commit"
+echo "[install-hooks] post-commit hook installed at $HOOKS_DIR/post-commit"
