@@ -44,6 +44,7 @@ const HERO_RANGE := 220.0
 @onready var milestone_row_label: Label = $HUD/MilestoneRow/Label
 @onready var milestone_row_bar: ProgressBar = $HUD/MilestoneRow/Bar
 @onready var overlay_scrim: ColorRect = $Overlay/Scrim
+@onready var overlay_flash: ColorRect = $Overlay/Flash
 @onready var milestone_overlay: Panel = $Overlay/Milestone
 @onready var milestone_title: Label = $Overlay/Milestone/V/Title
 @onready var milestone_body: Label = $Overlay/Milestone/V/Body
@@ -307,6 +308,8 @@ func _damage_enemy(e: Dictionary, amount: int) -> void:
                 Vector2(arena.size.x * 0.5 - 50, arena.size.y * 0.4), T.SECONDARY)
             _boss_burst(death_pos)
             _pop(hud_embers)
+            _flash_screen(Color(1, 1, 1, 1), 0.65, 0.35)
+            _slow_mo(0.3, 0.3)
             SfxBus.play("dragon_roar", 0.0)
             SfxBus.play("levelup", -3.0)
             SaveSystem.save()
@@ -350,6 +353,7 @@ func _next_wave() -> void:
     _floating_text("WAVE %d  +%d g" % [HordeState.wave, bonus],
         hero.position + hero.size * 0.5, T.PRIMARY)
     _pop(hud_gold)
+    _flash_screen(T.PRIMARY, 0.18, 0.22)
     SfxBus.play("levelup", -8.0)
     if HordeState.wave % 10 == 0:
         _spawn_boss()
@@ -427,6 +431,19 @@ func _pop(node: Control) -> void:
     var tw := create_tween()
     tw.tween_property(node, "scale", orig * 1.18, 0.06)
     tw.tween_property(node, "scale", orig, 0.10)
+
+func _flash_screen(c: Color, peak_alpha: float, duration: float) -> void:
+    if overlay_flash == null: return
+    overlay_flash.color = Color(c.r, c.g, c.b, 0.0)
+    var tw := create_tween()
+    tw.tween_property(overlay_flash, "color:a", peak_alpha, duration * 0.25)
+    tw.tween_property(overlay_flash, "color:a", 0.0, duration * 0.75)
+
+func _slow_mo(scale: float, hold: float) -> void:
+    Engine.time_scale = scale
+    # Real-time timer (ignore_time_scale=true) so the slow-mo actually ends.
+    var t := get_tree().create_timer(hold, true, false, true)
+    t.timeout.connect(func(): Engine.time_scale = 1.0)
 
 func _boss_burst(pos: Vector2) -> void:
     # Eight-petal radial flash for the boss kill.
