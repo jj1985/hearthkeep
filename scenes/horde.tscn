@@ -40,6 +40,11 @@ size = Vector2(440, 440)
 position = Vector2(60, 140)
 mouse_filter = 2
 
+[node name="Companion" type="Panel" parent="Arena"]
+custom_minimum_size = Vector2(20, 20)
+size = Vector2(20, 20)
+visible = false
+
 [node name="Hero" type="Panel" parent="Arena"]
 custom_minimum_size = Vector2(44, 44)
 size = Vector2(44, 44)

@@ -37,6 +37,7 @@ const HERO_RANGE := 220.0
 @onready var floor_rect: ColorRect = $Arena/Floor
 @onready var hero: Panel = $Arena/Hero
 @onready var range_ring: Panel = $Arena/RangeRing
+@onready var companion: Panel = $Arena/Companion
 @onready var hero_label: Label = $Arena/Hero/Label
 @onready var enemies_layer: Control = $Arena/Enemies
 @onready var fx_layer: Control = $Arena/FX
@@ -80,6 +81,15 @@ var idle_timer: float = 0.0
 var skill_cd: float = 0.0
 const SKILL_COOLDOWN := 6.0
 var reroll_cost: int = 0
+
+var companion_orbit_t: float = 0.0
+var companion_atk_t: float = 0.0
+const COMPANION_ATK_RATE := 1.0       # hits/sec
+const COMPANION_ORBIT_R := 60.0
+const COMPANION_RANGE := 180.0
+
+func _has_companion() -> bool:
+    return GameState.bosses_felled >= 1
 
 var combo: int = 0
 var combo_decay: float = 0.0
@@ -164,7 +174,22 @@ func _ready() -> void:
     _refresh_perk_row()
     _hide_milestone()
     _maybe_show_tutorial()
+    _setup_companion()
     MusicDirector.set_layer(MusicDirector.Layer.COMBAT)
+
+func _setup_companion() -> void:
+    if companion == null: return
+    companion.visible = _has_companion()
+    if not companion.visible: return
+    var sb := StyleBoxFlat.new()
+    var c: Color = _class_color(HordeState.secondary if HordeState.secondary != "" else HordeState.primary)
+    sb.bg_color = Color(c.r * 0.7, c.g * 0.7, c.b * 0.7)
+    sb.corner_radius_top_left = 10; sb.corner_radius_top_right = 10
+    sb.corner_radius_bottom_left = 10; sb.corner_radius_bottom_right = 10
+    sb.border_color = c
+    sb.border_width_top = 2; sb.border_width_bottom = 2
+    sb.border_width_left = 2; sb.border_width_right = 2
+    companion.add_theme_stylebox_override("panel", sb)
 
 const ZONES := [
     {"min":1,  "name":"Greenmarch", "floor": Color(0.07, 0.10, 0.07)},
@@ -321,6 +346,8 @@ func _process(delta: float) -> void:
     if attack_timer <= 0.0:
         _hero_attack()
         attack_timer = 1.0 / _hero_atk_rate()
+    if _has_companion():
+        _companion_tick(delta)
     if idle_timer <= 0.0:
         var amount: int = int(round(_idle_gold_per_sec()))
         if amount > 0:
@@ -439,6 +466,27 @@ func _move_enemies(delta: float) -> void:
             _damage_enemy(e, 9999)
             _shake(4)
     for d in dead: enemies.erase(d)
+
+func _companion_tick(delta: float) -> void:
+    companion_orbit_t += delta * 1.5
+    var hero_center: Vector2 = hero.position + hero.size * 0.5
+    var orbit: Vector2 = Vector2(cos(companion_orbit_t), sin(companion_orbit_t)) * COMPANION_ORBIT_R
+    companion.position = hero_center + orbit - companion.size * 0.5
+    companion_atk_t -= delta
+    if companion_atk_t > 0.0: return
+    var cp: Vector2 = companion.position + companion.size * 0.5
+    var best: Dictionary = {}
+    var best_d: float = COMPANION_RANGE
+    for e in enemies:
+        var n: Panel = e.get("node")
+        if n == null or not is_instance_valid(n): continue
+        var d: float = (n.position + n.size * 0.5).distance_to(cp)
+        if d < best_d: best_d = d; best = e
+    if best.is_empty(): return
+    var dmg: int = max(1, int(_hero_damage() * 0.5))
+    _damage_enemy(best, dmg)
+    _spawn_strike(best["node"].position + best["node"].size * 0.5)
+    companion_atk_t = 1.0 / COMPANION_ATK_RATE
 
 func _hero_attack() -> void:
     var hero_center: Vector2 = hero.position + hero.size * 0.5
