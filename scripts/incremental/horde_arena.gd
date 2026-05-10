@@ -955,7 +955,35 @@ func _on_slot_unlocked(slot: String) -> void:
     _open_slot_picker(slot)
 
 func _show_milestone_toast(label: String) -> void:
-    _floating_text(label, Vector2(arena.size.x * 0.5 - 80, 80), T.PRIMARY)
+    _achievement_banner(label)
+
+func _achievement_banner(label: String) -> void:
+    # Big primary-gold banner that flies in from the top, holds 1.4s,
+    # then fades out. Reuses fx_layer so it tracks the arena.
+    var bg := Panel.new()
+    bg.custom_minimum_size = Vector2(360, 56)
+    bg.size = Vector2(360, 56)
+    bg.position = Vector2(arena.size.x * 0.5 - 180, -60)
+    var sb := StyleBoxFlat.new()
+    sb.bg_color = Color(T.PRIMARY.r, T.PRIMARY.g, T.PRIMARY.b, 0.92)
+    sb.corner_radius_top_left = 12; sb.corner_radius_top_right = 12
+    sb.corner_radius_bottom_left = 12; sb.corner_radius_bottom_right = 12
+    bg.add_theme_stylebox_override("panel", sb)
+    fx_layer.add_child(bg)
+    var lbl := Label.new()
+    lbl.text = "✦ %s ✦" % label
+    lbl.anchor_right = 1.0; lbl.anchor_bottom = 1.0
+    lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+    lbl.add_theme_color_override("font_color", T.ON_PRIMARY)
+    lbl.add_theme_font_size_override("font_size", T.FS_HEADLINE_SM)
+    bg.add_child(lbl)
+    var tw := create_tween()
+    tw.tween_property(bg, "position:y", 24, 0.3)
+    tw.tween_interval(1.4)
+    tw.tween_property(bg, "modulate:a", 0.0, 0.4)
+    tw.tween_callback(bg.queue_free)
+    SfxBus.play("levelup", -3.0)
 
 func _open_slot_picker(slot: String) -> void:
     var options: Array[String] = HordeState.available_classes_for_extra_slot()
