@@ -374,6 +374,8 @@ func _move_enemies(delta: float) -> void:
         if node == null or not is_instance_valid(node):
             dead.append(e); continue
         var ep: Vector2 = node.position + node.size * 0.5
+        if bool(e.get("boss", false)):
+            _boss_tick(e, delta)
         # Shamans hold distance and tick a heal cooldown.
         if bool(e.get("heals", false)):
             e["heal_cd"] = float(e.get("heal_cd", 3.0)) - delta
@@ -392,6 +394,7 @@ func _move_enemies(delta: float) -> void:
         # Contact: enemy bites the hero for chip damage and dies (so the
         # arena never softlocks with a fully-buffed enemy stuck on top).
         if ep.distance_to(hero_center) < HERO_RADIUS + 14:
+            if String(e.get("phase_kind", "")) == "fly": continue
             var bite: int = 2 + HordeState.wave / 4
             if bool(e.get("boss", false)): bite *= 6
             elif bool(e.get("mythic", false)): bite *= 3
@@ -440,6 +443,12 @@ func _hero_range() -> float:
     return HERO_RANGE + Upgrades.bonus_range() + HordePerks.range_bonus
 
 func _damage_enemy(e: Dictionary, amount: int) -> void:
+    # Airborne dragon ignores hits entirely.
+    if String(e.get("phase_kind", "")) == "fly":
+        var n0: Panel = e.get("node")
+        if n0 != null and is_instance_valid(n0):
+            _floating_text("MISS", n0.position + n0.size * 0.5, T.ON_SURFACE_MUTED)
+        return
     e["hp"] -= amount
     var bar: ProgressBar = e.get("hp_bar")
     if bar != null and is_instance_valid(bar):
@@ -547,6 +556,37 @@ func _next_wave() -> void:
             Vector2(arena.size.x * 0.5 - 100, 60), T.RARITY_MYTHIC)
         _flash_screen(T.RARITY_MYTHIC, 0.8, 0.5)
         SaveSystem.save()
+
+func _boss_tick(e: Dictionary, delta: float) -> void:
+    var node: Panel = e["node"]
+    if node == null or not is_instance_valid(node): return
+    if float(e.get("phase_active", 0.0)) > 0.0:
+        e["phase_active"] = float(e["phase_active"]) - delta
+        if float(e["phase_active"]) <= 0.0:
+            # Phase ended — restore visuals + speed + reset cooldown.
+            e["speed"] = float(e["base_speed"])
+            node.modulate = Color(1, 1, 1, 1)
+            e["phase_kind"] = ""
+            e["phase_cd"] = 4.0
+        return
+    e["phase_cd"] = float(e.get("phase_cd", 4.0)) - delta
+    if float(e["phase_cd"]) > 0.0: return
+    # Trigger phase based on boss kind.
+    var id: String = String(e.get("id", ""))
+    if id == "boss_warchief":
+        e["phase_kind"] = "charge"
+        e["phase_active"] = 1.0
+        e["speed"] = float(e["base_speed"]) * 4.0
+        node.modulate = Color(1.4, 0.8, 0.6)  # heated
+        SfxBus.play("hit_heavy", -6.0)
+        _floating_text("CHARGE!", node.position + node.size * 0.5, T.SECONDARY)
+    elif id == "boss_dragon":
+        e["phase_kind"] = "fly"
+        e["phase_active"] = 1.2
+        e["speed"] = float(e["base_speed"]) * 0.5
+        node.modulate = Color(1, 1, 1, 0.4)   # transparent = airborne
+        SfxBus.play("dragon_phase_air", -4.0)
+        _floating_text("AIRBORNE", node.position + node.size * 0.5, T.RARITY_RARE)
 
 func _shaman_heal(shaman: Dictionary, sp: Vector2) -> void:
     # Heal nearest non-shaman ally for 20% of its missing HP.
@@ -659,8 +699,12 @@ func _spawn_boss() -> void:
     enemies.append({
         "node": p, "hp": max_hp, "max_hp": max_hp, "hp_bar": bar,
         "speed": float(def["speed"]),
+        "base_speed": float(def["speed"]),
         "gold": int(def["gold"]),
         "id": boss_id, "boss": true,
+        "phase_cd": 4.0,
+        "phase_active": 0.0,
+        "phase_kind": "",   # "charge" | "fly"
     })
     _floating_text("%s appears!" % String(def["label"]), Vector2(arena.size.x * 0.5 - 80, 80), T.SECONDARY)
 
