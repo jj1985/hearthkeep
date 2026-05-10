@@ -25,6 +25,18 @@ var kills_this_run: int = 0
 var dps: float = 0.0          # smoothed
 var gold_per_sec: float = 0.0 # idle gold yield (lifetime)
 
+# --- Hero HP -----------------------------------------------------------
+const HERO_HP_BASE := 50
+var hero_hp: int = HERO_HP_BASE
+var hero_max_hp: int = HERO_HP_BASE
+
+func max_hp() -> int:
+    var hp := HERO_HP_BASE
+    hp += GameState.deepest_floor / 2
+    if secondary != "": hp += 15
+    if tertiary != "": hp += 20
+    return hp
+
 # --- Milestones ---------------------------------------------------------
 # kills: cumulative across runs (uses GameState.lifetime_kills)
 # A milestone fires once. Achieved IDs are persisted via GameState.meta_unlocks.
@@ -55,6 +67,8 @@ func reset_run() -> void:
     secondary = ""
     tertiary = ""
     primary = "warrior"
+    hero_max_hp = max_hp()
+    hero_hp = hero_max_hp
     wave_changed.emit(wave)
     kills_changed.emit(0)
 

@@ -76,6 +76,10 @@ text = "+0 g/s"
 [node name="Embers" type="Label" parent="HUD/Top"]
 text = "0 ember"
 
+[node name="HP" type="ProgressBar" parent="HUD/Top"]
+custom_minimum_size = Vector2(120, 14)
+show_percentage = false
+
 [node name="Wavebar" type="ProgressBar" parent="HUD/Top"]
 custom_minimum_size = Vector2(180, 14)
 size_flags_horizontal = 3

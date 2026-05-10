@@ -56,6 +56,24 @@ func test_available_classes_excludes_already_picked() -> void:
     assert_false(avail.has("warrior"))
     assert_false(avail.has("rogue"))
 
+func test_max_hp_grows_with_extra_class_slots() -> void:
+    HordeState.primary = "warrior"
+    HordeState.secondary = ""
+    HordeState.tertiary = ""
+    var solo := HordeState.max_hp()
+    HordeState.secondary = "rogue"
+    var dual := HordeState.max_hp()
+    HordeState.tertiary = "wizard"
+    var triple := HordeState.max_hp()
+    assert_gt(dual, solo)
+    assert_gt(triple, dual)
+
+func test_reset_run_resets_hp_to_max() -> void:
+    HordeState.hero_hp = 1
+    HordeState.reset_run()
+    assert_eq(HordeState.hero_hp, HordeState.hero_max_hp)
+    assert_gt(HordeState.hero_max_hp, 0)
+
 func test_record_kill_grants_gold() -> void:
     HordeState.record_kill("goblin", 5)
     assert_eq(GameState.gold, 5)

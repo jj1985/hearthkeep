@@ -61,6 +61,7 @@ const HERO_RANGE := 220.0
 @onready var btn_restart: Button = $Overlay/Pause/V/Restart
 @onready var hud_idle: Label = $HUD/Top/Idle
 @onready var hud_embers: Label = $HUD/Top/Embers
+@onready var hud_hp: ProgressBar = $HUD/Top/HP
 @onready var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
 var enemies: Array = []          # Array of { node, hp, max_hp, hp_bar, speed, gold, id }
@@ -92,6 +93,8 @@ func _ready() -> void:
     # The title screen's NEW RUN handler resets HordeState/HordePerks before
     # changing scene, so we don't blow away an in-progress run on every load.
     if HordeState.wave < 1: HordeState.wave = 1
+    HordeState.hero_max_hp = HordeState.max_hp()
+    if HordeState.hero_hp <= 0: HordeState.hero_hp = HordeState.hero_max_hp
     HordeState.milestone_reached.connect(_on_milestone)
     HordeState.slot_unlocked.connect(_on_slot_unlocked)
     HordeState.class_unlocked.connect(_on_class_unlocked)
@@ -169,6 +172,8 @@ func _refresh_hud() -> void:
     hud_loadout.text = _loadout_text()
     hud_idle.text = "+%.1f g/s" % _idle_gold_per_sec()
     hud_embers.text = "%d ember" % GameState.embers
+    hud_hp.max_value = max(1, HordeState.hero_max_hp)
+    hud_hp.value = HordeState.hero_hp
     dps_bar.max_value = max(1, wave_kills_target)
     dps_bar.value = wave_kills_progress
     _refresh_milestone_row()
@@ -291,9 +296,13 @@ func _move_enemies(delta: float) -> void:
         var ep: Vector2 = node.position + node.size * 0.5
         var dir: Vector2 = (hero_center - ep).normalized()
         node.position += dir * float(e["speed"]) * delta
-        # Contact damage = chip the player's gold (no death — stable)
+        # Contact: enemy bites the hero for chip damage and dies (so the
+        # arena never softlocks with a fully-buffed enemy stuck on top).
         if ep.distance_to(hero_center) < HERO_RADIUS + 14:
-            # Touch nibble: enemy explodes harmlessly so the run never softlocks
+            var bite: int = 2 + HordeState.wave / 4
+            if bool(e.get("boss", false)): bite *= 6
+            elif bool(e.get("mythic", false)): bite *= 3
+            _hero_take_damage(bite)
             _damage_enemy(e, 9999)
             _shake(4)
     for d in dead: enemies.erase(d)
@@ -395,6 +404,9 @@ func _next_wave() -> void:
     HordeState.advance_wave()
     wave_kills_progress = 0
     wave_kills_target = int(8 + HordeState.wave * 1.5)
+    # Heal 25% on wave clear so the run isn't a death spiral.
+    HordeState.hero_hp = min(HordeState.hero_max_hp,
+        HordeState.hero_hp + HordeState.hero_max_hp / 4)
     # Wave-clear bonus: 5 + wave² gold so survival pays off even when
     # you're not gathering kill drops fast.
     var bonus: int = 5 + HordeState.wave * HordeState.wave
@@ -636,6 +648,45 @@ func _hide_milestone() -> void:
     overlay_scrim.visible = false
 
 func _on_quit() -> void:
+    SaveSystem.save()
+    get_tree().change_scene_to_file("res://scenes/title.tscn")
+
+func _hero_take_damage(amount: int) -> void:
+    if dead_screen_open: return
+    HordeState.hero_hp = max(0, HordeState.hero_hp - amount)
+    _refresh_hud()
+    SfxBus.play("low_hp" if HordeState.hero_hp < HordeState.hero_max_hp / 4 else "hit", -10.0)
+    _flash_screen(T.ERROR, 0.18, 0.18)
+    if HordeState.hero_hp <= 0:
+        _on_hero_died()
+
+var dead_screen_open: bool = false
+
+func _on_hero_died() -> void:
+    dead_screen_open = true
+    paused_for_milestone = true
+    overlay_scrim.visible = true
+    var lost: int = GameState.gold / 2
+    GameState.gold = max(0, GameState.gold - lost)
+    SaveSystem.save()
+    milestone_title.text = "FALLEN ON WAVE %d" % HordeState.wave
+    milestone_body.text = "%d kills · -%d gold spilled. Embers and upgrades persist." % [
+        HordeState.kills_this_run, lost,
+    ]
+    for c in milestone_choices.get_children(): c.queue_free()
+    var b := Button.new()
+    b.text = "RETURN HOME"
+    b.custom_minimum_size = Vector2(0, 64)
+    UiStyle_.apply_primary(b)
+    b.pressed.connect(_on_return_after_death)
+    milestone_choices.add_child(b)
+    milestone_overlay.visible = true
+    milestone_skip.visible = false
+    SfxBus.play("dragon_phase_enraged", 0.0)
+
+func _on_return_after_death() -> void:
+    HordeState.reset_run()
+    HordePerks.reset_for_run()
     SaveSystem.save()
     get_tree().change_scene_to_file("res://scenes/title.tscn")
 
