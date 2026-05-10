@@ -2,19 +2,19 @@
 
 > *of the Sundered Realms*
 
-A 3D mobile ARPG roguelike with deep multiclassing, dragons, goblin warbands, in-world gambling, a player villa with treasury and trophy hall, full crafting, and Megabonk-style perk-card escalation.
+A 2D mobile incremental horde survival arena with milestone-gated multiclassing, ember-prestige progression, dragons, goblin warbands, and Megabonk-style perk-card escalation. (v0.3.0 pivoted away from the 3D run flow that was crashing on device — those scenes still live in the tree but the active loop is a stable Control-node 2D arena.)
 
-**Engine:** Godot 4.6.x.  **Target:** Android (mobile renderer, portrait-default), with Forward+ on desktop for iteration.  **Status:** v0.2.5 — see [CHANGELOG.md](CHANGELOG.md) and the [GitHub release](https://github.com/jj1985/hearthkeep/releases/tag/v0.2.5).
+**Engine:** Godot 4.6.x.  **Target:** Android (mobile renderer), with Forward+ on desktop for iteration.  **Status:** v0.3.0 — see [CHANGELOG.md](CHANGELOG.md) and the [GitHub release](https://github.com/jj1985/hearthkeep/releases/tag/v0.3.0).
 
 ---
 
 ## Install (sideload to Android)
 
 ```bash
-# 1. Download HearthkeepDemo-v0.2.5.apk from
-#    https://github.com/jj1985/hearthkeep/releases/tag/v0.2.5
+# 1. Download HearthkeepDemo-v0.3.0.apk from
+#    https://github.com/jj1985/hearthkeep/releases/tag/v0.3.0
 # 2. With your phone plugged in via USB and dev mode + USB debugging on:
-adb install -r HearthkeepDemo-v0.2.5.apk
+adb install -r HearthkeepDemo-v0.3.0.apk
 ```
 
 Or run on desktop: `make run`.
@@ -150,7 +150,7 @@ Cosmetics + expansions + supporter pass.  **Never** energy/timers/paywalls.  No 
 
 Tagged milestones land on GitHub Releases with a sideloadable APK.
 
-- [v0.2.0 — Autonomous iteration milestone](https://github.com/jj1985/hearthkeep/releases/tag/v0.2.5) (current)
+- [v0.2.0 — Autonomous iteration milestone](https://github.com/jj1985/hearthkeep/releases/tag/v0.3.0) (current)
 - [v0.1.0-multiclass — first sideloadable APK](https://github.com/jj1985/hearthkeep/releases/tag/v0.1.0-multiclass)
 
 ---
