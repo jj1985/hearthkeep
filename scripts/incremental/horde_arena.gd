@@ -12,6 +12,7 @@ extends Control
 
 const T := preload("res://scripts/ui/ui_tokens.gd")
 const UiStyle_ := preload("res://scripts/ui/ui_style.gd")
+const Achievements := preload("res://scripts/incremental/achievements.gd")
 
 const ENEMY_TYPES := {
     "skeleton":   {"label": "Skeleton",   "color": Color(0.85, 0.85, 0.78), "hp_base": 6,   "speed": 70.0,  "gold": 1,  "size": 28, "min_wave": 1},
@@ -1212,6 +1213,9 @@ func _on_hero_died() -> void:
     var class_best: int = int(GameState.best_wave_by_class.get(HordeState.primary, 0))
     if HordeState.wave > class_best:
         GameState.best_wave_by_class[HordeState.primary] = HordeState.wave
+    var ach_reward: int = Achievements.scan_and_claim()
+    if ach_reward > 0:
+        run_embers_earned += ach_reward
     var lost: int = GameState.gold / 2
     GameState.gold = max(0, GameState.gold - lost)
     SaveSystem.save()

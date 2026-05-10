@@ -37,6 +37,9 @@ func _ready() -> void:
     UiStyle_.apply_primary(btn_rebirth)
     btn_ach_toggle.pressed.connect(_on_ach_toggle)
     UiStyle_.apply_secondary(btn_ach_toggle)
+    var ach_pay: int = Achievements.scan_and_claim()
+    if ach_pay > 0:
+        SaveSystem.save()
     _build_achievements()
     Upgrades.upgrade_purchased.connect(_on_purchased)
     EventBus.currency_changed.connect(_on_currency)
@@ -154,14 +157,20 @@ func _build_achievements() -> void:
         var id: String = String(d["id"])
         var prog: Array = Achievements.progress(id)
         var done: bool = Achievements.is_done(id)
+        var claimed: bool = Achievements.is_claimed(id)
         var row := HBoxContainer.new()
         row.theme_override_constants_separation = 8
         var name_lbl := Label.new()
         name_lbl.text = ("✓ " if done else "  ") + String(d["label"])
         name_lbl.size_flags_horizontal = 3
         name_lbl.add_theme_color_override("font_color",
-            T.SUCCESS if done else T.ON_SURFACE_MUTED)
+            T.SUCCESS if claimed else (T.ON_SURFACE if done else T.ON_SURFACE_MUTED))
         row.add_child(name_lbl)
+        var reward_lbl := Label.new()
+        reward_lbl.text = "+%d🜂" % Achievements.reward(id)
+        reward_lbl.add_theme_color_override("font_color",
+            T.SECONDARY if not claimed else T.ON_SURFACE_MUTED)
+        row.add_child(reward_lbl)
         var prog_lbl := Label.new()
         prog_lbl.text = "%d / %d" % [int(prog[0]), int(prog[1])]
         prog_lbl.add_theme_color_override("font_color",

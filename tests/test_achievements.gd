@@ -35,3 +35,26 @@ func test_unknown_id_returns_zero_one() -> void:
     var p := Achievements.progress("nope")
     assert_eq(int(p[0]), 0)
     assert_eq(int(p[1]), 1)
+
+func test_scan_grants_embers_for_newly_done_milestones() -> void:
+    GameState.meta_unlocks["ach_claimed"] = {}
+    GameState.embers = 0
+    GameState.lifetime_kills = 100  # unlock_rogue done
+    GameState.bosses_felled = 1     # first_boss done
+    var got := Achievements.scan_and_claim()
+    assert_eq(got, 4)  # rogue(2) + first_boss(2)
+    assert_eq(GameState.embers, 4)
+    assert_true(Achievements.is_claimed("unlock_rogue"))
+
+func test_scan_idempotent_on_already_claimed() -> void:
+    GameState.meta_unlocks["ach_claimed"] = {"unlock_rogue": true}
+    GameState.embers = 0
+    GameState.lifetime_kills = 100
+    var got := Achievements.scan_and_claim()
+    assert_eq(got, 0)
+    assert_eq(GameState.embers, 0)
+
+func test_reward_lookup() -> void:
+    assert_eq(Achievements.reward("unlock_rogue"), 2)
+    assert_eq(Achievements.reward("endless"), 10)
+    assert_eq(Achievements.reward("unknown"), 0)

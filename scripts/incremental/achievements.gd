@@ -8,19 +8,48 @@ extends Node
 # upgrade_screen.gd can preload it directly.
 
 const ROWS := [
-    {"id":"unlock_rogue",     "label":"Unlock Rogue (100 kills)"},
-    {"id":"unlock_wizard",    "label":"Unlock Wizard (500 kills)"},
-    {"id":"unlock_necro",     "label":"Unlock Necromancer (1500 kills)"},
-    {"id":"unlock_bard",      "label":"Unlock Bard (5000 kills)"},
-    {"id":"slot_dual",        "label":"Dual-class slot (wave 10)"},
-    {"id":"slot_triple",      "label":"Triple-class slot (wave 25)"},
-    {"id":"endless",          "label":"Reach wave 50"},
-    {"id":"first_boss",       "label":"Fell your first boss"},
-    {"id":"five_bosses",      "label":"Fell 5 bosses"},
-    {"id":"curse_first",      "label":"Clear a curse"},
-    {"id":"first_rebirth",    "label":"First Mark of Rebirth"},
-    {"id":"streak_seven",     "label":"7-day login streak"},
+    {"id":"unlock_rogue",     "label":"Unlock Rogue (100 kills)",       "reward":2},
+    {"id":"unlock_wizard",    "label":"Unlock Wizard (500 kills)",      "reward":3},
+    {"id":"unlock_necro",     "label":"Unlock Necromancer (1500 kills)","reward":4},
+    {"id":"unlock_bard",      "label":"Unlock Bard (5000 kills)",       "reward":6},
+    {"id":"slot_dual",        "label":"Dual-class slot (wave 10)",      "reward":3},
+    {"id":"slot_triple",      "label":"Triple-class slot (wave 25)",    "reward":6},
+    {"id":"endless",          "label":"Reach wave 50",                  "reward":10},
+    {"id":"first_boss",       "label":"Fell your first boss",           "reward":2},
+    {"id":"five_bosses",      "label":"Fell 5 bosses",                  "reward":5},
+    {"id":"curse_first",      "label":"Clear a curse",                  "reward":3},
+    {"id":"first_rebirth",    "label":"First Mark of Rebirth",          "reward":8},
+    {"id":"streak_seven",     "label":"7-day login streak",             "reward":7},
 ]
+
+static func _claimed() -> Dictionary:
+    if "ach_claimed" not in GameState.meta_unlocks:
+        GameState.meta_unlocks["ach_claimed"] = {}
+    return GameState.meta_unlocks["ach_claimed"]
+
+static func is_claimed(id: String) -> bool:
+    return bool(_claimed().get(id, false))
+
+static func reward(id: String) -> int:
+    for r in ROWS:
+        if String((r as Dictionary)["id"]) == id:
+            return int((r as Dictionary).get("reward", 0))
+    return 0
+
+# Returns total embers granted this scan.
+static func scan_and_claim() -> int:
+    var total: int = 0
+    var c := _claimed()
+    for r in ROWS:
+        var id := String((r as Dictionary)["id"])
+        if c.get(id, false): continue
+        if is_done(id):
+            c[id] = true
+            total += reward(id)
+    if total > 0:
+        GameState.add_embers(total)
+        GameState.meta_unlocks["ach_claimed"] = c
+    return total
 
 static func progress(id: String) -> Array:
     # returns [current, target] suitable for "n / m" display.
