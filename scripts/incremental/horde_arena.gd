@@ -556,6 +556,15 @@ func _next_wave() -> void:
             Vector2(arena.size.x * 0.5 - 100, 60), T.RARITY_MYTHIC)
         _flash_screen(T.RARITY_MYTHIC, 0.8, 0.5)
         SaveSystem.save()
+    if HordeState.wave == 30 and GameState.challenge_active and not GameState.challenge_claimed_today:
+        GameState.challenge_claimed_today = true
+        GameState.curses_cleared += 1
+        GameState.add_embers(5)
+        run_embers_earned += 5
+        _floating_text("CURSE BROKEN — +5 Embers",
+            Vector2(arena.size.x * 0.5 - 130, 60), T.SECONDARY)
+        _flash_screen(T.SECONDARY, 0.6, 0.4)
+        SaveSystem.save()
 
 func _boss_tick(e: Dictionary, delta: float) -> void:
     var node: Panel = e["node"]

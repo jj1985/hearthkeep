@@ -37,6 +37,8 @@ func save() -> void:
         "rebirths": GameState.rebirths,
         "daily_curse": GameState.daily_curse,
         "challenge_active": GameState.challenge_active,
+        "curses_cleared": GameState.curses_cleared,
+        "challenge_claimed_today": GameState.challenge_claimed_today,
         "login_streak": GameState.login_streak,
         "last_login_day": GameState.last_login_day,
         "best_run_wave": GameState.best_run_wave,
@@ -88,6 +90,8 @@ func load_save() -> bool:
     GameState.rebirths = int(d.get("rebirths", 0))
     GameState.daily_curse = String(d.get("daily_curse", ""))
     GameState.challenge_active = bool(d.get("challenge_active", false))
+    GameState.curses_cleared = int(d.get("curses_cleared", 0))
+    GameState.challenge_claimed_today = bool(d.get("challenge_claimed_today", false))
     GameState.login_streak = int(d.get("login_streak", 0))
     GameState.last_login_day = int(d.get("last_login_day", 0))
     GameState.best_run_wave = int(d.get("best_run_wave", 0))
@@ -128,6 +132,7 @@ func process_daily_login() -> Dictionary:
     rng.seed = day
     GameState.daily_curse = String(curses[rng.randi_range(0, curses.size() - 1)])
     GameState.challenge_active = false  # require explicit opt-in each day
+    GameState.challenge_claimed_today = false
     save()
     return {"ember": bonus, "streak": GameState.login_streak,
         "curse": GameState.daily_curse}

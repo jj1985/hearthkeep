@@ -108,6 +108,8 @@ func _refresh_milestone_hint() -> void:
         lines.append("Best wave: %d" % GameState.deepest_floor)
     if GameState.bosses_felled > 0:
         lines.append("Bosses felled: %d" % GameState.bosses_felled)
+    if GameState.curses_cleared > 0:
+        lines.append("Curses cleared: %d" % GameState.curses_cleared)
     var km: Dictionary = HordeState.next_kill_milestone()
     if not km.is_empty():
         var need: int = int(km["kills"])
