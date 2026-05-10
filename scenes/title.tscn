@@ -123,7 +123,7 @@ theme_override_constants/separation = 12
 
 [node name="Continue" type="Button" parent="SafeArea/Menu/V"]
 custom_minimum_size = Vector2(0, 56)
-text = "RETURN TO VILLA"
+text = "CONTINUE RUN"
 visible = false
 
 [node name="NewRun" type="Button" parent="SafeArea/Menu/V"]
@@ -132,7 +132,7 @@ text = "NEW RUN"
 
 [node name="Villa" type="Button" parent="SafeArea/Menu/V"]
 custom_minimum_size = Vector2(0, 56)
-text = "VISIT VILLA"
+text = "UPGRADES"
 
 [node name="Codex" type="Button" parent="SafeArea/Menu/V"]
 custom_minimum_size = Vector2(0, 56)

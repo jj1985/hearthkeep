@@ -58,6 +58,7 @@ ChestManager="*res://scripts/storage/chest_manager.gd"
 TrophyManager="*res://scripts/hall/trophy_manager.gd"
 Settings="*res://scripts/settings.gd"
 HordeState="*res://scripts/incremental/horde_state.gd"
+Upgrades="*res://scripts/incremental/upgrades.gd"
 
 [display]
 

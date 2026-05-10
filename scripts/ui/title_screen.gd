@@ -173,12 +173,14 @@ func _on_new_run() -> void:
     get_tree().change_scene_to_file("res://scenes/horde.tscn")
 
 func _on_continue() -> void:
-    # Run state is per-run (not persisted). CONTINUE returns to the
-    # villa where saved gold / dyes / trophies / unlocks are usable.
-    get_tree().change_scene_to_file("res://scenes/villa/villa.tscn")
+    # CONTINUE jumps straight back into the horde arena.
+    get_tree().change_scene_to_file("res://scenes/horde.tscn")
 
 func _on_villa() -> void:
-    get_tree().change_scene_to_file("res://scenes/villa/villa.tscn")
+    # Repurposed: VILLA → upgrade workshop where gold buys persistent
+    # stat boosts. The full 3D villa scene is shelved during the
+    # incremental pivot.
+    get_tree().change_scene_to_file("res://scenes/upgrades.tscn")
 
 func _on_codex() -> void:
     get_tree().change_scene_to_file("res://scenes/ui/journal.tscn")

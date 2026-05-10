@@ -62,6 +62,7 @@ func _idle_gold_per_sec() -> float:
     base += float(GameState.lifetime_kills) / 1000.0
     if HordeState.secondary != "": base *= 1.4
     if HordeState.tertiary != "": base *= 1.5
+    base *= Upgrades.idle_multiplier()
     return base
 
 func _ready() -> void:
@@ -121,7 +122,7 @@ func _process(delta: float) -> void:
         spawn_timer = max(0.25, 1.4 - HordeState.wave * 0.04)
     if attack_timer <= 0.0:
         _hero_attack()
-        attack_timer = 1.0 / HERO_ATTACK_RATE
+        attack_timer = 1.0 / _hero_atk_rate()
     if idle_timer <= 0.0:
         var amount: int = int(round(_idle_gold_per_sec()))
         if amount > 0:
@@ -201,7 +202,7 @@ func _move_enemies(delta: float) -> void:
 func _hero_attack() -> void:
     var hero_center: Vector2 = hero.position + hero.size * 0.5
     var best: Dictionary = {}
-    var best_d: float = HERO_RANGE
+    var best_d: float = _hero_range()
     for e in enemies:
         var node: Panel = e["node"]
         if node == null or not is_instance_valid(node):
@@ -219,7 +220,16 @@ func _hero_damage() -> int:
     if HordeState.secondary != "": d += 3
     if HordeState.tertiary != "": d += 4
     d += HordeState.wave / 2
+    d += Upgrades.bonus_damage()
+    if rng.randf() < Upgrades.crit_chance():
+        d *= 2
     return d
+
+func _hero_atk_rate() -> float:
+    return HERO_ATTACK_RATE + Upgrades.bonus_atk_speed()
+
+func _hero_range() -> float:
+    return HERO_RANGE + Upgrades.bonus_range()
 
 func _damage_enemy(e: Dictionary, amount: int) -> void:
     e["hp"] -= amount
@@ -243,7 +253,7 @@ func _on_player_strike() -> void:
     # Tap deals a fat hit on the closest enemy and visibly shakes the arena.
     var hero_center: Vector2 = hero.position + hero.size * 0.5
     var best: Dictionary = {}
-    var best_d: float = HERO_RANGE * 1.3
+    var best_d: float = _hero_range() * 1.3
     for e in enemies:
         var node: Panel = e["node"]
         if node == null or not is_instance_valid(node):
