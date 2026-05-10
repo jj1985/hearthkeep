@@ -595,6 +595,8 @@ func _damage_enemy(e: Dictionary, amount: int) -> void:
             * _challenge_reward_mult()))
         HordeState.record_kill(String(e.get("id", "skeleton")), gold_amt)
         _pop(hud_kills); _pop(hud_gold)
+        if bool(e.get("mythic", false)):
+            _drop_powerup(death_pos)
         if was_boss:
             var ember_reward: int = int(round((1 + HordeState.wave / 10) * _challenge_reward_mult()))
             GameState.add_embers(ember_reward)
@@ -754,6 +756,48 @@ func _shaman_heal(shaman: Dictionary, sp: Vector2) -> void:
     var tw := create_tween()
     tw.tween_property(line, "modulate:a", 0.0, 0.4)
     tw.tween_callback(line.queue_free)
+
+const POWERUPS := [
+    {"id":"heal",   "label":"+25%% HP",    "color": Color(0.55, 0.85, 0.55)},
+    {"id":"gold",   "label":"+50g",        "color": Color(0.85, 0.78, 0.45)},
+    {"id":"haste",  "label":"+1 atk/s 8s", "color": Color(0.95, 0.55, 0.25)},
+]
+
+func _drop_powerup(pos: Vector2) -> void:
+    var pick: Dictionary = POWERUPS[rng.randi_range(0, POWERUPS.size() - 1)]
+    var p := Panel.new()
+    p.custom_minimum_size = Vector2(18, 18)
+    p.size = Vector2(18, 18)
+    p.position = pos - p.size * 0.5
+    var sb := StyleBoxFlat.new()
+    sb.bg_color = pick["color"]
+    sb.corner_radius_top_left = 9; sb.corner_radius_top_right = 9
+    sb.corner_radius_bottom_left = 9; sb.corner_radius_bottom_right = 9
+    p.add_theme_stylebox_override("panel", sb)
+    fx_layer.add_child(p)
+    # Float to hero over 1s; on arrival apply effect.
+    var hero_center: Vector2 = hero.position + hero.size * 0.5
+    var tw := create_tween()
+    tw.tween_property(p, "position", hero_center - p.size * 0.5, 1.0).set_trans(Tween.TRANS_QUAD)
+    tw.tween_callback(_apply_powerup.bind(pick))
+    tw.tween_callback(p.queue_free)
+
+func _apply_powerup(p: Dictionary) -> void:
+    var id: String = String(p["id"])
+    var label: String = String(p["label"]).replace("%%", "%")
+    match id:
+        "heal":
+            var amt: int = HordeState.hero_max_hp / 4
+            HordeState.hero_hp = min(HordeState.hero_max_hp, HordeState.hero_hp + amt)
+        "gold":
+            GameState.add_gold(50)
+        "haste":
+            HordePerks.atk_speed_bonus += 1.0
+            var t := get_tree().create_timer(8.0, true, false, true)
+            t.timeout.connect(func(): HordePerks.atk_speed_bonus = max(0.0, HordePerks.atk_speed_bonus - 1.0))
+    _floating_text(label, hero.position + hero.size * 0.5, T.RARITY_MYTHIC)
+    SfxBus.play("pickup", -4.0)
+    _refresh_hud()
 
 func _spawn_arrow(from: Vector2, to: Vector2) -> void:
     var dir: Vector2 = (to - from).normalized()
