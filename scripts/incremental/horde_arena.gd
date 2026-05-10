@@ -458,9 +458,13 @@ func _move_enemies(delta: float) -> void:
                 node.position -= dir_h * float(e["speed"]) * delta
             else:
                 node.position += dir_h * float(e["speed"]) * 0.6 * delta
+            if float(e["shot_cd"]) <= 0.25 and not bool(e.get("telegraphed", false)):
+                _spawn_shot_telegraph(ep, hero_center)
+                e["telegraphed"] = true
             if float(e["shot_cd"]) <= 0.0:
                 _spawn_arrow(ep, hero_center)
                 e["shot_cd"] = 2.0
+                e["telegraphed"] = false
             continue
         # Shamans hold distance and tick a heal cooldown.
         if bool(e.get("heals", false)):
@@ -798,6 +802,18 @@ func _apply_powerup(p: Dictionary) -> void:
     _floating_text(label, hero.position + hero.size * 0.5, T.RARITY_MYTHIC)
     SfxBus.play("pickup", -4.0)
     _refresh_hud()
+
+func _spawn_shot_telegraph(from: Vector2, to: Vector2) -> void:
+    var line := ColorRect.new()
+    line.color = Color(0.85, 0.30, 0.30, 0.45)
+    var mid: Vector2 = (from + to) * 0.5
+    line.size = Vector2(from.distance_to(to), 2)
+    line.position = mid - line.size * 0.5
+    line.rotation = (to - from).angle()
+    fx_layer.add_child(line)
+    var tw := create_tween()
+    tw.tween_property(line, "modulate:a", 0.0, 0.25)
+    tw.tween_callback(line.queue_free)
 
 func _spawn_arrow(from: Vector2, to: Vector2) -> void:
     var dir: Vector2 = (to - from).normalized()
