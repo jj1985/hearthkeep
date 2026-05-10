@@ -34,6 +34,7 @@ func save() -> void:
         "run_primary": HordeState.primary,
         "run_secondary": HordeState.secondary,
         "run_tertiary": HordeState.tertiary,
+        "rebirths": GameState.rebirths,
         "login_streak": GameState.login_streak,
         "last_login_day": GameState.last_login_day,
         "best_run_wave": GameState.best_run_wave,
@@ -82,6 +83,7 @@ func load_save() -> bool:
     HordeState.primary = String(d.get("run_primary", "warrior"))
     HordeState.secondary = String(d.get("run_secondary", ""))
     HordeState.tertiary = String(d.get("run_tertiary", ""))
+    GameState.rebirths = int(d.get("rebirths", 0))
     GameState.login_streak = int(d.get("login_streak", 0))
     GameState.last_login_day = int(d.get("last_login_day", 0))
     GameState.best_run_wave = int(d.get("best_run_wave", 0))

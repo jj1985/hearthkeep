@@ -400,6 +400,7 @@ func _hero_damage() -> int:
     d += HordeState.wave / 2
     d += Upgrades.bonus_damage()
     var f: float = float(d) * Upgrades.ember_damage_mult() * HordePerks.dmg_mult
+    f *= 1.0 + GameState.rebirths * 0.25
     if _temp_dmg_active(): f *= 1.5
     if rng.randf() < (Upgrades.crit_chance() + HordePerks.crit_bonus):
         f *= 2.0
@@ -431,7 +432,9 @@ func _damage_enemy(e: Dictionary, amount: int) -> void:
         var was_boss: bool = bool(e.get("boss", false))
         combo += 1
         combo_decay = COMBO_WINDOW
-        var gold_amt: int = int(round(int(e.get("gold", 1)) * Upgrades.ember_gold_mult() * HordePerks.gold_mult * _combo_mult()))
+        var gold_amt: int = int(round(int(e.get("gold", 1))
+            * Upgrades.ember_gold_mult() * HordePerks.gold_mult * _combo_mult()
+            * (1.0 + GameState.rebirths * 0.25)))
         HordeState.record_kill(String(e.get("id", "skeleton")), gold_amt)
         _pop(hud_kills); _pop(hud_gold)
         if was_boss:

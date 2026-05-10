@@ -34,6 +34,7 @@ var lifetime_kills_by_type: Dictionary = {}    # monster_id -> count
 var embers: int = 0                              # prestige currency from boss kills
 var bosses_felled: int = 0
 var last_save_unix: int = 0                      # used to award offline idle gold
+var rebirths: int = 0                            # permanent prestige stack
 var login_streak: int = 0
 var last_login_day: int = 0                      # unix-day of last daily reward
 var best_run_wave: int = 0

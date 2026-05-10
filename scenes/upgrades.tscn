@@ -61,6 +61,11 @@ custom_minimum_size = Vector2(160, 56)
 text = "JUMP W50"
 visible = false
 
+[node name="Rebirth" type="Button" parent="V"]
+custom_minimum_size = Vector2(0, 56)
+text = "REBIRTH"
+visible = false
+
 [node name="Back" type="Button" parent="V"]
 custom_minimum_size = Vector2(0, 56)
 text = "BACK"

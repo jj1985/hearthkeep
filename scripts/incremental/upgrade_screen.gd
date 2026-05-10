@@ -14,6 +14,7 @@ const UiStyle_ := preload("res://scripts/ui/ui_style.gd")
 @onready var btn_jump_10: Button = $V/JumpRow/Jump10
 @onready var btn_jump_25: Button = $V/JumpRow/Jump25
 @onready var btn_jump_50: Button = $V/JumpRow/Jump50
+@onready var btn_rebirth: Button = $V/Rebirth
 
 var row_widgets: Array = []
 
@@ -28,6 +29,8 @@ func _ready() -> void:
     UiStyle_.apply_secondary(btn_jump_10)
     UiStyle_.apply_secondary(btn_jump_25)
     UiStyle_.apply_secondary(btn_jump_50)
+    btn_rebirth.pressed.connect(_on_rebirth)
+    UiStyle_.apply_primary(btn_rebirth)
     Upgrades.upgrade_purchased.connect(_on_purchased)
     EventBus.currency_changed.connect(_on_currency)
     _build_rows()
@@ -115,6 +118,9 @@ func _refresh_stats() -> void:
     btn_jump_10.visible = GameState.best_run_wave >= 10
     btn_jump_25.visible = GameState.best_run_wave >= 25
     btn_jump_50.visible = GameState.best_run_wave >= 50
+    btn_rebirth.visible = bool(GameState.meta_unlocks.get("wave_50", false))
+    if btn_rebirth.visible:
+        btn_rebirth.text = "REBIRTH (+25%% perm.) — Mark %d" % (GameState.rebirths + 1)
 
 func _on_jump(target_wave: int) -> void:
     HordeState.reset_run()
@@ -122,6 +128,28 @@ func _on_jump(target_wave: int) -> void:
     HordeState.wave = target_wave
     SaveSystem.save()
     get_tree().change_scene_to_file("res://scenes/horde.tscn")
+
+func _on_rebirth() -> void:
+    # Confirm-and-go: increments rebirths, wipes per-track upgrades, gold,
+    # lifetime kills, best-run, and the wave_50 milestone (so the next
+    # rebirth has to be earned again). Embers and the rebirth count
+    # itself persist.
+    GameState.rebirths += 1
+    GameState.gold = 0
+    GameState.lifetime_kills = 0
+    GameState.lifetime_kills_by_type = {}
+    GameState.best_run_wave = 0
+    GameState.best_run_kills = 0
+    GameState.bosses_felled = 0
+    GameState.deepest_floor = 0
+    GameState.unlocked_classes = ["warrior"] as Array[String]
+    GameState.meta_unlocks["upgrades"] = {}
+    GameState.meta_unlocks["milestones"] = {}
+    GameState.meta_unlocks["wave_50"] = false
+    HordeState.reset_run()
+    HordePerks.reset_for_run()
+    SaveSystem.save()
+    _refresh_rows(); _refresh_gold(); _refresh_stats()
 
 func _on_back() -> void:
     SaveSystem.save()
