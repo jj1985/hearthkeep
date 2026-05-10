@@ -77,6 +77,13 @@ var reroll_cost: int = 0
 
 var combo: int = 0
 var combo_decay: float = 0.0
+
+# Mid-run merchant buffs — apply through wave N, then expire.
+var temp_dmg_until: int = -1
+var temp_atk_until: int = -1
+
+func _temp_dmg_active() -> bool: return HordeState.wave <= temp_dmg_until
+func _temp_atk_active() -> bool: return HordeState.wave <= temp_atk_until
 const COMBO_WINDOW := 1.5
 const COMBO_MAX_BONUS := 1.0  # +100% at peak
 const COMBO_HALF_AT := 30     # streak length where you hit half of max bonus
@@ -369,12 +376,15 @@ func _hero_damage() -> int:
     d += HordeState.wave / 2
     d += Upgrades.bonus_damage()
     var f: float = float(d) * Upgrades.ember_damage_mult() * HordePerks.dmg_mult
+    if _temp_dmg_active(): f *= 1.5
     if rng.randf() < (Upgrades.crit_chance() + HordePerks.crit_bonus):
         f *= 2.0
     return int(round(f))
 
 func _hero_atk_rate() -> float:
-    return HERO_ATTACK_RATE + Upgrades.bonus_atk_speed() + HordePerks.atk_speed_bonus
+    var r := HERO_ATTACK_RATE + Upgrades.bonus_atk_speed() + HordePerks.atk_speed_bonus
+    if _temp_atk_active(): r += 1.0
+    return r
 
 func _hero_range() -> float:
     return HERO_RANGE + Upgrades.bonus_range() + HordePerks.range_bonus
@@ -462,6 +472,8 @@ func _next_wave() -> void:
         _spawn_boss()
     if HordeState.wave % 5 == 0:
         _open_perk_picker()
+    elif HordeState.wave % 7 == 0:
+        _open_merchant()
     if HordeState.wave == 50 and not bool(GameState.meta_unlocks.get("wave_50", false)):
         GameState.meta_unlocks["wave_50"] = true
         GameState.add_embers(25)
@@ -631,6 +643,55 @@ func _pick_extra_class(slot: String, cid: String) -> void:
     _style_hero()
     btn_skill.text = _skill_label()
     _refresh_hud()
+
+const MERCHANT_OFFERS := [
+    {"id":"heal",     "label":"Healing Tonic",    "desc":"Restore HP to full.",            "cost":40},
+    {"id":"oil",      "label":"Whetstone Oil",    "desc":"+50%% damage for 3 waves.",      "cost":60},
+    {"id":"drum",     "label":"Battle Drum",      "desc":"+1.0 atk/sec for 3 waves.",      "cost":80},
+    {"id":"trade",    "label":"Ember Bargain",    "desc":"Trade 30 gold for 1 Ember.",     "cost":30},
+]
+
+func _open_merchant() -> void:
+    milestone_title.text = "Wandering Merchant"
+    milestone_body.text = "A trader sets up shop between fights."
+    for c in milestone_choices.get_children():
+        c.queue_free()
+    for o in MERCHANT_OFFERS:
+        var d: Dictionary = o
+        var b := Button.new()
+        var label: String = String(d["label"])
+        var desc: String = String(d["desc"]).replace("%%", "%")
+        var cost: int = int(d["cost"])
+        b.text = "%s (%dg)  —  %s" % [label, cost, desc]
+        b.custom_minimum_size = Vector2(0, 56)
+        b.disabled = GameState.gold < cost or (String(d["id"]) == "trade" and GameState.gold < 30)
+        UiStyle_.apply_secondary(b)
+        b.pressed.connect(_on_merchant_buy.bind(d))
+        milestone_choices.add_child(b)
+    paused_for_milestone = true
+    milestone_overlay.visible = true
+    overlay_scrim.visible = true
+    SfxBus.play("chest_open", -6.0)
+
+func _on_merchant_buy(offer: Dictionary) -> void:
+    var cost: int = int(offer["cost"])
+    if GameState.gold < cost: return
+    GameState.gold -= cost
+    EventBus.currency_changed.emit("gold", -cost, GameState.gold)
+    match String(offer["id"]):
+        "heal":
+            HordeState.hero_hp = HordeState.hero_max_hp
+        "oil":
+            temp_dmg_until = HordeState.wave + 3
+        "drum":
+            temp_atk_until = HordeState.wave + 3
+        "trade":
+            GameState.add_embers(1)
+    SaveSystem.save()
+    _refresh_hud()
+    _close_milestone()
+    _floating_text("Bought: %s" % String(offer["label"]),
+        Vector2(arena.size.x * 0.5 - 100, 80), T.SECONDARY)
 
 func _open_perk_picker() -> void:
     reroll_cost = 50
