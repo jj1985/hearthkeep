@@ -159,7 +159,9 @@ func _process(delta: float) -> void:
     idle_timer -= delta
     if spawn_timer <= 0.0:
         _spawn_enemy()
-        spawn_timer = max(0.25, 1.4 - HordeState.wave * 0.04)
+        # Slower start for the first 5 waves, then standard ramp.
+        var soft: float = 1.0 if HordeState.wave > 5 else lerp(2.2, 1.4, (HordeState.wave - 1) / 4.0)
+        spawn_timer = max(0.25, soft - HordeState.wave * 0.04)
     if attack_timer <= 0.0:
         _hero_attack()
         attack_timer = 1.0 / _hero_atk_rate()
@@ -338,9 +340,16 @@ func _next_wave() -> void:
     HordeState.advance_wave()
     wave_kills_progress = 0
     wave_kills_target = int(8 + HordeState.wave * 1.5)
+    # Wave-clear bonus: 5 + wave² gold so survival pays off even when
+    # you're not gathering kill drops fast.
+    var bonus: int = 5 + HordeState.wave * HordeState.wave
+    bonus = int(round(bonus * Upgrades.ember_gold_mult()))
+    GameState.add_gold(bonus)
     SaveSystem.save()
     _refresh_hud()
-    _floating_text("WAVE %d" % HordeState.wave, hero.position + hero.size * 0.5, T.PRIMARY)
+    _floating_text("WAVE %d  +%d g" % [HordeState.wave, bonus],
+        hero.position + hero.size * 0.5, T.PRIMARY)
+    _pop(hud_gold)
     SfxBus.play("levelup", -8.0)
     if HordeState.wave % 10 == 0:
         _spawn_boss()
