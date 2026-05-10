@@ -242,20 +242,28 @@ func _damage_enemy(e: Dictionary, amount: int) -> void:
     var bar: ProgressBar = e.get("hp_bar")
     if bar != null and is_instance_valid(bar):
         bar.value = float(max(0, e["hp"])) / float(max(1, int(e["max_hp"])))
+    var n: Panel = e["node"]
+    var death_pos: Vector2 = Vector2.ZERO
+    if n != null and is_instance_valid(n):
+        death_pos = n.position + n.size * 0.5
+        _floating_text("-%d" % amount, death_pos,
+            T.WARNING if amount < 10 else T.SECONDARY)
     if e["hp"] <= 0:
-        var n: Panel = e["node"]
         if n != null and is_instance_valid(n):
             n.queue_free()
         enemies.erase(e)
         var was_boss: bool = bool(e.get("boss", false))
         var gold_amt: int = int(round(int(e.get("gold", 1)) * Upgrades.ember_gold_mult()))
         HordeState.record_kill(String(e.get("id", "skeleton")), gold_amt)
+        _pop(hud_kills); _pop(hud_gold)
         if was_boss:
             var ember_reward: int = 1 + HordeState.wave / 10
             GameState.add_embers(ember_reward)
             GameState.bosses_felled += 1
             _floating_text("+%d Embers" % ember_reward,
                 Vector2(arena.size.x * 0.5 - 50, arena.size.y * 0.4), T.SECONDARY)
+            _boss_burst(death_pos)
+            _pop(hud_embers)
             SaveSystem.save()
         else:
             wave_kills_progress += 1
@@ -358,6 +366,29 @@ func _shake(amount: float) -> void:
     var tw := create_tween()
     tw.tween_property(arena, "position", orig + Vector2(amount, 0), 0.04)
     tw.tween_property(arena, "position", orig, 0.06)
+
+func _pop(node: Control) -> void:
+    if node == null: return
+    var orig := node.scale
+    var tw := create_tween()
+    tw.tween_property(node, "scale", orig * 1.18, 0.06)
+    tw.tween_property(node, "scale", orig, 0.10)
+
+func _boss_burst(pos: Vector2) -> void:
+    # Eight-petal radial flash for the boss kill.
+    for i in 8:
+        var c := ColorRect.new()
+        c.color = T.PRIMARY
+        c.size = Vector2(10, 10)
+        c.position = pos - c.size * 0.5
+        fx_layer.add_child(c)
+        var angle: float = TAU * float(i) / 8.0
+        var dest: Vector2 = pos + Vector2(cos(angle), sin(angle)) * 96.0 - c.size * 0.5
+        var tw := create_tween()
+        tw.parallel().tween_property(c, "position", dest, 0.45)
+        tw.parallel().tween_property(c, "modulate:a", 0.0, 0.45)
+        tw.tween_callback(c.queue_free)
+    _shake(16)
 
 # --- Milestone overlay --------------------------------------------------
 
