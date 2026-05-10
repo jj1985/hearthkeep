@@ -15,6 +15,10 @@ const UiStyle_ := preload("res://scripts/ui/ui_style.gd")
 @onready var btn_jump_25: Button = $V/JumpRow/Jump25
 @onready var btn_jump_50: Button = $V/JumpRow/Jump50
 @onready var btn_rebirth: Button = $V/Rebirth
+@onready var btn_ach_toggle: Button = $V/AchToggle
+@onready var ach_scroll: ScrollContainer = $V/AchScroll
+@onready var ach_rows: VBoxContainer = $V/AchScroll/AchRows
+const Achievements := preload("res://scripts/incremental/achievements.gd")
 
 var row_widgets: Array = []
 
@@ -31,6 +35,9 @@ func _ready() -> void:
     UiStyle_.apply_secondary(btn_jump_50)
     btn_rebirth.pressed.connect(_on_rebirth)
     UiStyle_.apply_primary(btn_rebirth)
+    btn_ach_toggle.pressed.connect(_on_ach_toggle)
+    UiStyle_.apply_secondary(btn_ach_toggle)
+    _build_achievements()
     Upgrades.upgrade_purchased.connect(_on_purchased)
     EventBus.currency_changed.connect(_on_currency)
     _build_rows()
@@ -128,6 +135,33 @@ func _on_jump(target_wave: int) -> void:
     HordeState.wave = target_wave
     SaveSystem.save()
     get_tree().change_scene_to_file("res://scenes/horde.tscn")
+
+func _on_ach_toggle() -> void:
+    ach_scroll.visible = not ach_scroll.visible
+    if ach_scroll.visible: _build_achievements()
+
+func _build_achievements() -> void:
+    if ach_rows == null: return
+    for c in ach_rows.get_children(): c.queue_free()
+    for r in Achievements.ROWS:
+        var d: Dictionary = r
+        var id: String = String(d["id"])
+        var prog: Array = Achievements.progress(id)
+        var done: bool = Achievements.is_done(id)
+        var row := HBoxContainer.new()
+        row.theme_override_constants_separation = 8
+        var name_lbl := Label.new()
+        name_lbl.text = ("✓ " if done else "  ") + String(d["label"])
+        name_lbl.size_flags_horizontal = 3
+        name_lbl.add_theme_color_override("font_color",
+            T.SUCCESS if done else T.ON_SURFACE_MUTED)
+        row.add_child(name_lbl)
+        var prog_lbl := Label.new()
+        prog_lbl.text = "%d / %d" % [int(prog[0]), int(prog[1])]
+        prog_lbl.add_theme_color_override("font_color",
+            T.PRIMARY if done else T.ON_SURFACE)
+        row.add_child(prog_lbl)
+        ach_rows.add_child(row)
 
 func _on_rebirth() -> void:
     # Confirm-and-go: increments rebirths, wipes per-track upgrades, gold,
