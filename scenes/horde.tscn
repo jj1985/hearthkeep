@@ -221,6 +221,9 @@ theme_override_constants/separation = 8
 [node name="MuteCheck" type="CheckBox" parent="Overlay/Pause/V/MuteRow"]
 text = "Mute SFX"
 
+[node name="MotionCheck" type="CheckBox" parent="Overlay/Pause/V/MuteRow"]
+text = "Reduced Motion"
+
 [node name="Restart" type="Button" parent="Overlay/Pause/V"]
 custom_minimum_size = Vector2(0, 56)
 text = "RESTART RUN"

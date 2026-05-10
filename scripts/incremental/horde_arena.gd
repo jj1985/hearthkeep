@@ -59,6 +59,7 @@ const HERO_RANGE := 220.0
 @onready var btn_resume: Button = $Overlay/Pause/V/Resume
 @onready var btn_pause_home: Button = $Overlay/Pause/V/Home
 @onready var mute_check: CheckBox = $Overlay/Pause/V/MuteRow/MuteCheck
+@onready var motion_check: CheckBox = $Overlay/Pause/V/MuteRow/MotionCheck
 @onready var btn_restart: Button = $Overlay/Pause/V/Restart
 @onready var hud_idle: Label = $HUD/Top/Idle
 @onready var hud_embers: Label = $HUD/Top/Embers
@@ -113,6 +114,8 @@ func _ready() -> void:
     UiStyle_.apply_secondary(btn_restart)
     mute_check.button_pressed = Settings.sfx_volume <= 0.001
     mute_check.toggled.connect(_on_mute_toggled)
+    motion_check.button_pressed = Settings.screen_shake_scale <= 0.001
+    motion_check.toggled.connect(_on_motion_toggled)
     milestone_skip.pressed.connect(_close_milestone)
     bg.color = T.SURFACE_DIM
     UiStyle_.apply_secondary(btn_quit)
@@ -503,9 +506,11 @@ func _floating_text(s: String, pos: Vector2, color: Color) -> void:
     tw.tween_callback(lbl.queue_free)
 
 func _shake(amount: float) -> void:
+    if Settings.screen_shake_scale <= 0.001: return
     var orig := arena.position
+    var scaled: float = amount * Settings.screen_shake_scale
     var tw := create_tween()
-    tw.tween_property(arena, "position", orig + Vector2(amount, 0), 0.04)
+    tw.tween_property(arena, "position", orig + Vector2(scaled, 0), 0.04)
     tw.tween_property(arena, "position", orig, 0.06)
 
 func _pop(node: Control) -> void:
@@ -523,6 +528,7 @@ func _flash_screen(c: Color, peak_alpha: float, duration: float) -> void:
     tw.tween_property(overlay_flash, "color:a", 0.0, duration * 0.75)
 
 func _slow_mo(scale: float, hold: float) -> void:
+    if Settings.screen_shake_scale <= 0.001: return
     Engine.time_scale = scale
     # Real-time timer (ignore_time_scale=true) so the slow-mo actually ends.
     var t := get_tree().create_timer(hold, true, false, true)
@@ -792,6 +798,16 @@ func _on_pause() -> void:
     pause_overlay.visible = true
     overlay_scrim.visible = true
     SaveSystem.save()
+
+func _on_motion_toggled(reduced: bool) -> void:
+    if reduced:
+        if Settings.screen_shake_scale > 0.001:
+            Settings.set_meta("prev_shake", Settings.screen_shake_scale)
+        Settings.screen_shake_scale = 0.0
+    else:
+        var prev := float(Settings.get_meta("prev_shake", 1.0))
+        Settings.screen_shake_scale = prev if prev > 0.05 else 1.0
+    Settings.save()
 
 func _on_mute_toggled(muted: bool) -> void:
     # Stash the previous level so unchecking restores it instead of
