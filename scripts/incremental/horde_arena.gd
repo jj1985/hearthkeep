@@ -20,6 +20,7 @@ const ENEMY_TYPES := {
     "ghoul":      {"label": "Ghoul",      "color": Color(0.55, 0.70, 0.50), "hp_base": 40,  "speed": 110.0, "gold": 9,  "size": 30, "min_wave": 9},
     "drake":      {"label": "Drake",      "color": Color(0.85, 0.35, 0.25), "hp_base": 60,  "speed": 75.0,  "gold": 14, "size": 36, "min_wave": 12},
     "wraith":     {"label": "Wraith",     "color": Color(0.55, 0.45, 0.85), "hp_base": 90,  "speed": 130.0, "gold": 24, "size": 30, "min_wave": 16},
+    "sapper":     {"label": "Sapper",     "color": Color(0.95, 0.45, 0.20), "hp_base": 30,  "speed": 50.0,  "gold": 8,  "size": 30, "min_wave": 14, "explodes": true},
     "ogre":       {"label": "Ogre",       "color": Color(0.55, 0.55, 0.30), "hp_base": 220, "speed": 40.0,  "gold": 55, "size": 44, "min_wave": 20},
     "boss_warchief":{"label":"Krrik III", "color": Color(0.95, 0.75, 0.25), "hp_base": 240, "speed": 50.0,  "gold": 60, "size": 56, "boss": true},
     "boss_dragon":{"label":"Vyxhasis",    "color": Color(0.85, 0.25, 0.55), "hp_base": 600, "speed": 45.0,  "gold": 200,"size": 72, "boss": true},
@@ -356,6 +357,7 @@ func _spawn_enemy() -> void:
         "gold": int(def["gold"]) * (10 if is_mythic else 1),
         "id": id,
         "mythic": is_mythic,
+        "explodes": bool(def.get("explodes", false)),
     })
     if is_mythic:
         _floating_text("MYTHIC %s" % String(def.get("label", "Foe")).to_upper(),
@@ -436,6 +438,8 @@ func _damage_enemy(e: Dictionary, amount: int) -> void:
         if n != null and is_instance_valid(n):
             n.queue_free()
         enemies.erase(e)
+        if bool(e.get("explodes", false)) and death_pos != Vector2.ZERO:
+            _detonate_at(death_pos, 60.0, _hero_damage())
         var was_boss: bool = bool(e.get("boss", false))
         combo += 1
         combo_decay = COMBO_WINDOW
@@ -517,6 +521,31 @@ func _next_wave() -> void:
             Vector2(arena.size.x * 0.5 - 100, 60), T.RARITY_MYTHIC)
         _flash_screen(T.RARITY_MYTHIC, 0.8, 0.5)
         SaveSystem.save()
+
+func _detonate_at(pos: Vector2, radius: float, damage: int) -> void:
+    # Visual ring
+    var c := ColorRect.new()
+    c.color = Color(1.0, 0.55, 0.20, 0.55)
+    c.size = Vector2(radius * 2, radius * 2)
+    c.position = pos - c.size * 0.5
+    fx_layer.add_child(c)
+    var tw := create_tween()
+    tw.parallel().tween_property(c, "modulate:a", 0.0, 0.35)
+    tw.parallel().tween_property(c, "scale", Vector2(1.4, 1.4), 0.35)
+    tw.tween_callback(c.queue_free)
+    # Damage everything in radius (chain detonating Sappers)
+    for e in enemies.duplicate():
+        var n: Panel = e.get("node")
+        if n == null or not is_instance_valid(n): continue
+        var ep: Vector2 = n.position + n.size * 0.5
+        if ep.distance_to(pos) <= radius:
+            _damage_enemy(e, damage)
+    # Hero takes splash if too close
+    var hero_center: Vector2 = hero.position + hero.size * 0.5
+    if hero_center.distance_to(pos) <= radius:
+        _hero_take_damage(int(damage * 0.5))
+    _shake(8)
+    SfxBus.play("hit_heavy", -4.0)
 
 func _telegraph_boss() -> void:
     var boss_id: String = "boss_warchief"
