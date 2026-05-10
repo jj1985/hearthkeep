@@ -22,6 +22,7 @@ const ENEMY_TYPES := {
     "wraith":     {"label": "Wraith",     "color": Color(0.55, 0.45, 0.85), "hp_base": 90,  "speed": 130.0, "gold": 24, "size": 30, "min_wave": 16},
     "sapper":     {"label": "Sapper",     "color": Color(0.95, 0.45, 0.20), "hp_base": 30,  "speed": 50.0,  "gold": 8,  "size": 30, "min_wave": 14, "explodes": true},
     "shaman":     {"label": "Shaman",     "color": Color(0.45, 0.85, 0.55), "hp_base": 50,  "speed": 60.0,  "gold": 16, "size": 30, "min_wave": 18, "heals": true},
+    "archer":     {"label": "Archer",     "color": Color(0.70, 0.85, 0.40), "hp_base": 25,  "speed": 50.0,  "gold": 6,  "size": 28, "min_wave": 11, "ranged": true},
     "ogre":       {"label": "Ogre",       "color": Color(0.55, 0.55, 0.30), "hp_base": 220, "speed": 40.0,  "gold": 55, "size": 44, "min_wave": 20},
     "boss_warchief":{"label":"Krrik III", "color": Color(0.95, 0.75, 0.25), "hp_base": 240, "speed": 50.0,  "gold": 60, "size": 56, "boss": true},
     "boss_dragon":{"label":"Vyxhasis",    "color": Color(0.85, 0.25, 0.55), "hp_base": 600, "speed": 45.0,  "gold": 200,"size": 72, "boss": true},
@@ -99,6 +100,9 @@ var run_embers_earned: int = 0
 # Rolling DPS — list of [t, damage] entries within the last 3s.
 var dps_log: Array = []
 const DPS_WINDOW := 3.0
+
+var arrows: Array = []   # [{node, vel, dmg}]
+const ARROW_SPEED := 220.0
 
 # Mid-run merchant buffs — apply through wave N, then expire.
 var temp_dmg_until: int = -1
@@ -355,6 +359,7 @@ func _process(delta: float) -> void:
             _refresh_hud()
         idle_timer = 1.0
     _move_enemies(delta)
+    _move_arrows(delta)
 
 func _spawn_enemy() -> void:
     var size := arena.size
@@ -420,6 +425,8 @@ func _spawn_enemy() -> void:
         "explodes": bool(def.get("explodes", false)),
         "heals": bool(def.get("heals", false)),
         "heal_cd": 3.0,
+        "ranged": bool(def.get("ranged", false)),
+        "shot_cd": 1.5,
     })
     if is_mythic:
         _floating_text("MYTHIC %s" % String(def.get("label", "Foe")).to_upper(),
@@ -440,6 +447,19 @@ func _move_enemies(delta: float) -> void:
             continue
         if bool(e.get("boss", false)):
             _boss_tick(e, delta)
+        # Archers kite at range and fire periodic projectiles at the hero.
+        if bool(e.get("ranged", false)):
+            e["shot_cd"] = float(e.get("shot_cd", 1.5)) - delta
+            var dist: float = ep.distance_to(hero_center)
+            var dir_h: Vector2 = (hero_center - ep).normalized()
+            if dist < 240.0:
+                node.position -= dir_h * float(e["speed"]) * delta
+            else:
+                node.position += dir_h * float(e["speed"]) * 0.6 * delta
+            if float(e["shot_cd"]) <= 0.0:
+                _spawn_arrow(ep, hero_center)
+                e["shot_cd"] = 2.0
+            continue
         # Shamans hold distance and tick a heal cooldown.
         if bool(e.get("heals", false)):
             e["heal_cd"] = float(e.get("heal_cd", 3.0)) - delta
@@ -732,6 +752,39 @@ func _shaman_heal(shaman: Dictionary, sp: Vector2) -> void:
     var tw := create_tween()
     tw.tween_property(line, "modulate:a", 0.0, 0.4)
     tw.tween_callback(line.queue_free)
+
+func _spawn_arrow(from: Vector2, to: Vector2) -> void:
+    var dir: Vector2 = (to - from).normalized()
+    var a := ColorRect.new()
+    a.color = Color(0.95, 0.85, 0.55, 0.9)
+    a.size = Vector2(10, 3)
+    a.position = from - a.size * 0.5
+    a.rotation = dir.angle()
+    fx_layer.add_child(a)
+    arrows.append({"node": a, "vel": dir * ARROW_SPEED,
+        "dmg": 3 + HordeState.wave / 3, "life": 3.0})
+    SfxBus.play("hit", -14.0)
+
+func _move_arrows(delta: float) -> void:
+    var dead: Array = []
+    var hero_center: Vector2 = hero.position + hero.size * 0.5
+    var arena_size := arena.size
+    for a in arrows:
+        var n: ColorRect = a.get("node")
+        if n == null or not is_instance_valid(n):
+            dead.append(a); continue
+        n.position += (a["vel"] as Vector2) * delta
+        a["life"] = float(a.get("life", 3.0)) - delta
+        var cp: Vector2 = n.position + n.size * 0.5
+        if cp.distance_to(hero_center) < HERO_RADIUS + 4:
+            _hero_take_damage(int(a["dmg"]))
+            n.queue_free()
+            dead.append(a)
+            continue
+        if float(a["life"]) <= 0.0 or cp.x < -20 or cp.y < -20 or cp.x > arena_size.x + 20 or cp.y > arena_size.y + 20:
+            n.queue_free()
+            dead.append(a)
+    for d in dead: arrows.erase(d)
 
 func _detonate_at(pos: Vector2, radius: float, damage: int) -> void:
     # Visual ring
