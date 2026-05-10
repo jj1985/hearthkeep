@@ -43,6 +43,7 @@ const HERO_RANGE := 220.0
 @onready var dps_bar: ProgressBar = $HUD/Top/Wavebar
 @onready var milestone_row_label: Label = $HUD/MilestoneRow/Label
 @onready var milestone_row_bar: ProgressBar = $HUD/MilestoneRow/Bar
+@onready var perk_row: HBoxContainer = $HUD/PerkRow
 @onready var overlay_scrim: ColorRect = $Overlay/Scrim
 @onready var overlay_flash: ColorRect = $Overlay/Flash
 @onready var milestone_overlay: Panel = $Overlay/Milestone
@@ -588,7 +589,35 @@ func _on_perk_chosen(perk: Dictionary) -> void:
     HordePerks.apply(perk)
     _floating_text("+ %s" % String(perk["label"]),
         Vector2(arena.size.x * 0.5 - 80, 100), T.PRIMARY)
+    _refresh_perk_row()
     _close_milestone()
+
+func _refresh_perk_row() -> void:
+    if perk_row == null: return
+    for c in perk_row.get_children(): c.queue_free()
+    for id in HordePerks.taken_ids:
+        var def: Dictionary = {}
+        for p in HordePerks.ALL_PERKS:
+            if String((p as Dictionary)["id"]) == id:
+                def = p; break
+        if def.is_empty(): continue
+        var chip := Panel.new()
+        chip.custom_minimum_size = Vector2(0, 28)
+        var sb := StyleBoxFlat.new()
+        sb.bg_color = T.SURFACE_BRIGHT
+        sb.corner_radius_top_left = 14; sb.corner_radius_top_right = 14
+        sb.corner_radius_bottom_left = 14; sb.corner_radius_bottom_right = 14
+        sb.border_color = T.PRIMARY
+        sb.border_width_left = 1; sb.border_width_right = 1
+        sb.border_width_top = 1; sb.border_width_bottom = 1
+        chip.add_theme_stylebox_override("panel", sb)
+        var label := Label.new()
+        label.text = "  %s  " % String(def["label"])
+        label.add_theme_color_override("font_color", T.ON_SURFACE)
+        label.add_theme_font_size_override("font_size", T.FS_BODY_SM)
+        chip.add_child(label)
+        label.position = Vector2(0, 4)
+        perk_row.add_child(chip)
 
 func _close_milestone() -> void:
     paused_for_milestone = false

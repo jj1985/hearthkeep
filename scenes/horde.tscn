@@ -96,6 +96,15 @@ size_flags_horizontal = 3
 custom_minimum_size = Vector2(0, 10)
 show_percentage = false
 
+[node name="PerkRow" type="HBoxContainer" parent="HUD"]
+anchor_right = 1.0
+offset_left = 16.0
+offset_top = 96.0
+offset_right = -16.0
+offset_bottom = 124.0
+theme_override_constants/separation = 6
+clip_contents = true
+
 [node name="Bottom" type="HBoxContainer" parent="HUD"]
 anchor_left = 0.0
 anchor_top = 1.0
