@@ -86,6 +86,7 @@ func _idle_gold_per_sec() -> float:
 func _ready() -> void:
     rng.randomize()
     HordeState.reset_run()
+    HordePerks.reset_for_run()
     HordeState.milestone_reached.connect(_on_milestone)
     HordeState.slot_unlocked.connect(_on_slot_unlocked)
     HordeState.class_unlocked.connect(_on_class_unlocked)
@@ -192,7 +193,9 @@ func _process(delta: float) -> void:
         _spawn_enemy()
         # Slower start for the first 5 waves, then standard ramp.
         var soft: float = 1.0 if HordeState.wave > 5 else lerp(2.2, 1.4, (HordeState.wave - 1) / 4.0)
-        spawn_timer = max(0.25, soft - HordeState.wave * 0.04)
+        var t: float = soft - HordeState.wave * 0.04
+        t /= max(0.4, 1.0 - HordePerks.spawn_slow)
+        spawn_timer = max(0.25, t)
     if attack_timer <= 0.0:
         _hero_attack()
         attack_timer = 1.0 / _hero_atk_rate()
@@ -311,16 +314,16 @@ func _hero_damage() -> int:
     if HordeState.tertiary != "": d += 4
     d += HordeState.wave / 2
     d += Upgrades.bonus_damage()
-    var f: float = float(d) * Upgrades.ember_damage_mult()
-    if rng.randf() < Upgrades.crit_chance():
+    var f: float = float(d) * Upgrades.ember_damage_mult() * HordePerks.dmg_mult
+    if rng.randf() < (Upgrades.crit_chance() + HordePerks.crit_bonus):
         f *= 2.0
     return int(round(f))
 
 func _hero_atk_rate() -> float:
-    return HERO_ATTACK_RATE + Upgrades.bonus_atk_speed()
+    return HERO_ATTACK_RATE + Upgrades.bonus_atk_speed() + HordePerks.atk_speed_bonus
 
 func _hero_range() -> float:
-    return HERO_RANGE + Upgrades.bonus_range()
+    return HERO_RANGE + Upgrades.bonus_range() + HordePerks.range_bonus
 
 func _damage_enemy(e: Dictionary, amount: int) -> void:
     e["hp"] -= amount
@@ -338,7 +341,7 @@ func _damage_enemy(e: Dictionary, amount: int) -> void:
             n.queue_free()
         enemies.erase(e)
         var was_boss: bool = bool(e.get("boss", false))
-        var gold_amt: int = int(round(int(e.get("gold", 1)) * Upgrades.ember_gold_mult()))
+        var gold_amt: int = int(round(int(e.get("gold", 1)) * Upgrades.ember_gold_mult() * HordePerks.gold_mult))
         HordeState.record_kill(String(e.get("id", "skeleton")), gold_amt)
         _pop(hud_kills); _pop(hud_gold)
         if was_boss:
@@ -387,7 +390,7 @@ func _next_wave() -> void:
     # Wave-clear bonus: 5 + wave² gold so survival pays off even when
     # you're not gathering kill drops fast.
     var bonus: int = 5 + HordeState.wave * HordeState.wave
-    bonus = int(round(bonus * Upgrades.ember_gold_mult()))
+    bonus = int(round(bonus * Upgrades.ember_gold_mult() * HordePerks.wave_bonus_mult))
     GameState.add_gold(bonus)
     SaveSystem.save()
     _refresh_hud()
@@ -398,6 +401,8 @@ func _next_wave() -> void:
     SfxBus.play("levelup", -8.0)
     if HordeState.wave % 10 == 0:
         _spawn_boss()
+    if HordeState.wave % 5 == 0:
+        _open_perk_picker()
 
 func _spawn_boss() -> void:
     var boss_id: String = "boss_warchief"
@@ -556,6 +561,34 @@ func _pick_extra_class(slot: String, cid: String) -> void:
     hero_label.text = _hero_initials()
     _style_hero()
     _refresh_hud()
+
+func _open_perk_picker() -> void:
+    var picks: Array = HordePerks.roll(rng, 3)
+    if picks.is_empty(): return
+    milestone_title.text = "Perk pick — wave %d" % HordeState.wave
+    milestone_body.text = "Choose a power to carry into the next push."
+    for c in milestone_choices.get_children():
+        c.queue_free()
+    for p in picks:
+        var d: Dictionary = p
+        var b := Button.new()
+        var label: String = String(d["label"])
+        var desc: String = String(d["desc"]).replace("%%", "%")
+        b.text = "%s  —  %s" % [label, desc]
+        b.custom_minimum_size = Vector2(0, 64)
+        UiStyle_.apply_primary(b)
+        b.pressed.connect(_on_perk_chosen.bind(d))
+        milestone_choices.add_child(b)
+    paused_for_milestone = true
+    milestone_overlay.visible = true
+    overlay_scrim.visible = true
+    SfxBus.play("perk_pick", -6.0)
+
+func _on_perk_chosen(perk: Dictionary) -> void:
+    HordePerks.apply(perk)
+    _floating_text("+ %s" % String(perk["label"]),
+        Vector2(arena.size.x * 0.5 - 80, 100), T.PRIMARY)
+    _close_milestone()
 
 func _close_milestone() -> void:
     paused_for_milestone = false
