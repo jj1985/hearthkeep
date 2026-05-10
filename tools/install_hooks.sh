@@ -47,3 +47,24 @@ EOF
 
 chmod +x "$HOOKS_DIR/pre-commit"
 echo "[install-hooks] pre-commit hook installed at $HOOKS_DIR/pre-commit"
+
+# pre-push: builds + uploads APK in the background after the push
+# completes (forked + disowned so the user's terminal isn't blocked).
+# Logs to .git/last-ship.log.
+cat > "$HOOKS_DIR/pre-push" <<'EOF'
+#!/usr/bin/env bash
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+LOG="$REPO_ROOT/.git/last-ship.log"
+(
+    sleep 3
+    echo "[ship-bg] $(date) starting" > "$LOG"
+    make ship >> "$LOG" 2>&1 \
+        && echo "[ship-bg] $(date) OK" >> "$LOG" \
+        || echo "[ship-bg] $(date) FAILED" >> "$LOG"
+) </dev/null >/dev/null 2>&1 &
+disown $! || true
+exit 0
+EOF
+chmod +x "$HOOKS_DIR/pre-push"
+echo "[install-hooks] pre-push hook installed at $HOOKS_DIR/pre-push"

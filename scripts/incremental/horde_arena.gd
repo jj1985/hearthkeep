@@ -36,21 +36,33 @@ const HERO_RANGE := 220.0
 @onready var hud_gold: Label = $HUD/Top/Gold
 @onready var hud_loadout: Label = $HUD/Top/Loadout
 @onready var dps_bar: ProgressBar = $HUD/Top/Wavebar
+@onready var overlay_scrim: ColorRect = $Overlay/Scrim
 @onready var milestone_overlay: Panel = $Overlay/Milestone
 @onready var milestone_title: Label = $Overlay/Milestone/V/Title
 @onready var milestone_body: Label = $Overlay/Milestone/V/Body
 @onready var milestone_choices: VBoxContainer = $Overlay/Milestone/V/Choices
 @onready var milestone_skip: Button = $Overlay/Milestone/V/Skip
 @onready var btn_quit: Button = $HUD/Bottom/Quit
+@onready var btn_strike: Button = $HUD/Bottom/Strike
+@onready var hud_idle: Label = $HUD/Top/Idle
 @onready var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
-var enemies: Array = []          # Array of { node, hp, speed, gold, id }
+var enemies: Array = []          # Array of { node, hp, max_hp, hp_bar, speed, gold, id }
 var spawn_timer: float = 0.0
 var attack_timer: float = 0.0
+var idle_timer: float = 0.0
 var wave_kills_target: int = 8
 var wave_kills_progress: int = 0
 var paused_for_milestone: bool = false
 var pending_slot: String = ""    # "secondary" | "tertiary" | ""
+
+# Idle gold/sec scales with deepest_floor + lifetime kills tier.
+func _idle_gold_per_sec() -> float:
+    var base: float = 0.4 + GameState.deepest_floor * 0.15
+    base += float(GameState.lifetime_kills) / 1000.0
+    if HordeState.secondary != "": base *= 1.4
+    if HordeState.tertiary != "": base *= 1.5
+    return base
 
 func _ready() -> void:
     rng.randomize()
@@ -59,9 +71,11 @@ func _ready() -> void:
     HordeState.slot_unlocked.connect(_on_slot_unlocked)
     HordeState.class_unlocked.connect(_on_class_unlocked)
     btn_quit.pressed.connect(_on_quit)
+    btn_strike.pressed.connect(_on_player_strike)
     milestone_skip.pressed.connect(_close_milestone)
     bg.color = T.SURFACE_DIM
     UiStyle_.apply_secondary(btn_quit)
+    UiStyle_.apply_primary(btn_strike)
     UiStyle_.apply_secondary(milestone_skip)
     _layout_hero()
     _refresh_hud()
@@ -86,6 +100,7 @@ func _refresh_hud() -> void:
     hud_kills.text = "%d kills" % GameState.lifetime_kills
     hud_gold.text = "%d gold" % GameState.gold
     hud_loadout.text = _loadout_text()
+    hud_idle.text = "+%.1f g/s" % _idle_gold_per_sec()
     dps_bar.max_value = max(1, wave_kills_target)
     dps_bar.value = wave_kills_progress
 
@@ -100,12 +115,19 @@ func _process(delta: float) -> void:
         return
     spawn_timer -= delta
     attack_timer -= delta
+    idle_timer -= delta
     if spawn_timer <= 0.0:
         _spawn_enemy()
         spawn_timer = max(0.25, 1.4 - HordeState.wave * 0.04)
     if attack_timer <= 0.0:
         _hero_attack()
         attack_timer = 1.0 / HERO_ATTACK_RATE
+    if idle_timer <= 0.0:
+        var amount: int = int(round(_idle_gold_per_sec()))
+        if amount > 0:
+            GameState.add_gold(amount)
+            _refresh_hud()
+        idle_timer = 1.0
     _move_enemies(delta)
 
 func _spawn_enemy() -> void:
@@ -135,11 +157,25 @@ func _spawn_enemy() -> void:
         _: pos = Vector2(-30, rng.randf_range(0, size.y))
     p.position = pos
     enemies_layer.add_child(p)
+    # HP bar floats above the enemy
+    var bar := ProgressBar.new()
+    bar.show_percentage = false
+    bar.custom_minimum_size = Vector2(28, 4)
+    bar.size = Vector2(28, 4)
+    bar.position = Vector2(0, -8)
+    bar.max_value = 1.0
+    bar.value = 1.0
+    var bar_fg := StyleBoxFlat.new()
+    bar_fg.bg_color = Color(0.85, 0.25, 0.25)
+    bar.add_theme_stylebox_override("fill", bar_fg)
+    p.add_child(bar)
     var hp_scale: float = 1.0 + (HordeState.wave - 1) * 0.18
+    var max_hp: int = int(round(int(def["hp_base"]) * hp_scale))
     enemies.append({
         "node": p,
-        "hp": int(round(int(def["hp_base"]) * hp_scale)),
-        "max_hp": int(round(int(def["hp_base"]) * hp_scale)),
+        "hp": max_hp,
+        "max_hp": max_hp,
+        "hp_bar": bar,
         "speed": float(def["speed"]) + HordeState.wave * 1.5,
         "gold": int(def["gold"]),
         "id": id,
@@ -187,6 +223,9 @@ func _hero_damage() -> int:
 
 func _damage_enemy(e: Dictionary, amount: int) -> void:
     e["hp"] -= amount
+    var bar: ProgressBar = e.get("hp_bar")
+    if bar != null and is_instance_valid(bar):
+        bar.value = float(max(0, e["hp"])) / float(max(1, int(e["max_hp"])))
     if e["hp"] <= 0:
         var n: Panel = e["node"]
         if n != null and is_instance_valid(n):
@@ -197,6 +236,25 @@ func _damage_enemy(e: Dictionary, amount: int) -> void:
         _refresh_hud()
         if wave_kills_progress >= wave_kills_target:
             _next_wave()
+
+func _on_player_strike() -> void:
+    if paused_for_milestone:
+        return
+    # Tap deals a fat hit on the closest enemy and visibly shakes the arena.
+    var hero_center: Vector2 = hero.position + hero.size * 0.5
+    var best: Dictionary = {}
+    var best_d: float = HERO_RANGE * 1.3
+    for e in enemies:
+        var node: Panel = e["node"]
+        if node == null or not is_instance_valid(node):
+            continue
+        var d: float = (node.position + node.size * 0.5).distance_to(hero_center)
+        if d < best_d:
+            best_d = d; best = e
+    if best.is_empty(): return
+    _damage_enemy(best, _hero_damage() * 4)
+    _spawn_strike(best["node"].position + best["node"].size * 0.5)
+    _shake(8)
 
 func _next_wave() -> void:
     HordeState.advance_wave()
@@ -268,6 +326,7 @@ func _open_slot_picker(slot: String) -> void:
         milestone_choices.add_child(b)
     paused_for_milestone = true
     milestone_overlay.visible = true
+    overlay_scrim.visible = true
 
 func _pick_extra_class(slot: String, cid: String) -> void:
     if slot == "secondary":
@@ -282,9 +341,11 @@ func _pick_extra_class(slot: String, cid: String) -> void:
 func _close_milestone() -> void:
     paused_for_milestone = false
     milestone_overlay.visible = false
+    overlay_scrim.visible = false
 
 func _hide_milestone() -> void:
     milestone_overlay.visible = false
+    overlay_scrim.visible = false
 
 func _on_quit() -> void:
     SaveSystem.save()

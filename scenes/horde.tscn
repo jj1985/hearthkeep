@@ -70,6 +70,9 @@ text = "0 gold"
 [node name="Loadout" type="Label" parent="HUD/Top"]
 text = "Warrior"
 
+[node name="Idle" type="Label" parent="HUD/Top"]
+text = "+0 g/s"
+
 [node name="Wavebar" type="ProgressBar" parent="HUD/Top"]
 custom_minimum_size = Vector2(180, 14)
 size_flags_horizontal = 3
@@ -83,6 +86,11 @@ offset_left = 16.0
 offset_top = -96.0
 offset_right = -16.0
 offset_bottom = -16.0
+
+[node name="Strike" type="Button" parent="HUD/Bottom"]
+custom_minimum_size = Vector2(220, 64)
+size_flags_horizontal = 3
+text = "STRIKE"
 
 [node name="Quit" type="Button" parent="HUD/Bottom"]
 custom_minimum_size = Vector2(140, 64)
