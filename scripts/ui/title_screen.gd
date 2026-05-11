@@ -110,6 +110,19 @@ func _refresh_milestone_hint() -> void:
         lines.append("Bosses felled: %d" % GameState.bosses_felled)
     if GameState.curses_cleared > 0:
         lines.append("Curses cleared: %d" % GameState.curses_cleared)
+    if not GameState.daily_quest.is_empty():
+        var dq: Dictionary = GameState.daily_quest
+        if not bool(dq.get("claimed", false)):
+            lines.append("Daily: kill %d / %d %s" % [
+                int(dq.get("progress", 0)),
+                int(dq.get("target_count", 0)),
+                String(dq.get("target_id", "")).capitalize(),
+            ])
+        else:
+            lines.append("Daily ✓ (%d g, %d 🜂)" % [
+                int(dq.get("reward_gold", 0)),
+                int(dq.get("reward_ember", 0)),
+            ])
     var km: Dictionary = HordeState.next_kill_milestone()
     if not km.is_empty():
         var need: int = int(km["kills"])

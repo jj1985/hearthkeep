@@ -92,8 +92,20 @@ func record_kill(monster_id: String = "skeleton", gold_value: int = 1) -> void:
     GameState.lifetime_kills += 1
     GameState.tally_kill(monster_id)
     GameState.add_gold(gold_value)
+    _tick_daily_quest(monster_id)
     kills_changed.emit(kills_this_run)
     _check_kill_milestones()
+
+func _tick_daily_quest(monster_id: String) -> void:
+    if GameState.daily_quest.is_empty(): return
+    if bool(GameState.daily_quest.get("claimed", false)): return
+    if String(GameState.daily_quest.get("target_id", "")) != monster_id: return
+    var prog: int = int(GameState.daily_quest.get("progress", 0)) + 1
+    GameState.daily_quest["progress"] = prog
+    if prog >= int(GameState.daily_quest.get("target_count", 0)):
+        GameState.daily_quest["claimed"] = true
+        GameState.add_gold(int(GameState.daily_quest.get("reward_gold", 0)))
+        GameState.add_embers(int(GameState.daily_quest.get("reward_ember", 0)))
 
 func advance_wave() -> void:
     wave += 1

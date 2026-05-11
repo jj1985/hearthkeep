@@ -45,6 +45,7 @@ func save() -> void:
         "best_run_kills": GameState.best_run_kills,
         "best_wave_by_class": GameState.best_wave_by_class,
         "run_history": GameState.run_history,
+        "daily_quest": GameState.daily_quest,
     }
     GameState.last_save_unix = int(payload["last_save_unix"])
     f.store_string(JSON.stringify(payload))
@@ -101,6 +102,7 @@ func load_save() -> bool:
     GameState.best_wave_by_class = d.get("best_wave_by_class", {})
     var rh: Array = d.get("run_history", [])
     GameState.run_history = rh if typeof(rh) == TYPE_ARRAY else []
+    GameState.daily_quest = d.get("daily_quest", {})
     HordePerks.reset_for_run()
     var perks: Array = d.get("run_perks", [])
     for pid in perks:
@@ -138,6 +140,20 @@ func process_daily_login() -> Dictionary:
     GameState.daily_curse = String(curses[rng.randi_range(0, curses.size() - 1)])
     GameState.challenge_active = false  # require explicit opt-in each day
     GameState.challenge_claimed_today = false
+    # Roll the daily kill quest. Picks one of the normal enemy types
+    # (excluding bosses) and sets a small count + matched reward.
+    var targets: Array = ["skeleton", "goblin", "skel_brute", "ghoul",
+        "drake", "wraith", "ogre", "sapper", "shaman", "archer"]
+    var t_id: String = String(targets[rng.randi_range(0, targets.size() - 1)])
+    var count: int = 10 + rng.randi_range(0, 20)
+    GameState.daily_quest = {
+        "target_id": t_id,
+        "target_count": count,
+        "progress": 0,
+        "reward_gold": 50 + count * 5,
+        "reward_ember": 2 + count / 10,
+        "claimed": false,
+    }
     save()
     return {"ember": bonus, "streak": GameState.login_streak,
         "curse": GameState.daily_curse}
