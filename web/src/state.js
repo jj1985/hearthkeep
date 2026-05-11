@@ -19,6 +19,8 @@ const DEFAULTS = {
   dragonslayer: false,
   defeated_dragons: [],  // ids of named bosses ever felled
   level_perks: {},       // perm_dmg / perm_hp / perm_atk / perm_gold / perm_range / perm_crit -> stacks
+  top_runs: [],          // [{wave, kills, combo, class, when}] sorted desc by wave, cap 5
+  run_history: [],       // [{wave, kills, combo, embers, class, when}] cap 8
 };
 
 export const State = Object.assign({}, DEFAULTS, Save.load());
@@ -82,6 +84,18 @@ export function rebirth() {
 }
 
 export function canRebirth() { return State.best_wave >= 50; }
+
+// Push a run summary onto history + top-runs leaderboard.
+export function recordRun(entry) {
+  if (!State.run_history) State.run_history = [];
+  if (!State.top_runs) State.top_runs = [];
+  State.run_history.push(entry);
+  while (State.run_history.length > 8) State.run_history.shift();
+  State.top_runs.push(entry);
+  State.top_runs.sort((a, b) => (b.wave || 0) - (a.wave || 0));
+  while (State.top_runs.length > 5) State.top_runs.pop();
+  persist();
+}
 
 export function checkKillMilestones() {
   const fired = [];

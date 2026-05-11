@@ -1,5 +1,5 @@
 // HTML5 horde arena — canvas renderer, ECS-lite update loop.
-import { State, persist, grantXp, checkKillMilestones } from './state.js';
+import { State, persist, grantXp, checkKillMilestones, recordRun } from './state.js';
 import { bonusDamage, bonusAtk, bonusRange, bonusHp, bonusCrit } from './upgrades.js';
 import { synergyFor } from './synergies.js';
 
@@ -80,6 +80,9 @@ export class Game {
     this.wizardHitCount = 0;
     this.frenzy = 0;          // hits taken since last guaranteed-crit
     this.FRENZY_CAP = 5;
+    // Companion (unlocks at first boss kill)
+    this.companionOrbitT = 0;
+    this.companionAtkT = 1;
     // Perk accumulators (per-run)
     this.takenPerks = new Set();
     this.onBossBoon = null;     // fn(picks, applyCb)
@@ -160,6 +163,7 @@ export class Game {
       this._heroAuto();
       this.attackTimer = 1.0 / this.atkRate();
     }
+    if (this.hasCompanion()) this._tickCompanion(dt);
     if (this.idleTimer <= 0) {
       this.idleTimer = 1;
       const idle = Math.round(0.4 + (State.best_wave || 0) * 0.15);
@@ -496,6 +500,34 @@ export class Game {
 
   isTempest() { return this.wave > 0 && this.wave % 13 === 0; }
 
+  hasCompanion() { return (State.bosses_felled || 0) >= 1; }
+
+  _companionPos() {
+    const r = 60;
+    return {
+      x: this.heroPos.x + Math.cos(this.companionOrbitT) * r,
+      y: this.heroPos.y + Math.sin(this.companionOrbitT) * r,
+    };
+  }
+
+  _tickCompanion(dt) {
+    this.companionOrbitT += dt * 1.5;
+    this.companionAtkT -= dt;
+    if (this.companionAtkT > 0) return;
+    const cp = this._companionPos();
+    let best = null, bestD = 180;
+    for (const e of this.enemies) {
+      if (e.dead) continue;
+      const d = Math.hypot(e.x - cp.x, e.y - cp.y);
+      if (d < bestD) { bestD = d; best = e; }
+    }
+    if (!best) return;
+    const dmg = Math.max(1, Math.round(this.heroDmg() * 0.5));
+    this._damageEnemy(best, dmg);
+    this._spawnStrike(best.x, best.y);
+    this.companionAtkT = 1.0;
+  }
+
   comboMult() {
     if (this.combo <= 0) return 1;
     // Saturating: at combo=30 ≈ 1.5x, asymptote 2.0x.
@@ -546,6 +578,11 @@ export class Game {
     this.paused = true;
     const lost = Math.floor(State.gold / 2);
     State.gold -= lost;
+    recordRun({
+      wave: this.wave, kills: this.killsThisRun,
+      combo: this.comboPeak, embers: this.runEmbersEarned,
+      class: this.primaryClass, when: Date.now(),
+    });
     persist();
     if (this.onDeath) this.onDeath({
       wave: this.wave, kills: this.killsThisRun,
@@ -728,6 +765,19 @@ export class Game {
       ctx.fill();
     }
     ctx.globalAlpha = 1;
+
+    // companion
+    if (this.hasCompanion()) {
+      const cp = this._companionPos();
+      const cc = CLASS_COLOR[this.secondaryClass || this.primaryClass] || '#d4a24c';
+      ctx.fillStyle = cc;
+      ctx.beginPath();
+      ctx.arc(cp.x, cp.y, 10, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
 
     // hero
     const hr = 22;

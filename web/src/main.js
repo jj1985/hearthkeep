@@ -407,8 +407,44 @@ function ensureExtraTitleButtons() {
   };
   addBtn('btn-ach',      'ACHIEVEMENTS', showAchievements);
   addBtn('btn-bestiary', 'BESTIARY',     showBestiary);
+  addBtn('btn-history',  'RUN HISTORY',  showRunHistory);
 }
 ensureExtraTitleButtons();
+
+function showRunHistory() {
+  const choices = [];
+  const top = State.top_runs || [];
+  if (top.length > 0) {
+    for (let i = 0; i < top.length; i++) {
+      const r = top[i];
+      const cls = (r.class || '?')[0].toUpperCase() + (r.class || '?').slice(1);
+      choices.push({
+        label: `#${i + 1}  W${r.wave}  ·  ${r.kills} kills  ·  ${cls}`,
+        cls: 'secondary',
+        cb: () => {},
+      });
+    }
+  }
+  const recent = State.run_history || [];
+  if (recent.length > 0) {
+    choices.push({ label: '— recent runs —', cls: 'secondary', cb: () => {} });
+    for (let i = recent.length - 1; i >= 0 && i >= recent.length - 5; i--) {
+      const r = recent[i];
+      const cls = (r.class || '?')[0].toUpperCase() + (r.class || '?').slice(1);
+      const combo = r.combo >= 5 ? `  combo x${r.combo}` : '';
+      choices.push({
+        label: `W${r.wave}  ·  ${r.kills} kills  ·  +${r.embers}🜂 (${cls})${combo}`,
+        cls: 'secondary',
+        cb: () => {},
+      });
+    }
+  }
+  if (choices.length === 0) {
+    choices.push({ label: 'No runs yet.', cls: 'secondary', cb: () => {} });
+  }
+  choices.push({ label: 'Back', cls: 'secondary', cb: () => hideOverlay() });
+  showOverlay('RUN HISTORY', 'Top 5 + recent 5 runs.', choices);
+}
 
 function refreshJumpButtons() {
   for (const tier of [10, 25, 50]) {
