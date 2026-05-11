@@ -18,6 +18,7 @@ const UiStyle_ := preload("res://scripts/ui/ui_style.gd")
 @onready var btn_ach_toggle: Button = $V/AchToggle
 @onready var ach_scroll: ScrollContainer = $V/AchScroll
 @onready var ach_rows: VBoxContainer = $V/AchScroll/AchRows
+@onready var history_label: Label = $V/HistoryLabel
 const Achievements := preload("res://scripts/incremental/achievements.gd")
 
 var row_widgets: Array = []
@@ -41,6 +42,7 @@ func _ready() -> void:
     if ach_pay > 0:
         SaveSystem.save()
     _build_achievements()
+    _refresh_history()
     Upgrades.upgrade_purchased.connect(_on_purchased)
     EventBus.currency_changed.connect(_on_currency)
     _build_rows()
@@ -177,6 +179,25 @@ func _build_achievements() -> void:
             T.PRIMARY if done else T.ON_SURFACE)
         row.add_child(prog_lbl)
         ach_rows.add_child(row)
+
+func _refresh_history() -> void:
+    if history_label == null: return
+    if GameState.run_history.is_empty():
+        history_label.text = ""
+        return
+    var lines: Array[String] = ["recent runs"]
+    var i: int = GameState.run_history.size() - 1
+    while i >= 0 and lines.size() <= 5:
+        var r: Dictionary = GameState.run_history[i]
+        var combo_part: String = "  combo x%d" % int(r.get("combo", 0)) if int(r.get("combo", 0)) >= 5 else ""
+        lines.append("W%d · %d kills · +%d🜂 (%s)%s" % [
+            int(r.get("wave", 0)), int(r.get("kills", 0)),
+            int(r.get("embers", 0)), String(r.get("class", "?")).capitalize(),
+            combo_part,
+        ])
+        i -= 1
+    history_label.text = "\n".join(lines)
+    history_label.add_theme_color_override("font_color", T.ON_SURFACE_MUTED)
 
 func _on_rebirth() -> void:
     # Confirm-and-go: increments rebirths, wipes per-track upgrades, gold,

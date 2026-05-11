@@ -44,6 +44,7 @@ var last_login_day: int = 0                      # unix-day of last daily reward
 var best_run_wave: int = 0
 var best_run_kills: int = 0
 var best_wave_by_class: Dictionary = {}    # primary class id -> best wave
+var run_history: Array = []               # ring buffer of {wave, kills, combo, embers, class, when}
 
 func tally_kill(monster_id: String) -> void:
     lifetime_kills_by_type[monster_id] = int(lifetime_kills_by_type.get(monster_id, 0)) + 1
@@ -68,6 +69,13 @@ func add_gems(amount: int) -> void:
 func add_embers(amount: int) -> void:
     embers = max(0, embers + amount)
     EventBus.currency_changed.emit("embers", amount, embers)
+
+const RUN_HISTORY_CAP := 8
+
+func push_run_history(entry: Dictionary) -> void:
+    run_history.append(entry)
+    while run_history.size() > RUN_HISTORY_CAP:
+        run_history.pop_front()
 
 func add_dye(color_id: String, amount: int = 1) -> void:
     dye_pots[color_id] = dye_pots.get(color_id, 0) + amount

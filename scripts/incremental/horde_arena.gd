@@ -1277,6 +1277,14 @@ func _on_hero_died() -> void:
     var ach_reward: int = Achievements.scan_and_claim()
     if ach_reward > 0:
         run_embers_earned += ach_reward
+    GameState.push_run_history({
+        "wave": HordeState.wave,
+        "kills": HordeState.kills_this_run,
+        "combo": combo_peak,
+        "embers": run_embers_earned,
+        "class": HordeState.primary,
+        "when": int(Time.get_unix_time_from_system()),
+    })
     var lost: int = GameState.gold / 2
     GameState.gold = max(0, GameState.gold - lost)
     SaveSystem.save()

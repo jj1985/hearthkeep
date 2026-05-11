@@ -57,6 +57,10 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 6
 
+[node name="HistoryLabel" type="Label" parent="V"]
+text = ""
+horizontal_alignment = 1
+
 [node name="JumpRow" type="HBoxContainer" parent="V"]
 theme_override_constants/separation = 8
 alignment = 1
