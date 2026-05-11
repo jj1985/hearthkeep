@@ -19,6 +19,8 @@ const ENEMY_TYPES = {
   wraith:     { label: 'Wraith',     color: '#8c72d9', hp: 90,  speed: 130, gold: 24, size: 20, minWave: 16 },
   ogre:       { label: 'Ogre',       color: '#8a8a4d', hp: 220, speed: 40,  gold: 55, size: 30, minWave: 20 },
   sapper:     { label: 'Sapper',     color: '#f27333', hp: 30,  speed: 50,  gold: 8,  size: 20, minWave: 14, explodes: true },
+  archer:     { label: 'Archer',     color: '#b3d966', hp: 25,  speed: 50,  gold: 6,  size: 18, minWave: 11, ranged: true },
+  shaman:     { label: 'Shaman',     color: '#73d98c', hp: 50,  speed: 60,  gold: 16, size: 20, minWave: 18, heals: true },
 };
 
 const BOSS_TYPES = {
@@ -34,6 +36,8 @@ export class Game {
     this.fx = [];        // ephemeral particles: { x, y, vx, vy, life, color, size }
     this.floaters = [];  // { text, x, y, color, life }
     this.combatLog = [];
+    this.arrows = [];    // { x, y, vx, vy, dmg, life }
+    this.powerups = [];  // { x, y, tx, ty, kind, life }
     this.wave = 1;
     this.waveKillsTarget = 8;
     this.waveKillsProgress = 0;
@@ -143,6 +147,47 @@ export class Game {
       const dx = this.heroPos.x - e.x;
       const dy = this.heroPos.y - e.y;
       const d = Math.hypot(dx, dy) || 1;
+      // Archer: kite at 220px and fire arrows.
+      if (e.ranged) {
+        e.shotCd -= dt;
+        const want = 220;
+        const step = e.speed * dt * (d < want ? -1 : 0.6);
+        e.x += (dx / d) * step;
+        e.y += (dy / d) * step;
+        if (e.shotCd <= 0) {
+          this.arrows.push({
+            x: e.x, y: e.y,
+            vx: (dx / d) * 220, vy: (dy / d) * 220,
+            dmg: 3 + Math.floor(this.wave / 3), life: 2.5,
+          });
+          e.shotCd = 2.0;
+        }
+        continue;
+      }
+      // Shaman: kite at 240px and heal a wounded ally.
+      if (e.heals) {
+        e.healCd -= dt;
+        const want = 240;
+        const step = e.speed * dt * (d < want ? -1 : 0.4);
+        e.x += (dx / d) * step;
+        e.y += (dy / d) * step;
+        if (e.healCd <= 0) {
+          let target = null, tgap = 0;
+          for (const o of this.enemies) {
+            if (o === e || o.dead || o.heals) continue;
+            const gap = o.maxHp - o.hp;
+            if (gap > tgap) { tgap = gap; target = o; }
+          }
+          if (target) {
+            const amt = Math.max(1, Math.round(tgap * 0.2));
+            target.hp = Math.min(target.maxHp, target.hp + amt);
+            this.floater(`+${amt}`, target.x, target.y, '#6fa060');
+          }
+          e.healCd = 4.0;
+        }
+        continue;
+      }
+      // Default chase + bite.
       e.x += (dx / d) * e.speed * dt;
       e.y += (dy / d) * e.speed * dt;
       if (d < 22 + e.size * 0.4) {
@@ -152,6 +197,35 @@ export class Game {
         this._killEnemy(e, false);
       }
     }
+
+    // Arrows
+    for (const a of this.arrows) {
+      a.x += a.vx * dt;
+      a.y += a.vy * dt;
+      a.life -= dt;
+      const adx = a.x - this.heroPos.x;
+      const ady = a.y - this.heroPos.y;
+      if (adx * adx + ady * ady < 24 * 24) {
+        this._heroTakeDamage(a.dmg);
+        a.life = 0;
+      }
+    }
+    this.arrows = this.arrows.filter(a => a.life > 0);
+
+    // Power-ups: magnetic pull to hero.
+    for (const p of this.powerups) {
+      p.life -= dt;
+      const dx2 = this.heroPos.x - p.x;
+      const dy2 = this.heroPos.y - p.y;
+      const d2 = Math.hypot(dx2, dy2) || 1;
+      p.x += (dx2 / d2) * 320 * dt;
+      p.y += (dy2 / d2) * 320 * dt;
+      if (d2 < 28) {
+        this._applyPowerup(p.kind);
+        p.life = 0;
+      }
+    }
+    this.powerups = this.powerups.filter(p => p.life > 0);
 
     // FX
     for (const f of this.fx) {
@@ -199,6 +273,8 @@ export class Game {
       gold: def.gold * (isMythic ? 10 : 1), size: sz,
       mythic: isMythic, boss: false,
       explodes: !!def.explodes,
+      ranged: !!def.ranged, shotCd: 1.5,
+      heals: !!def.heals, healCd: 3.0,
     });
     if (isMythic) {
       this.floater(`MYTHIC ${def.label.toUpperCase()}`, this.size.w / 2 - 60, 80, '#e8d2a0');
@@ -331,6 +407,7 @@ export class Game {
     for (const m of fired) {
       this._showBanner(m.label);
     }
+    if (e.mythic) this._dropPowerup(e.x, e.y);
     if (e.boss) {
       const ember = 1 + Math.floor(this.wave / 10);
       State.embers += ember;
@@ -406,6 +483,27 @@ export class Game {
       }
     }
     this.shakeMag = Math.max(this.shakeMag, 10);
+  }
+
+  _dropPowerup(x, y) {
+    const pool = ['heal', 'gold', 'haste'];
+    const kind = pool[Math.floor(Math.random() * pool.length)];
+    this.powerups.push({ x, y, kind, life: 5.0 });
+  }
+
+  _applyPowerup(kind) {
+    if (kind === 'heal') {
+      const amt = Math.floor(this.heroMaxHp / 4);
+      this.heroHp = Math.min(this.heroMaxHp, this.heroHp + amt);
+      this.floater(`+${amt} HP`, this.heroPos.x, this.heroPos.y, '#6fa060');
+    } else if (kind === 'gold') {
+      State.gold += 50;
+      this.floater(`+50g`, this.heroPos.x, this.heroPos.y, '#d4a24c');
+    } else {
+      this.atkBonus += 1.0;
+      setTimeout(() => { this.atkBonus = Math.max(0, this.atkBonus - 1.0); }, 8000);
+      this.floater(`+1 atk/s 8s`, this.heroPos.x, this.heroPos.y, '#d4582c');
+    }
   }
 
   spawnChest() {
@@ -508,6 +606,28 @@ export class Game {
       ctx.fillRect(e.x - barW / 2, e.y - r - 8, barW, 3);
       ctx.fillStyle = '#d95940';
       ctx.fillRect(e.x - barW / 2, e.y - r - 8, barW * frac, 3);
+    }
+
+    // arrows
+    for (const a of this.arrows) {
+      ctx.strokeStyle = '#f5e8a8';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(a.x - a.vx * 0.04, a.y - a.vy * 0.04);
+      ctx.stroke();
+    }
+
+    // power-ups
+    for (const p of this.powerups) {
+      const c = p.kind === 'heal' ? '#6fa060' : p.kind === 'gold' ? '#d4a24c' : '#d4582c';
+      ctx.fillStyle = c;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
     }
 
     // fx
