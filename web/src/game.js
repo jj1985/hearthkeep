@@ -87,6 +87,7 @@ export class Game {
     this.mythicBonus = 0.0;
     this.contactReduction = 0.0;
     this.onPerkRequest = null;    // fn(picks, applyCb) → modal opens
+    this.onMerchant = null;       // fn() → modal opens
     this.size = { w: 0, h: 0 };
     this.heroPos = { x: 0, y: 0 };
     this._resize();
@@ -464,6 +465,8 @@ export class Game {
     if (this.wave % 15 === 0) this.spawnChest();
     if (this.wave % 5 === 0 && this.onPerkRequest) {
       this.onPerkRequest();
+    } else if (this.wave % 7 === 0 && this.onMerchant) {
+      this.onMerchant();
     }
     persist();
   }

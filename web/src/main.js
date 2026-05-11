@@ -118,7 +118,37 @@ function startGame(klass, startWave = 1) {
   }
   game.onPerkRequest = showPerkPicker;
   game.onBossBoon = showBossBoon;
+  game.onMerchant = showMerchant;
   game.onDeath = onDeath;
+}
+
+const MERCHANT_OFFERS = [
+  { id: 'heal',  label: 'Healing Tonic', desc: 'Restore HP to full.',     cost: 40,
+    apply: g => { g.heroHp = g.heroMaxHp; } },
+  { id: 'oil',   label: 'Whetstone Oil', desc: '+50% damage, 3 waves.',   cost: 60,
+    apply: g => { g.dmgMult *= 1.5; setTimeout(() => g.dmgMult /= 1.5, 60_000); } },
+  { id: 'drum',  label: 'Battle Drum',   desc: '+1.0 atk/sec, 3 waves.',  cost: 80,
+    apply: g => { g.atkBonus += 1.0; setTimeout(() => { g.atkBonus = Math.max(0, g.atkBonus - 1.0); }, 60_000); } },
+  { id: 'trade', label: 'Ember Bargain', desc: 'Trade 30g for 1 Ember.',  cost: 30,
+    apply: () => { State.embers += 1; persist(); } },
+];
+
+function showMerchant() {
+  game.paused = true;
+  const choices = MERCHANT_OFFERS.map(o => ({
+    label: `${o.label} (${o.cost}g) — ${o.desc}`,
+    cls: State.gold >= o.cost ? '' : 'secondary',
+    cb: () => {
+      if (State.gold < o.cost) return;
+      State.gold -= o.cost;
+      o.apply(game);
+      game.log(`Bought: ${o.label}`);
+      game.paused = false;
+      hideOverlay();
+    },
+  }));
+  choices.push({ label: 'Skip', cls: 'secondary', cb: () => { game.paused = false; hideOverlay(); } });
+  showOverlay('Wandering Merchant', `You have ${State.gold} gold.`, choices);
 }
 
 const BOSS_BOONS = [
@@ -188,6 +218,7 @@ function showBestiary() {
   showOverlay('BESTIARY', 'Discovered enemies and lifetime kill counts.', choices);
 }
 
+const statusrow = document.getElementById('statusrow');
 function refreshHud() {
   if (!game || canvas.hidden) return;
   const c = game.combo;
@@ -200,6 +231,25 @@ function refreshHud() {
   level.textContent = `L${State.hero_level}`;
   hpfill.style.width = (100 * game.heroHp / game.heroMaxHp).toFixed(1) + '%';
   log.textContent = game.combatLog.join('\n');
+  refreshStatusRow();
+}
+
+function refreshStatusRow() {
+  clearChildren(statusrow);
+  const add = (text, cls = '') => {
+    const c = document.createElement('span');
+    c.className = 'chip' + (cls ? ' ' + cls : '');
+    c.textContent = text;
+    statusrow.appendChild(c);
+  };
+  if (game.dmgMult > 1.001) add(`Dmg ${game.dmgMult.toFixed(2)}×`);
+  if (game.goldMult > 1.001) add(`Gold ${game.goldMult.toFixed(2)}×`);
+  if (game.atkBonus > 0.05) add(`Spd +${game.atkBonus.toFixed(1)}`);
+  if (game.waveBonusMult > 1.001) add(`Wave ${game.waveBonusMult.toFixed(2)}×`);
+  if (game.critBonus > 0.001) add(`Crit +${Math.round(game.critBonus * 100)}%`);
+  if (game.contactReduction > 0.001) add(`Aegis ${Math.round(game.contactReduction * 100)}%`, 'def');
+  if (game.primaryClass === 'warrior' && game.warriorRage > 0) add(`Rage x${game.warriorRage}`, 'temp');
+  if (game.skillCd > 0) add(`Skill ${game.skillCd.toFixed(1)}s`, 'def');
 }
 setInterval(refreshHud, 100);
 
