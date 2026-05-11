@@ -13,6 +13,8 @@ var stash: Array[Dictionary] = []
 var meta_perk_points: int = 0
 var defeated_dragons: Array[String] = []
 var dragonslayer: bool = false
+var hero_level: int = 1
+var hero_xp: int = 0
 var buildings: Dictionary = {                # building_id -> tier (0..3)
     "stash": 1,
     "forge": 1,
@@ -51,6 +53,18 @@ var daily_quest: Dictionary = {}           # {target_id, target_count, progress,
 
 func tally_kill(monster_id: String) -> void:
     lifetime_kills_by_type[monster_id] = int(lifetime_kills_by_type.get(monster_id, 0)) + 1
+
+func xp_to_next_level() -> int:
+    return 20 + (hero_level - 1) * 15
+
+func grant_xp(amount: int) -> int:
+    hero_xp += amount
+    var ups: int = 0
+    while hero_xp >= xp_to_next_level():
+        hero_xp -= xp_to_next_level()
+        hero_level += 1
+        ups += 1
+    return ups
 
 func _ready() -> void:
     EventBus.entity_killed.connect(_on_entity_killed)

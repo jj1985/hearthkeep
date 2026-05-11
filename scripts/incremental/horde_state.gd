@@ -13,6 +13,7 @@ signal class_unlocked(class_id: String)
 signal slot_unlocked(slot: String)         # "secondary" | "tertiary"
 signal wave_changed(wave: int)
 signal kills_changed(total: int)
+signal hero_leveled(new_level: int)
 
 # --- Active class loadout for the run -----------------------------------
 var primary: String = "warrior"
@@ -34,6 +35,7 @@ var revives_used: int = 0
 func max_hp() -> int:
     var hp := HERO_HP_BASE
     hp += GameState.deepest_floor / 2
+    hp += GameState.hero_level - 1
     if secondary != "": hp += 15
     if tertiary != "": hp += 20
     if GameState.challenge_active and GameState.daily_curse == "glass_cannon":
@@ -92,6 +94,9 @@ func record_kill(monster_id: String = "skeleton", gold_value: int = 1) -> void:
     GameState.lifetime_kills += 1
     GameState.tally_kill(monster_id)
     GameState.add_gold(gold_value)
+    var ups: int = GameState.grant_xp(1)
+    if ups > 0:
+        hero_leveled.emit(GameState.hero_level)
     _tick_daily_quest(monster_id)
     kills_changed.emit(kills_this_run)
     _check_kill_milestones()

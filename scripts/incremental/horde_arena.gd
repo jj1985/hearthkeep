@@ -166,6 +166,7 @@ func _ready() -> void:
     HordeState.milestone_reached.connect(_on_milestone)
     HordeState.slot_unlocked.connect(_on_slot_unlocked)
     HordeState.class_unlocked.connect(_on_class_unlocked)
+    HordeState.hero_leveled.connect(_on_hero_leveled)
     btn_quit.pressed.connect(_on_quit)
     btn_strike.pressed.connect(_on_player_strike)
     btn_skill.pressed.connect(_on_skill_used)
@@ -298,7 +299,7 @@ func _refresh_hud() -> void:
     hud_gold.text = "%d gold" % GameState.gold
     hud_loadout.text = _loadout_text()
     hud_idle.text = "+%.1f g/s" % _idle_gold_per_sec()
-    hud_embers.text = "%d ember" % GameState.embers
+    hud_embers.text = "%d ember  ·  L%d" % [GameState.embers, GameState.hero_level]
     hud_hp.max_value = max(1, HordeState.hero_max_hp)
     hud_hp.value = HordeState.hero_hp
     if combo > 1:
@@ -569,6 +570,7 @@ func _hero_damage() -> int:
     if HordeState.tertiary != "": d += 4
     d += HordeState.wave / 2
     d += Upgrades.bonus_damage()
+    d += int(round((GameState.hero_level - 1) * 0.5))
     var f: float = float(d) * Upgrades.ember_damage_mult() * HordePerks.dmg_mult
     f *= 1.0 + GameState.rebirths * 0.25
     if GameState.dragonslayer: f *= 1.10
@@ -1109,6 +1111,16 @@ func _boss_burst(pos: Vector2) -> void:
 
 func _on_milestone(_id: String, label: String) -> void:
     _show_milestone_toast(label)
+
+func _on_hero_leveled(new_level: int) -> void:
+    _floating_text("LEVEL %d" % new_level, hero.position + hero.size * 0.5, T.PRIMARY)
+    _flash_screen(T.PRIMARY, 0.18, 0.18)
+    SfxBus.play("levelup", -4.0)
+    # Heal a chunk to celebrate.
+    HordeState.hero_max_hp = HordeState.max_hp()
+    HordeState.hero_hp = min(HordeState.hero_max_hp, HordeState.hero_hp + 10)
+    _refresh_hud()
+    _log("Level %d" % new_level)
 
 func _on_class_unlocked(class_id: String) -> void:
     _show_milestone_toast("%s class unlocked" % class_id.capitalize())
