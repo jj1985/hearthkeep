@@ -45,6 +45,7 @@ var best_run_wave: int = 0
 var best_run_kills: int = 0
 var best_wave_by_class: Dictionary = {}    # primary class id -> best wave
 var run_history: Array = []               # ring buffer of {wave, kills, combo, embers, class, when}
+var top_runs: Array = []                  # leaderboard sorted desc by wave (cap 5)
 var daily_quest: Dictionary = {}           # {target_id, target_count, progress, reward_gold, reward_ember, claimed}
 
 func tally_kill(monster_id: String) -> void:
@@ -72,11 +73,17 @@ func add_embers(amount: int) -> void:
     EventBus.currency_changed.emit("embers", amount, embers)
 
 const RUN_HISTORY_CAP := 8
+const TOP_RUNS_CAP := 5
 
 func push_run_history(entry: Dictionary) -> void:
     run_history.append(entry)
     while run_history.size() > RUN_HISTORY_CAP:
         run_history.pop_front()
+    # Top-runs leaderboard: insert sorted desc by wave, trim to cap.
+    top_runs.append(entry)
+    top_runs.sort_custom(func(a, b): return int(a.get("wave", 0)) > int(b.get("wave", 0)))
+    while top_runs.size() > TOP_RUNS_CAP:
+        top_runs.pop_back()
 
 func add_dye(color_id: String, amount: int = 1) -> void:
     dye_pots[color_id] = dye_pots.get(color_id, 0) + amount

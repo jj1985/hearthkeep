@@ -19,6 +19,7 @@ const UiStyle_ := preload("res://scripts/ui/ui_style.gd")
 @onready var ach_scroll: ScrollContainer = $V/AchScroll
 @onready var ach_rows: VBoxContainer = $V/AchScroll/AchRows
 @onready var history_label: Label = $V/HistoryLabel
+@onready var top_runs_label: Label = $V/TopRunsLabel
 const Achievements := preload("res://scripts/incremental/achievements.gd")
 
 var row_widgets: Array = []
@@ -43,6 +44,7 @@ func _ready() -> void:
         SaveSystem.save()
     _build_achievements()
     _refresh_history()
+    _refresh_top_runs()
     Upgrades.upgrade_purchased.connect(_on_purchased)
     EventBus.currency_changed.connect(_on_currency)
     _build_rows()
@@ -198,6 +200,24 @@ func _refresh_history() -> void:
         i -= 1
     history_label.text = "\n".join(lines)
     history_label.add_theme_color_override("font_color", T.ON_SURFACE_MUTED)
+
+func _refresh_top_runs() -> void:
+    if top_runs_label == null: return
+    if GameState.top_runs.is_empty():
+        top_runs_label.text = ""
+        return
+    var lines: Array[String] = ["top runs"]
+    var rank: int = 1
+    for r in GameState.top_runs:
+        var d: Dictionary = r
+        lines.append("#%d  W%d · %d kills (%s)" % [
+            rank, int(d.get("wave", 0)),
+            int(d.get("kills", 0)),
+            String(d.get("class", "?")).capitalize(),
+        ])
+        rank += 1
+    top_runs_label.text = "\n".join(lines)
+    top_runs_label.add_theme_color_override("font_color", T.PRIMARY)
 
 func _on_rebirth() -> void:
     # Confirm-and-go: increments rebirths, wipes per-track upgrades, gold,

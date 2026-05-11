@@ -45,6 +45,7 @@ func save() -> void:
         "best_run_kills": GameState.best_run_kills,
         "best_wave_by_class": GameState.best_wave_by_class,
         "run_history": GameState.run_history,
+        "top_runs": GameState.top_runs,
         "daily_quest": GameState.daily_quest,
     }
     GameState.last_save_unix = int(payload["last_save_unix"])
@@ -102,6 +103,8 @@ func load_save() -> bool:
     GameState.best_wave_by_class = d.get("best_wave_by_class", {})
     var rh: Array = d.get("run_history", [])
     GameState.run_history = rh if typeof(rh) == TYPE_ARRAY else []
+    var tr: Array = d.get("top_runs", [])
+    GameState.top_runs = tr if typeof(tr) == TYPE_ARRAY else []
     GameState.daily_quest = d.get("daily_quest", {})
     HordePerks.reset_for_run()
     var perks: Array = d.get("run_perks", [])
