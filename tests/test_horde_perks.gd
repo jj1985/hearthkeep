@@ -64,6 +64,21 @@ func test_chime_boosts_wave_and_gold() -> void:
     assert_almost_eq(HordePerks.wave_bonus_mult, 1.30, 0.001)
     assert_almost_eq(HordePerks.gold_mult, 1.20, 0.001)
 
+func test_fortunate_increments_mythic_rate() -> void:
+    HordePerks.apply({"id":"fortunate", "kind":"mythic_rate", "value":0.02})
+    HordePerks.apply({"id":"fortunate2", "kind":"mythic_rate", "value":0.02})
+    assert_almost_eq(HordePerks.mythic_rate_bonus, 0.04, 0.001)
+
+func test_dodge_caps_at_90_pct() -> void:
+    for i in 5:
+        HordePerks.apply({"id":"sidestep%d" % i, "kind":"dodge", "value":0.30})
+    assert_almost_eq(HordePerks.dodge_chance, 0.9, 0.001)
+
+func test_aegis_caps_contact_reduction_at_90_pct() -> void:
+    for i in 4:
+        HordePerks.apply({"id":"aegis%d" % i, "kind":"contact_red", "value":0.50})
+    assert_almost_eq(HordePerks.contact_reduction, 0.9, 0.001)
+
 func test_class_tagged_perks_weighted_higher() -> void:
     # warrior-only — over many rolls hot_steel should appear most often.
     HordeState.primary = "warrior"

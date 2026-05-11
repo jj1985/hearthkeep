@@ -23,6 +23,9 @@ const ALL_PERKS := [
     {"id":"phantom",     "label":"Phantom",       "desc":"+10%% crit + +50 range.", "tags":["rogue","crit"], "kind":"crit_range", "value":0.10},
     {"id":"frostbite",   "label":"Frostbite",     "desc":"-15%% spawn cadence + +20%% damage.", "tags":["wizard","arcane"], "kind":"frostbite", "value":0.15},
     {"id":"chime",       "label":"Resonant Chime","desc":"+30%% wave-clear + +20%% gold drops.", "tags":["bard","support"], "kind":"chime", "value":0.20},
+    {"id":"fortunate",   "label":"Fortunate",     "desc":"+2%% Mythic spawn chance.",            "tags":["any"], "kind":"mythic_rate", "value":0.02},
+    {"id":"sidestep",    "label":"Sidestep",      "desc":"30%% chance to dodge arrows.",         "tags":["rogue","support"], "kind":"dodge", "value":0.30},
+    {"id":"aegis",       "label":"Aegis",         "desc":"-50%% contact damage.",                "tags":["warrior","melee"], "kind":"contact_red", "value":0.50},
 ]
 
 # Run-scoped accumulators. Reset by reset_for_run().
@@ -34,6 +37,9 @@ var wave_bonus_mult: float = 1.0
 var crit_bonus: float = 0.0
 var spawn_slow: float = 0.0
 var taken_ids: Array[String] = []
+var mythic_rate_bonus: float = 0.0
+var dodge_chance: float = 0.0
+var contact_reduction: float = 0.0
 
 func reset_for_run() -> void:
     dmg_mult = 1.0
@@ -43,6 +49,9 @@ func reset_for_run() -> void:
     wave_bonus_mult = 1.0
     crit_bonus = 0.0
     spawn_slow = 0.0
+    mythic_rate_bonus = 0.0
+    dodge_chance = 0.0
+    contact_reduction = 0.0
     taken_ids.clear()
 
 # Roll three perks weighted toward the active class trio's tags.
@@ -88,4 +97,7 @@ func apply(perk: Dictionary) -> void:
         "chime":
             wave_bonus_mult *= 1.30
             gold_mult *= 1.20
+        "mythic_rate": mythic_rate_bonus += v
+        "dodge": dodge_chance = clamp(dodge_chance + v, 0.0, 0.9)
+        "contact_red": contact_reduction = clamp(contact_reduction + v, 0.0, 0.9)
     perk_taken.emit(perk)

@@ -375,7 +375,7 @@ func _spawn_enemy() -> void:
     var id: String = pool[rng.randi_range(0, pool.size() - 1)]
     var def: Dictionary = ENEMY_TYPES[id]
     # ~3% chance for a Mythic — 10× HP, 10× gold, gold border, larger.
-    var is_mythic: bool = HordeState.wave >= 5 and rng.randf() < 0.03
+    var is_mythic: bool = HordeState.wave >= 5 and rng.randf() < (0.03 + HordePerks.mythic_rate_bonus)
     var sz: int = int(def.get("size", 28))
     if is_mythic: sz = int(sz * 1.4)
     var p := Panel.new()
@@ -488,6 +488,7 @@ func _move_enemies(delta: float) -> void:
             var bite: int = 2 + HordeState.wave / 4
             if bool(e.get("boss", false)): bite *= 6
             elif bool(e.get("mythic", false)): bite *= 3
+            bite = max(1, int(round(bite * (1.0 - HordePerks.contact_reduction))))
             _hero_take_damage(bite)
             _damage_enemy(e, 9999)
             _shake(4)
@@ -839,7 +840,10 @@ func _move_arrows(delta: float) -> void:
         a["life"] = float(a.get("life", 3.0)) - delta
         var cp: Vector2 = n.position + n.size * 0.5
         if cp.distance_to(hero_center) < HERO_RADIUS + 4:
-            _hero_take_damage(int(a["dmg"]))
+            if rng.randf() < HordePerks.dodge_chance:
+                _floating_text("DODGE", hero_center, T.PRIMARY)
+            else:
+                _hero_take_damage(int(a["dmg"]))
             n.queue_free()
             dead.append(a)
             continue
