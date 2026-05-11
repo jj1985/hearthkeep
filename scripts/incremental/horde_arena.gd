@@ -1627,6 +1627,8 @@ func _refresh_status_row() -> void:
             "color": T.RARITY_LEGENDARY if frenzy_charge >= FRENZY_CAP else T.WARNING})
     if HordePerks.taken_ids.has("magnet"):
         statuses.append({"label": "Magnet", "color": T.PRIMARY})
+    if HordeState.primary == "warrior" and warrior_rage > 0:
+        statuses.append({"label": "Rage x%d" % warrior_rage, "color": T.SECONDARY})
     for s in statuses:
         var d: Dictionary = s
         var chip := Panel.new()
