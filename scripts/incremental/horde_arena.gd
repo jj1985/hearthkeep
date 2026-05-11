@@ -389,6 +389,25 @@ func _process(delta: float) -> void:
         idle_timer = 1.0
     _move_enemies(delta)
     _move_arrows(delta)
+    _tick_poison(delta)
+
+func _tick_poison(delta: float) -> void:
+    for e in enemies.duplicate():
+        var stacks: int = int(e.get("poison", 0))
+        if stacks <= 0: continue
+        e["poison_t"] = float(e.get("poison_t", 0.0)) - delta
+        if float(e["poison_t"]) <= 0.0:
+            e["poison"] = 0
+            continue
+        e["poison_tick"] = float(e.get("poison_tick", 1.0)) - delta
+        if float(e["poison_tick"]) <= 0.0:
+            e["poison_tick"] = 1.0
+            # Apply poison damage WITHOUT re-poisoning (avoids stack loop).
+            var stacks_now: int = int(e["poison"])
+            var saved: int = HordePerks.poison_stacks_per_hit
+            HordePerks.poison_stacks_per_hit = 0
+            _damage_enemy(e, stacks_now)
+            HordePerks.poison_stacks_per_hit = saved
 
 func _spawn_enemy() -> void:
     var size := arena.size
@@ -613,6 +632,11 @@ func _damage_enemy(e: Dictionary, amount: int) -> void:
     var now: float = Time.get_ticks_msec() / 1000.0
     dps_log.append([now, amount])
     e["hp"] -= amount
+    # Venom: each hit adds poison stacks; ticks below in _process.
+    if HordePerks.poison_stacks_per_hit > 0:
+        e["poison"] = min(5, int(e.get("poison", 0)) + HordePerks.poison_stacks_per_hit)
+        e["poison_t"] = 3.0
+        e["poison_tick"] = 1.0
     # Hit-stop stagger: skip movement for 0.08s and shove back 4px from
     # the hero. Bosses get a softer 0.04s/2px so they don't lock up.
     var nh: Panel = e.get("node")

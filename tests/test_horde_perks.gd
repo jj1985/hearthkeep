@@ -74,6 +74,11 @@ func test_dodge_caps_at_90_pct() -> void:
         HordePerks.apply({"id":"sidestep%d" % i, "kind":"dodge", "value":0.30})
     assert_almost_eq(HordePerks.dodge_chance, 0.9, 0.001)
 
+func test_venom_caps_at_5_stacks_per_hit() -> void:
+    for i in 8:
+        HordePerks.apply({"id":"venom%d" % i, "kind":"poison", "value":1.0})
+    assert_eq(HordePerks.poison_stacks_per_hit, 5)
+
 func test_aegis_caps_contact_reduction_at_90_pct() -> void:
     for i in 4:
         HordePerks.apply({"id":"aegis%d" % i, "kind":"contact_red", "value":0.50})
@@ -95,6 +100,6 @@ func test_class_tagged_perks_weighted_higher() -> void:
     var top_n: int = 0
     for k in counts.keys():
         if counts[k] > top_n: top = k; top_n = counts[k]
-    var warrior_perks: Array = ["hot_steel", "bloodlust"]
+    var warrior_perks: Array = ["hot_steel", "bloodlust", "aegis"]
     assert_true(warrior_perks.has(top),
         "expected a warrior-tagged perk to top the count, got %s" % top)
