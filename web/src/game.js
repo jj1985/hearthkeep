@@ -23,6 +23,20 @@ const ENEMY_TYPES = {
   shaman:     { label: 'Shaman',     color: '#73d98c', hp: 50,  speed: 60,  gold: 16, size: 20, minWave: 18, heals: true },
 };
 
+const ZONES = [
+  { min: 1,  name: 'Greenmarch', floor: '#101a10' },
+  { min: 11, name: 'Ashen Vale', floor: '#1c1610' },
+  { min: 21, name: 'Frostwatch', floor: '#101620' },
+  { min: 31, name: 'Emberlands', floor: '#1f0d09' },
+  { min: 41, name: 'The Void',   floor: '#0d0a18' },
+];
+
+export function zoneForWave(w) {
+  let cur = ZONES[0];
+  for (const z of ZONES) if (w >= z.min) cur = z;
+  return cur;
+}
+
 const BOSS_TYPES = {
   warchief:  { label: 'Krrik III',   color: '#d4a24c', hp: 240,  speed: 50,  gold: 60,  size: 38 },
   vyxhasis:  { label: 'Vyxhasis',    color: '#d44089', hp: 600,  speed: 45,  gold: 200, size: 48 },
@@ -62,6 +76,7 @@ export class Game {
     this.wizardHitCount = 0;
     // Perk accumulators (per-run)
     this.takenPerks = new Set();
+    this.onBossBoon = null;     // fn(picks, applyCb)
     this.dmgMult = 1.0;
     this.goldMult = 1.0;
     this.waveBonusMult = 1.0;
@@ -421,6 +436,7 @@ export class Game {
       this.shakeMag = 30;
       this._burst(e.x, e.y);
       persist();
+      if (this.onBossBoon) this.onBossBoon();
     } else {
       this.waveKillsProgress++;
       if (this.waveKillsProgress >= this.waveKillsTarget) this._nextWave();
@@ -587,8 +603,8 @@ export class Game {
     // bg
     ctx.fillStyle = '#0b0a0f';
     ctx.fillRect(0, 0, w, h);
-    // floor
-    ctx.fillStyle = '#171420';
+    // floor — tinted by zone
+    ctx.fillStyle = zoneForWave(this.wave).floor;
     ctx.fillRect(0, 96, w, h - 200);
     // range ring (faint)
     ctx.strokeStyle = 'rgba(212, 162, 76, 0.12)';

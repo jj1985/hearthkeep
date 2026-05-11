@@ -83,6 +83,7 @@ function refreshTitle() {
   }
   titleTip.textContent = TIPS[Math.floor(Math.random() * TIPS.length)];
   refreshRebirthButton();
+  refreshJumpButtons();
 }
 
 function refreshRebirthButton() {
@@ -105,14 +106,37 @@ function refreshRebirthButton() {
   document.getElementById('title-actions').appendChild(b);
 }
 
-function startGame(klass) {
+function startGame(klass, startWave = 1) {
   titleScreen.hidden = true;
   canvas.hidden = false;
   hud.hidden = false;
   game = new Game(canvas);
   game.primaryClass = klass;
+  if (startWave > 1) {
+    game.wave = startWave;
+    game.waveKillsTarget = Math.floor(8 + startWave * 1.5);
+  }
   game.onPerkRequest = showPerkPicker;
+  game.onBossBoon = showBossBoon;
   game.onDeath = onDeath;
+}
+
+const BOSS_BOONS = [
+  { id: 'berserk',   label: 'Berserk',   desc: '+40% damage this run.',         apply: g => g.dmgMult *= 1.4 },
+  { id: 'sanctuary', label: 'Sanctuary', desc: '+50% max HP this run + full.',  apply: g => { g.heroMaxHp = Math.round(g.heroMaxHp * 1.5); g.heroHp = g.heroMaxHp; } },
+  { id: 'hoard',     label: 'Hoard',     desc: '+50% gold drops this run.',     apply: g => g.goldMult *= 1.5 },
+  { id: 'storm',     label: 'Storm',     desc: '+0.5 atk/sec this run.',        apply: g => g.atkBonus += 0.5 },
+];
+
+function showBossBoon() {
+  const pool = [...BOSS_BOONS].sort(() => Math.random() - 0.5).slice(0, 2);
+  game.paused = true;
+  const choices = pool.map(b => ({
+    label: `${b.label} — ${b.desc}`,
+    cls: '',
+    cb: () => { b.apply(game); game.paused = false; hideOverlay(); game.log(`Boon: ${b.label}`); },
+  }));
+  showOverlay('Boss boon — pick one', 'A reward for felling the boss. Active this run only.', choices);
 }
 
 function onDeath(info) {
@@ -264,26 +288,40 @@ btnShop.addEventListener('click', () => showUpgradeShop(true));
 // Expose Achievements + Bestiary as title-screen extras.
 function ensureExtraTitleButtons() {
   const wrap = document.getElementById('title-actions');
-  if (!document.getElementById('btn-ach')) {
-    const a = document.createElement('button');
-    a.id = 'btn-ach';
-    a.textContent = 'ACHIEVEMENTS';
-    a.style.background = 'var(--surface-bright)';
-    a.style.color = 'var(--on-surface)';
-    a.addEventListener('click', showAchievements);
-    wrap.appendChild(a);
-  }
-  if (!document.getElementById('btn-bestiary')) {
+  const addBtn = (id, label, cb, primary = false) => {
+    if (document.getElementById(id)) return;
     const b = document.createElement('button');
-    b.id = 'btn-bestiary';
-    b.textContent = 'BESTIARY';
-    b.style.background = 'var(--surface-bright)';
-    b.style.color = 'var(--on-surface)';
-    b.addEventListener('click', showBestiary);
+    b.id = id;
+    b.textContent = label;
+    if (!primary) {
+      b.style.background = 'var(--surface-bright)';
+      b.style.color = 'var(--on-surface)';
+    }
+    b.addEventListener('click', cb);
     wrap.appendChild(b);
-  }
+  };
+  addBtn('btn-ach',      'ACHIEVEMENTS', showAchievements);
+  addBtn('btn-bestiary', 'BESTIARY',     showBestiary);
 }
 ensureExtraTitleButtons();
+
+function refreshJumpButtons() {
+  for (const tier of [10, 25, 50]) {
+    const id = `btn-jump-${tier}`;
+    const existing = document.getElementById(id);
+    if (existing) existing.remove();
+    if (State.best_wave < tier) continue;
+    const b = document.createElement('button');
+    b.id = id;
+    b.textContent = `JUMP TO WAVE ${tier}`;
+    b.style.background = 'var(--surface-bright)';
+    b.style.color = 'var(--on-surface)';
+    b.addEventListener('click', () => {
+      showClassPicker(cls => startGame(cls, tier));
+    });
+    document.getElementById('title-actions').appendChild(b);
+  }
+}
 
 // Daily-login: fire once per page-load if the day rolled over.
 const daily = processDailyLogin();
