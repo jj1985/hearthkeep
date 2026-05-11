@@ -397,7 +397,26 @@ func _process(delta: float) -> void:
         sunfire_pulse_t -= delta
         if sunfire_pulse_t <= 0.0:
             sunfire_pulse_t = 8.0
-            _detonate_at(arena.size * 0.5, 280.0, max(1, int(_hero_damage() * 0.2)))
+            _sunfire_pulse(arena.size * 0.5, 280.0, max(1, int(_hero_damage() * 0.2)))
+
+func _sunfire_pulse(pos: Vector2, radius: float, damage: int) -> void:
+    # Visual ring (orange) + enemy-only damage. Doesn't splash the hero
+    # because the pulse spawns at arena center where the hero stands.
+    var c := ColorRect.new()
+    c.color = Color(1.0, 0.55, 0.20, 0.40)
+    c.size = Vector2(radius * 2, radius * 2)
+    c.position = pos - c.size * 0.5
+    fx_layer.add_child(c)
+    var tw := create_tween()
+    tw.parallel().tween_property(c, "modulate:a", 0.0, 0.7)
+    tw.parallel().tween_property(c, "scale", Vector2(1.3, 1.3), 0.7)
+    tw.tween_callback(c.queue_free)
+    for e in enemies.duplicate():
+        var n: Panel = e.get("node")
+        if n == null or not is_instance_valid(n): continue
+        var ep: Vector2 = n.position + n.size * 0.5
+        if ep.distance_to(pos) <= radius:
+            _damage_enemy(e, damage)
 
 func _tick_poison(delta: float) -> void:
     for e in enemies.duplicate():
