@@ -18,6 +18,7 @@ const ENEMY_TYPES = {
   drake:      { label: 'Drake',      color: '#d95940', hp: 60,  speed: 75,  gold: 14, size: 24, minWave: 12 },
   wraith:     { label: 'Wraith',     color: '#8c72d9', hp: 90,  speed: 130, gold: 24, size: 20, minWave: 16 },
   ogre:       { label: 'Ogre',       color: '#8a8a4d', hp: 220, speed: 40,  gold: 55, size: 30, minWave: 20 },
+  sapper:     { label: 'Sapper',     color: '#f27333', hp: 30,  speed: 50,  gold: 8,  size: 20, minWave: 14, explodes: true },
 };
 
 const BOSS_TYPES = {
@@ -164,6 +165,8 @@ export class Game {
 
     if (this.shakeMag > 0) this.shakeMag = Math.max(0, this.shakeMag - 80 * dt);
 
+    this._tickChest(dt);
+
     this.enemies = this.enemies.filter(e => !e.dead);
   }
 
@@ -192,6 +195,7 @@ export class Game {
       hp: maxHp, maxHp, speed: def.speed + this.wave * 1.5,
       gold: def.gold * (isMythic ? 10 : 1), size: sz,
       mythic: isMythic, boss: false,
+      explodes: !!def.explodes,
     });
     if (isMythic) {
       this.floater(`MYTHIC ${def.label.toUpperCase()}`, this.size.w / 2 - 60, 80, '#e8d2a0');
@@ -289,6 +293,7 @@ export class Game {
   _killEnemy(e, byPlayer) {
     if (e.dead) return;
     e.dead = true;
+    if (e.explodes) this._detonate(e.x, e.y, 60, Math.max(2, Math.round(this.heroDmg() * 0.5)));
     if (byPlayer) {
       const gold = Math.max(1, Math.round(e.gold * this.rebirthBonus * this.goldMult));
       State.gold += gold;
@@ -329,6 +334,7 @@ export class Game {
     this.floater(`WAVE ${this.wave}  +${bonus}g`, this.heroPos.x, this.heroPos.y, '#d4a24c');
     this.log(`Wave ${this.wave} cleared (+${bonus}g)`);
     if (this.wave % 10 === 0) this._spawnBoss();
+    if (this.wave % 15 === 0) this.spawnChest();
     if (this.wave % 5 === 0 && this.onPerkRequest) {
       this.onPerkRequest();
     }
@@ -353,6 +359,59 @@ export class Game {
       combo: this.comboPeak, embers: this.runEmbersEarned,
       gold_lost: lost,
     });
+  }
+
+  _detonate(x, y, radius, dmg) {
+    // Visual: short orange burst
+    for (let i = 0; i < 12; i++) {
+      const a = (Math.PI * 2 * i) / 12;
+      this.fx.push({
+        x, y, vx: Math.cos(a) * 200, vy: Math.sin(a) * 200,
+        life: 0.35, color: '#f08533', size: 8, fade: true,
+      });
+    }
+    for (const o of this.enemies) {
+      if (o.dead || o === undefined) continue;
+      const dx = o.x - x, dy = o.y - y;
+      if (dx * dx + dy * dy <= radius * radius) {
+        this._damageEnemy(o, dmg);
+      }
+    }
+    this.shakeMag = Math.max(this.shakeMag, 10);
+  }
+
+  spawnChest() {
+    this.chest = {
+      x: this.size.w * 0.5 + 80,
+      y: this.size.h * 0.45,
+      t: 3.0,
+    };
+  }
+
+  _tickChest(dt) {
+    if (!this.chest) return;
+    this.chest.t -= dt;
+    if (this.chest.t <= 0) {
+      const roll = Math.random();
+      if (roll < 0.6) {
+        const g = 150 + this.wave * 10;
+        State.gold += g;
+        this.floater(`+${g} gold`, this.chest.x, this.chest.y, '#d4a24c');
+        this.log(`Chest: +${g} gold`);
+      } else if (roll < 0.9) {
+        State.embers += 3;
+        this.runEmbersEarned += 3;
+        this.floater('+3 Ember', this.chest.x, this.chest.y, '#d4582c');
+        this.log('Chest: +3 ember');
+      } else {
+        this.heroHp = this.heroMaxHp;
+        this.floater('FULL HEAL', this.chest.x, this.chest.y, '#6fa060');
+        this.log('Chest: full heal');
+      }
+      this.shakeMag = 14;
+      this.chest = null;
+      persist();
+    }
   }
 
   // --- FX helpers ---
@@ -448,6 +507,20 @@ export class Game {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(this.primaryClass[0].toUpperCase(), this.heroPos.x, this.heroPos.y);
+
+    // chest
+    if (this.chest) {
+      const bob = Math.sin(performance.now() / 200) * 3;
+      ctx.fillStyle = '#8c6433';
+      ctx.fillRect(this.chest.x - 16, this.chest.y - 14 + bob, 32, 22);
+      ctx.strokeStyle = '#d4a24c';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(this.chest.x - 16, this.chest.y - 14 + bob, 32, 22);
+      ctx.fillStyle = '#d4a24c';
+      ctx.font = 'bold 12px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText(this.chest.t.toFixed(1), this.chest.x, this.chest.y - 22 + bob);
+    }
 
     // floaters
     for (const fl of this.floaters) {
