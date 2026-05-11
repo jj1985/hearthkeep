@@ -1,5 +1,6 @@
 // HTML5 horde arena — canvas renderer, ECS-lite update loop.
 import { State, persist, grantXp, checkKillMilestones } from './state.js';
+import { bonusDamage, bonusAtk, bonusRange, bonusHp, bonusCrit } from './upgrades.js';
 
 const CLASS_COLOR = {
   warrior: '#d9892e',
@@ -87,8 +88,7 @@ export class Game {
     let hp = 50;
     hp += Math.floor((State.best_wave || 0) / 2);
     hp += (State.hero_level - 1);
-    hp += Object.values(State.upgrades || {})
-      .map(r => r.id === 'hp' ? r.rank : 0).reduce((a, b) => a + b, 0);
+    hp += bonusHp();
     return Math.max(20, hp);
   }
 
@@ -215,22 +215,23 @@ export class Game {
 
   // --- Hero acts ---
   atkRate() {
-    return 2.5 + this.atkBonus;
+    return 2.5 + this.atkBonus + bonusAtk();
   }
 
   heroDmg() {
     let d = 4;
     d += Math.floor(this.wave / 2);
     d += (State.hero_level - 1) * 0.5;
+    d += bonusDamage();
     d *= this.rebirthBonus;
     d *= this.dmgMult;
     if (this.primaryClass === 'bard') d *= 1.05;
     let v = Math.max(1, Math.round(d));
-    if (Math.random() < this.critBonus) v *= 2;
+    if (Math.random() < (this.critBonus + bonusCrit())) v *= 2;
     return v;
   }
 
-  heroRange() { return 220 + this.rangeBonus; }
+  heroRange() { return 220 + this.rangeBonus + bonusRange(); }
 
   _heroAuto() {
     const r = this.heroRange();

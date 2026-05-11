@@ -1,6 +1,7 @@
 import { Game } from './game.js';
 import { State, persist } from './state.js';
 import { rollPerks, applyPerk } from './perks.js';
+import { UPGRADES, rank, cost, canBuy, buy } from './upgrades.js';
 
 const canvas = document.getElementById('game');
 const game = new Game(canvas);
@@ -87,6 +88,7 @@ document.getElementById('btn-pause').addEventListener('click', () => {
   if (game.paused) {
     showOverlay('Paused', '', [
       { label: 'Resume', cls: '', cb: () => { game.paused = false; hideOverlay(); } },
+      { label: 'Upgrades', cls: 'secondary', cb: () => showUpgradeShop(false) },
       { label: 'Restart Run', cls: 'secondary', cb: () => location.reload() },
     ]);
   } else hideOverlay();
@@ -100,9 +102,35 @@ game.onDeath = (info) => {
     `Embers earned: +${info.embers}`,
   ].join('\n');
   showOverlay(`FALLEN ON WAVE ${info.wave}`, body, [
-    { label: 'Try Again', cls: '', cb: () => location.reload() },
+    { label: 'Upgrades Shop', cls: '', cb: () => showUpgradeShop(true) },
+    { label: 'Try Again', cls: 'secondary', cb: () => location.reload() },
   ]);
 };
+
+function showUpgradeShop(reloadOnBack) {
+  function rebuild() {
+    const choices = UPGRADES.map(u => {
+      const c = cost(u.id);
+      const r = rank(u.id);
+      const buyable = canBuy(u.id);
+      const text = c < 0
+        ? `${u.label} (MAXED)`
+        : `${u.label} — ${u.desc}  ·  Rank ${r}/30  ·  ${c}g`;
+      return {
+        label: text,
+        cls: buyable ? '' : 'secondary',
+        cb: () => { if (buy(u.id)) rebuild(); },
+      };
+    });
+    choices.push({
+      label: reloadOnBack ? 'New Run' : 'Resume',
+      cls: 'secondary',
+      cb: () => { if (reloadOnBack) location.reload(); else hideOverlay(); },
+    });
+    showOverlay('UPGRADES', `Spend gold. Survives death.\n${State.gold} gold`, choices);
+  }
+  rebuild();
+}
 
 // First-run flow: show class picker if ≥2 unlocked, else tutorial.
 function bootFlow() {
