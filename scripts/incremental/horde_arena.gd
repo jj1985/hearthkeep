@@ -970,10 +970,11 @@ func _drop_powerup(pos: Vector2) -> void:
     sb.corner_radius_bottom_left = 9; sb.corner_radius_bottom_right = 9
     p.add_theme_stylebox_override("panel", sb)
     fx_layer.add_child(p)
-    # Float to hero over 1s; on arrival apply effect.
+    # Float to hero over 0.5s (or 0.25s with Coin Magnet); apply on arrival.
     var hero_center: Vector2 = hero.position + hero.size * 0.5
+    var pull_t: float = 0.25 if HordePerks.taken_ids.has("magnet") else 0.5
     var tw := create_tween()
-    tw.tween_property(p, "position", hero_center - p.size * 0.5, 1.0).set_trans(Tween.TRANS_QUAD)
+    tw.tween_property(p, "position", hero_center - p.size * 0.5, pull_t).set_trans(Tween.TRANS_QUAD)
     tw.tween_callback(_apply_powerup.bind(pick))
     tw.tween_callback(p.queue_free)
 
@@ -1539,6 +1540,8 @@ func _refresh_status_row() -> void:
     if frenzy_charge > 0:
         statuses.append({"label": "Frenzy %d/%d" % [frenzy_charge, FRENZY_CAP],
             "color": T.RARITY_LEGENDARY if frenzy_charge >= FRENZY_CAP else T.WARNING})
+    if HordePerks.taken_ids.has("magnet"):
+        statuses.append({"label": "Magnet", "color": T.PRIMARY})
     for s in statuses:
         var d: Dictionary = s
         var chip := Panel.new()

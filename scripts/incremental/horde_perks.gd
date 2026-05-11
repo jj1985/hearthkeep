@@ -28,6 +28,7 @@ const ALL_PERKS := [
     {"id":"aegis",       "label":"Aegis",         "desc":"-50%% contact damage.",                "tags":["warrior","melee"], "kind":"contact_red", "value":0.50},
     {"id":"venom",       "label":"Venom",         "desc":"+1 poison stack on each hit (1dmg/s 3s).","tags":["necromancer","rogue"], "kind":"poison", "value":1.0},
     {"id":"rime",        "label":"Rime",          "desc":"Hits slow enemies 50%% for 2s.",           "tags":["wizard","arcane"], "kind":"slow", "value":1.0},
+    {"id":"magnet",      "label":"Coin Magnet",   "desc":"Power-ups pull twice as fast.",            "tags":["any"], "kind":"nop", "value":0.0},
 ]
 
 # Run-scoped accumulators. Reset by reset_for_run().
