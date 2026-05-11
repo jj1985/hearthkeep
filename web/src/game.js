@@ -40,6 +40,7 @@ export function zoneForWave(w) {
 const BOSS_TYPES = {
   warchief:  { label: 'Krrik III',   color: '#d4a24c', hp: 240,  speed: 50,  gold: 60,  size: 38 },
   vyxhasis:  { label: 'Vyxhasis',    color: '#d44089', hp: 600,  speed: 45,  gold: 200, size: 48 },
+  aethyrnax: { label: 'Aethyrnax',   color: '#66d9f2', hp: 1400, speed: 55,  gold: 500, size: 56 },
 };
 
 export class Game {
@@ -88,6 +89,8 @@ export class Game {
     this.contactReduction = 0.0;
     this.onPerkRequest = null;    // fn(picks, applyCb) → modal opens
     this.onMerchant = null;       // fn() → modal opens
+    this.onLevelPick = null;      // fn(level)
+    this.lastSeenLevel = State.hero_level;
     this.size = { w: 0, h: 0 };
     this.heroPos = { x: 0, y: 0 };
     this._resize();
@@ -113,6 +116,7 @@ export class Game {
     hp += Math.floor((State.best_wave || 0) / 2);
     hp += (State.hero_level - 1);
     hp += bonusHp();
+    hp += (State.level_perks?.perm_hp || 0) * 5;
     return Math.max(20, hp);
   }
 
@@ -298,7 +302,7 @@ export class Game {
   }
 
   _spawnBoss() {
-    const id = this.wave >= 30 ? 'vyxhasis' : 'warchief';
+    const id = this.wave >= 50 ? 'aethyrnax' : (this.wave >= 30 ? 'vyxhasis' : 'warchief');
     const def = BOSS_TYPES[id];
     const hpScale = 1 + (this.wave - 1) * 0.18;
     const maxHp = Math.round(def.hp * hpScale);
@@ -314,7 +318,7 @@ export class Game {
 
   // --- Hero acts ---
   atkRate() {
-    return 2.5 + this.atkBonus + bonusAtk();
+    return 2.5 + this.atkBonus + bonusAtk() + (State.level_perks?.perm_atk || 0) * 0.1;
   }
 
   heroDmg() {
@@ -322,16 +326,19 @@ export class Game {
     d += Math.floor(this.wave / 2);
     d += (State.hero_level - 1) * 0.5;
     d += bonusDamage();
+    d += (State.level_perks?.perm_dmg || 0);
     d *= this.rebirthBonus;
     d *= this.dmgMult;
+    if (State.dragonslayer) d *= 1.10;
     if (this.primaryClass === 'bard') d *= 1.05;
     if (this.primaryClass === 'warrior') d += this.warriorRage * 0.5;
     let v = Math.max(1, Math.round(d));
-    if (Math.random() < (this.critBonus + bonusCrit())) v *= 2;
+    const permCrit = (State.level_perks?.perm_crit || 0) * 0.02;
+    if (Math.random() < (this.critBonus + bonusCrit() + permCrit)) v *= 2;
     return v;
   }
 
-  heroRange() { return 220 + this.rangeBonus + bonusRange(); }
+  heroRange() { return 220 + this.rangeBonus + bonusRange() + (State.level_perks?.perm_range || 0) * 10; }
 
   _heroAuto() {
     const r = this.heroRange();
@@ -408,7 +415,8 @@ export class Game {
     e.dead = true;
     if (e.explodes) this._detonate(e.x, e.y, 60, Math.max(2, Math.round(this.heroDmg() * 0.5)));
     if (byPlayer) {
-      const gold = Math.max(1, Math.round(e.gold * this.rebirthBonus * this.goldMult * this.comboMult()));
+      const permGold = 1 + (State.level_perks?.perm_gold || 0) * 0.05;
+      const gold = Math.max(1, Math.round(e.gold * this.rebirthBonus * this.goldMult * this.comboMult() * permGold));
       State.gold += gold;
       this.combo++;
       this.comboDecay = 1.5;
@@ -418,7 +426,16 @@ export class Game {
     }
     State.lifetime_kills++;
     this.killsThisRun++;
-    grantXp(1);
+    const ups = grantXp(1);
+    if (ups > 0) {
+      this.floater(`LEVEL ${State.hero_level}`, this.heroPos.x, this.heroPos.y - 20, '#d4a24c');
+      this.heroMaxHp = this.maxHp();
+      this.heroHp = Math.min(this.heroMaxHp, this.heroHp + 10);
+      // Every 5th level → perk pick.
+      if (State.hero_level % 5 === 0 && this.onLevelPick) {
+        this.onLevelPick(State.hero_level);
+      }
+    }
     const fired = checkKillMilestones();
     for (const m of fired) {
       this._showBanner(m.label);
@@ -436,6 +453,18 @@ export class Game {
       this.floater(`+${ember} Ember`, e.x, e.y, '#d4582c');
       this.shakeMag = 30;
       this._burst(e.x, e.y);
+      // Dragonslayer honor: all 3 named bosses ever felled.
+      const bossKey = e.id.replace('boss_', '');
+      if (!State.defeated_dragons.includes(bossKey)) State.defeated_dragons.push(bossKey);
+      const have = new Set(State.defeated_dragons);
+      if (!State.dragonslayer
+          && have.has('warchief') && have.has('vyxhasis') && have.has('aethyrnax')) {
+        State.dragonslayer = true;
+        State.embers += 15;
+        this.runEmbersEarned += 15;
+        this.floater('DRAGONSLAYER — +10% perm dmg', this.size.w / 2 - 110, 80, '#e8d2a0');
+        this.log('DRAGONSLAYER honor earned');
+      }
       persist();
       if (this.onBossBoon) this.onBossBoon();
     } else {

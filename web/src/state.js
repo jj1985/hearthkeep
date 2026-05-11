@@ -16,6 +16,9 @@ const DEFAULTS = {
   login_streak: 0,
   bestiary: {},          // enemy_id -> { first_seen, kills }
   ach_claimed: {},
+  dragonslayer: false,
+  defeated_dragons: [],  // ids of named bosses ever felled
+  level_perks: {},       // perm_dmg / perm_hp / perm_atk / perm_gold / perm_range / perm_crit -> stacks
 };
 
 export const State = Object.assign({}, DEFAULTS, Save.load());

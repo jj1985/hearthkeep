@@ -69,7 +69,8 @@ function refreshTitle() {
   canvas.hidden = true;
   clearChildren(titleStats);
   const lines = [];
-  if (State.rebirths > 0) lines.push(`⚔ Mark ${State.rebirths}  ·  +${State.rebirths * 25}% dmg + gold`);
+  if (State.dragonslayer) lines.push(`⚔ Dragonslayer  ·  permanent +10% damage`);
+  if (State.rebirths > 0) lines.push(`✦ Mark ${State.rebirths}  ·  +${State.rebirths * 25}% dmg + gold`);
   if (State.best_wave > 0) lines.push(`Best wave: ${State.best_wave}`);
   if (State.bosses_felled > 0) lines.push(`Bosses felled: ${State.bosses_felled}`);
   if (State.lifetime_kills > 0) lines.push(`Lifetime kills: ${State.lifetime_kills}`);
@@ -119,7 +120,34 @@ function startGame(klass, startWave = 1) {
   game.onPerkRequest = showPerkPicker;
   game.onBossBoon = showBossBoon;
   game.onMerchant = showMerchant;
+  game.onLevelPick = showLevelPerkPick;
   game.onDeath = onDeath;
+}
+
+const LEVEL_PERKS = [
+  { id: 'perm_dmg',   label: 'Sharpened',   desc: '+1 damage permanently.' },
+  { id: 'perm_hp',    label: 'Iron Body',   desc: '+5 max HP permanently.' },
+  { id: 'perm_atk',   label: 'Quickened',   desc: '+0.1 atk/sec permanently.' },
+  { id: 'perm_gold',  label: 'Coinhand',    desc: '+5% gold drops permanently.' },
+  { id: 'perm_range', label: 'Longarm',     desc: '+10 range permanently.' },
+  { id: 'perm_crit',  label: 'Keen Eye',    desc: '+2% crit chance permanently.' },
+];
+
+function showLevelPerkPick(level) {
+  const pool = [...LEVEL_PERKS].sort(() => Math.random() - 0.5).slice(0, 3);
+  game.paused = true;
+  const choices = pool.map(p => ({
+    label: `${p.label} — ${p.desc}`,
+    cls: '',
+    cb: () => {
+      State.level_perks[p.id] = (State.level_perks[p.id] || 0) + 1;
+      persist();
+      game.paused = false;
+      hideOverlay();
+      game.log(`Perm: ${p.label}`);
+    },
+  }));
+  showOverlay(`Level ${level} — pick a permanent boost`, 'Carries across all future runs and rebirths.', choices);
 }
 
 const MERCHANT_OFFERS = [
