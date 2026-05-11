@@ -25,6 +25,7 @@ const ENEMY_TYPES := {
     "sapper":     {"label": "Sapper",     "color": Color(0.95, 0.45, 0.20), "hp_base": 30,  "speed": 50.0,  "gold": 8,  "size": 30, "min_wave": 14, "explodes": true},
     "shaman":     {"label": "Shaman",     "color": Color(0.45, 0.85, 0.55), "hp_base": 50,  "speed": 60.0,  "gold": 16, "size": 30, "min_wave": 18, "heals": true},
     "archer":     {"label": "Archer",     "color": Color(0.70, 0.85, 0.40), "hp_base": 25,  "speed": 50.0,  "gold": 6,  "size": 28, "min_wave": 11, "ranged": true},
+    "summoner":   {"label": "Summoner",   "color": Color(0.70, 0.50, 0.85), "hp_base": 70,  "speed": 45.0,  "gold": 18, "size": 32, "min_wave": 22, "summons": true},
     "ogre":       {"label": "Ogre",       "color": Color(0.55, 0.55, 0.30), "hp_base": 220, "speed": 40.0,  "gold": 55, "size": 44, "min_wave": 20},
     "boss_warchief":{"label":"Krrik III", "color": Color(0.95, 0.75, 0.25), "hp_base": 240, "speed": 50.0,  "gold": 60, "size": 56, "boss": true},
     "boss_dragon":{"label":"Vyxhasis",    "color": Color(0.85, 0.25, 0.55), "hp_base": 600, "speed": 45.0,  "gold": 200,"size": 72, "boss": true},
@@ -445,6 +446,8 @@ func _spawn_enemy() -> void:
         "heal_cd": 3.0,
         "ranged": bool(def.get("ranged", false)),
         "shot_cd": 1.5,
+        "summons": bool(def.get("summons", false)),
+        "summon_cd": 3.0,
     })
     if is_mythic:
         _floating_text("MYTHIC %s" % String(def.get("label", "Foe")).to_upper(),
@@ -465,6 +468,17 @@ func _move_enemies(delta: float) -> void:
             continue
         if bool(e.get("boss", false)):
             _boss_tick(e, delta)
+        # Summoners stay at distance and spawn minions on a cooldown.
+        if bool(e.get("summons", false)):
+            e["summon_cd"] = float(e.get("summon_cd", 5.0)) - delta
+            var dist_s: float = ep.distance_to(hero_center)
+            var dir_s: Vector2 = (hero_center - ep).normalized()
+            if dist_s < 260.0:
+                node.position -= dir_s * float(e["speed"]) * delta
+            if float(e["summon_cd"]) <= 0.0:
+                _spawn_minion(ep)
+                e["summon_cd"] = 5.0
+            continue
         # Archers kite at range and fire periodic projectiles at the hero.
         if bool(e.get("ranged", false)):
             e["shot_cd"] = float(e.get("shot_cd", 1.5)) - delta
@@ -848,6 +862,36 @@ func _apply_powerup(p: Dictionary) -> void:
     _floating_text(label, hero.position + hero.size * 0.5, T.RARITY_MYTHIC)
     SfxBus.play("pickup", -4.0)
     _refresh_hud()
+
+func _spawn_minion(pos: Vector2) -> void:
+    var def: Dictionary = ENEMY_TYPES["skeleton"]
+    var sz: int = int(def["size"])
+    var p := Panel.new()
+    p.custom_minimum_size = Vector2(sz, sz)
+    p.size = Vector2(sz, sz)
+    p.position = pos
+    var sb := StyleBoxFlat.new()
+    sb.bg_color = def["color"]
+    sb.corner_radius_top_left = 6; sb.corner_radius_top_right = 6
+    sb.corner_radius_bottom_left = 6; sb.corner_radius_bottom_right = 6
+    p.add_theme_stylebox_override("panel", sb)
+    enemies_layer.add_child(p)
+    var bar := ProgressBar.new()
+    bar.show_percentage = false
+    bar.custom_minimum_size = Vector2(sz, 4)
+    bar.size = Vector2(sz, 4); bar.position = Vector2(0, -8)
+    bar.max_value = 1.0; bar.value = 1.0
+    p.add_child(bar)
+    var hp_scale: float = 1.0 + (HordeState.wave - 1) * 0.18
+    var max_hp: int = int(round(int(def["hp_base"]) * hp_scale))
+    enemies.append({
+        "node": p, "hp": max_hp, "max_hp": max_hp, "hp_bar": bar,
+        "speed": float(def["speed"]) + HordeState.wave * 1.5,
+        "gold": 0,  # minions don't pay out
+        "id": "skeleton",
+        "mythic": false, "explodes": false, "heals": false, "heal_cd": 0.0,
+        "ranged": false, "shot_cd": 0.0, "summons": false, "summon_cd": 0.0,
+    })
 
 func _spawn_shot_telegraph(from: Vector2, to: Vector2) -> void:
     var line := ColorRect.new()
