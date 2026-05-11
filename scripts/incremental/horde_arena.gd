@@ -30,6 +30,7 @@ const ENEMY_TYPES := {
     "boss_warchief":{"label":"Krrik III", "color": Color(0.95, 0.75, 0.25), "hp_base": 240, "speed": 50.0,  "gold": 60, "size": 56, "boss": true},
     "boss_dragon":{"label":"Vyxhasis",    "color": Color(0.85, 0.25, 0.55), "hp_base": 600, "speed": 45.0,  "gold": 200,"size": 72, "boss": true},
     "boss_aethyrnax":{"label":"Aethyrnax","color": Color(0.40, 0.85, 0.95), "hp_base": 1400,"speed": 55.0,  "gold": 500,"size": 84, "boss": true},
+    "boss_ourzhal":{"label":"Ourzhal",    "color": Color(0.95, 0.50, 0.20), "hp_base": 3000,"speed": 65.0,  "gold": 1200,"size":92, "boss": true},
 }
 
 const HERO_RADIUS := 22.0
@@ -743,7 +744,7 @@ func _damage_enemy(e: Dictionary, amount: int) -> void:
             ])
             _open_boss_loot_picker()
             var boss_kid: String = String(e.get("id", ""))
-            if boss_kid in ["boss_dragon", "boss_aethyrnax", "boss_warchief"]:
+            if boss_kid in ["boss_dragon", "boss_aethyrnax", "boss_warchief", "boss_ourzhal"]:
                 if not GameState.defeated_dragons.has(boss_kid):
                     GameState.defeated_dragons.append(boss_kid)
                 if GameState.defeated_dragons.size() >= 3 and not GameState.dragonslayer:
@@ -871,6 +872,33 @@ func _boss_tick(e: Dictionary, delta: float) -> void:
         node.modulate = Color(1, 1, 1, 0.4)   # transparent = airborne
         SfxBus.play("dragon_phase_air", -4.0)
         _floating_text("AIRBORNE", node.position + node.size * 0.5, T.RARITY_RARE)
+    elif id == "boss_ourzhal":
+        # Ourzhal cycles through THREE phases: charge → fly → summon.
+        var swap_o: int = int(e.get("phase_count", 0))
+        e["phase_count"] = swap_o + 1
+        match swap_o % 3:
+            0:
+                e["phase_kind"] = "charge"
+                e["phase_active"] = 0.9
+                e["speed"] = float(e["base_speed"]) * 5.5
+                node.modulate = Color(1.5, 0.7, 0.4)
+                SfxBus.play("hit_heavy", -1.0)
+                _floating_text("CHARGE!", node.position + node.size * 0.5, T.SECONDARY)
+            1:
+                e["phase_kind"] = "fly"
+                e["phase_active"] = 1.5
+                e["speed"] = float(e["base_speed"]) * 0.5
+                node.modulate = Color(1, 1, 1, 0.3)
+                SfxBus.play("dragon_phase_air", 0.0)
+                _floating_text("SKYBORNE", node.position + node.size * 0.5, T.RARITY_RARE)
+            _:
+                # Summon: spawn 2 skeletons + a sapper around Ourzhal.
+                e["phase_kind"] = ""
+                e["phase_active"] = 0.4
+                _spawn_minion(node.position + node.size * 0.5 + Vector2(-40, 0))
+                _spawn_minion(node.position + node.size * 0.5 + Vector2(40, 0))
+                _floating_text("SUMMON", node.position + node.size * 0.5, T.RARITY_EPIC)
+                SfxBus.play("levelup", -8.0)
     elif id == "boss_aethyrnax":
         # Aethyrnax alternates between CHARGE and FLY each cycle.
         var swap: int = int(e.get("phase_count", 0))
@@ -1073,6 +1101,7 @@ func _telegraph_boss() -> void:
     var boss_id: String = "boss_warchief"
     if HordeState.wave >= 30: boss_id = "boss_dragon"
     if HordeState.wave >= 50: boss_id = "boss_aethyrnax"
+    if HordeState.wave >= 70: boss_id = "boss_ourzhal"
     var def: Dictionary = ENEMY_TYPES[boss_id]
     var name: String = String(def["label"])
     # Three quick floating warnings + a screen flash, then spawn.
@@ -1092,6 +1121,7 @@ func _spawn_boss() -> void:
     var boss_id: String = "boss_warchief"
     if HordeState.wave >= 30: boss_id = "boss_dragon"
     if HordeState.wave >= 50: boss_id = "boss_aethyrnax"
+    if HordeState.wave >= 70: boss_id = "boss_ourzhal"
     var def: Dictionary = ENEMY_TYPES[boss_id]
     var sz: int = int(def["size"])
     var p := Panel.new()
