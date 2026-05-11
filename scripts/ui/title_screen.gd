@@ -28,6 +28,9 @@ enum State { SPLASH, TITLE, MENU }
 @onready var btn_settings: Button = $SafeArea/Menu/V/Settings
 @onready var milestone_hint: Label = $SafeArea/Menu/V/MilestoneHint
 @onready var challenge_check: CheckBox = $SafeArea/Menu/V/ChallengeRow/ChallengeCheck
+@onready var class_picker: Panel = $SafeArea/ClassPicker
+@onready var class_choices: VBoxContainer = $SafeArea/ClassPicker/V/Choices
+@onready var class_cancel: Button = $SafeArea/ClassPicker/V/Cancel
 
 var state: int = State.SPLASH
 var pulse_t: float = 0.0
@@ -255,8 +258,35 @@ func _enter_menu() -> void:
     tw2.tween_property(title_pane, "scale", Vector2(0.78, 0.78), 0.28)
 
 func _on_new_run() -> void:
+    if GameState.unlocked_classes.size() >= 2:
+        _open_class_picker()
+        return
     HordeState.reset_run()
     HordePerks.reset_for_run()
+    SaveSystem.save()
+    get_tree().change_scene_to_file("res://scenes/horde.tscn")
+
+func _open_class_picker() -> void:
+    for c in class_choices.get_children(): c.queue_free()
+    for cid in GameState.unlocked_classes:
+        var b := Button.new()
+        b.text = String(cid).capitalize()
+        b.custom_minimum_size = Vector2(0, 56)
+        UiStyle_.apply_primary(b)
+        b.pressed.connect(_pick_class.bind(String(cid)))
+        class_choices.add_child(b)
+    UiStyle_.apply_secondary(class_cancel)
+    if not class_cancel.is_connected("pressed", Callable(self, "_close_class_picker")):
+        class_cancel.pressed.connect(_close_class_picker)
+    class_picker.visible = true
+
+func _close_class_picker() -> void:
+    class_picker.visible = false
+
+func _pick_class(cid: String) -> void:
+    HordeState.reset_run()
+    HordePerks.reset_for_run()
+    HordeState.primary = cid
     SaveSystem.save()
     get_tree().change_scene_to_file("res://scenes/horde.tscn")
 

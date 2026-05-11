@@ -106,6 +106,38 @@ horizontal_alignment = 1
 
 ; ---- Menu state (button stack) ----
 
+[node name="ClassPicker" type="Panel" parent="SafeArea"]
+visible = false
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -220.0
+offset_top = -180.0
+offset_right = 220.0
+offset_bottom = 200.0
+
+[node name="V" type="VBoxContainer" parent="SafeArea/ClassPicker"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = -16.0
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="SafeArea/ClassPicker/V"]
+text = "Choose primary class"
+horizontal_alignment = 1
+
+[node name="Choices" type="VBoxContainer" parent="SafeArea/ClassPicker/V"]
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="Cancel" type="Button" parent="SafeArea/ClassPicker/V"]
+custom_minimum_size = Vector2(0, 48)
+text = "CANCEL"
+
 [node name="Menu" type="Control" parent="SafeArea"]
 visible = false
 anchor_right = 1.0
