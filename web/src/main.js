@@ -4,7 +4,12 @@ import { rollPerks, applyPerk } from './perks.js';
 import { UPGRADES, rank, cost, canBuy, buy } from './upgrades.js';
 
 const canvas = document.getElementById('game');
-const game = new Game(canvas);
+const hud = document.getElementById('hud');
+const titleScreen = document.getElementById('title-screen');
+const titleStats = document.getElementById('title-stats');
+const titleTip = document.getElementById('title-tip');
+const btnNewRun = document.getElementById('btn-newrun');
+const btnShop = document.getElementById('btn-shop');
 
 const wave = document.getElementById('wave');
 const kills = document.getElementById('kills');
@@ -18,20 +23,10 @@ const ovTitle = document.getElementById('overlay-title');
 const ovBody = document.getElementById('overlay-body');
 const ovChoices = document.getElementById('overlay-choices');
 
-function refreshHud() {
-  wave.textContent = `WAVE ${game.wave}`;
-  kills.textContent = `${State.lifetime_kills} kills`;
-  gold.textContent = `${State.gold} g`;
-  embers.textContent = `${State.embers} 🜂`;
-  level.textContent = `L${State.hero_level}`;
-  hpfill.style.width = (100 * game.heroHp / game.heroMaxHp).toFixed(1) + '%';
-  log.textContent = game.combatLog.join('\n');
-}
-setInterval(refreshHud, 100);
+let game = null;
 
-function clearChildren(el) {
-  while (el.firstChild) el.removeChild(el.firstChild);
-}
+function clearChildren(el) { while (el.firstChild) el.removeChild(el.firstChild); }
+
 function showOverlay(title, body, choices) {
   ovTitle.textContent = title;
   ovBody.textContent = body;
@@ -47,54 +42,56 @@ function showOverlay(title, body, choices) {
 }
 function hideOverlay() { overlay.hidden = true; }
 
-// --- Class picker (when ≥2 unlocked) ---
+// --- Title scene ---
 const PASSIVE_DESC = {
-  warrior:     'Hot Steel start — heavy melee',
-  rogue:       'Quick — heals on SKILL',
-  wizard:      'Long range — fireball SKILL',
-  necromancer: 'Death tag — slow start, scales',
-  bard:        '+5% global damage',
+  warrior:     'Rage on kill — stacks until wave clear',
+  rogue:       '5% innate dodge, SKILL full heal',
+  wizard:      'Every 5th hit chains, SKILL fireball',
+  necromancer: 'Kills heal 1 HP, SKILL cleave',
+  bard:        '+5% global damage, SKILL cleave',
 };
 
-function showClassPicker(after) {
-  const choices = State.unlocked_classes.map(cid => ({
-    label: `${cid[0].toUpperCase()}${cid.slice(1)} — ${PASSIVE_DESC[cid] || ''}`,
-    cls: '',
-    cb: () => { game.primaryClass = cid; hideOverlay(); after(); },
-  }));
-  showOverlay('Choose primary class', 'Each class shapes the SKILL and stat scaling.', choices);
+const TIPS = [
+  'STRIKE delivers a 4× burst hit on the closest enemy.',
+  'SKILL is your class active — 6-second cooldown.',
+  'Every 5th wave offers a 3-card perk pick.',
+  'Boss every 10th wave drops Embers + screen shake.',
+  'Mythic enemies (3% spawn) drop 10× gold.',
+  'Treasure chests spawn every 15 waves (3-second open).',
+  'Upgrade your hero between runs with gold.',
+  'Add to home screen for app-icon access.',
+];
+
+function refreshTitle() {
+  titleScreen.hidden = false;
+  hud.hidden = true;
+  canvas.hidden = true;
+  clearChildren(titleStats);
+  const lines = [];
+  if (State.best_wave > 0) lines.push(`Best wave: ${State.best_wave}`);
+  if (State.bosses_felled > 0) lines.push(`Bosses felled: ${State.bosses_felled}`);
+  if (State.lifetime_kills > 0) lines.push(`Lifetime kills: ${State.lifetime_kills}`);
+  lines.push(`Gold: ${State.gold}  ·  Embers: ${State.embers}  ·  Level: ${State.hero_level}`);
+  lines.push(`Unlocked: ${State.unlocked_classes.join(', ')}`);
+  for (const l of lines) {
+    const p = document.createElement('p');
+    p.textContent = l;
+    titleStats.appendChild(p);
+  }
+  titleTip.textContent = TIPS[Math.floor(Math.random() * TIPS.length)];
 }
 
-// --- Perk picker every 5 waves ---
-function showPerkPicker() {
-  const taken = game.takenPerks;
-  const picks = rollPerks(game.primaryClass, taken, 3);
-  if (picks.length === 0) return;
-  game.paused = true;
-  const choices = picks.map(p => ({
-    label: `${p.label} — ${p.desc}`,
-    cls: '',
-    cb: () => { applyPerk(game, p); game.paused = false; hideOverlay(); game.log(`Perk: ${p.label}`); },
-  }));
-  showOverlay(`Wave ${game.wave} — pick a perk`, 'Choose a power to carry into the next push.', choices);
+function startGame(klass) {
+  titleScreen.hidden = true;
+  canvas.hidden = false;
+  hud.hidden = false;
+  game = new Game(canvas);
+  game.primaryClass = klass;
+  game.onPerkRequest = showPerkPicker;
+  game.onDeath = onDeath;
 }
-game.onPerkRequest = showPerkPicker;
 
-// --- Buttons ---
-document.getElementById('btn-strike').addEventListener('click', () => game.strike());
-document.getElementById('btn-skill').addEventListener('click', () => game.skill());
-document.getElementById('btn-pause').addEventListener('click', () => {
-  game.paused = !game.paused;
-  if (game.paused) {
-    showOverlay('Paused', '', [
-      { label: 'Resume', cls: '', cb: () => { game.paused = false; hideOverlay(); } },
-      { label: 'Upgrades', cls: 'secondary', cb: () => showUpgradeShop(false) },
-      { label: 'Restart Run', cls: 'secondary', cb: () => location.reload() },
-    ]);
-  } else hideOverlay();
-});
-
-game.onDeath = (info) => {
+function onDeath(info) {
   const body = [
     `Kills: ${info.kills}`,
     `Gold spilled: -${info.gold_lost}`,
@@ -103,9 +100,54 @@ game.onDeath = (info) => {
   ].join('\n');
   showOverlay(`FALLEN ON WAVE ${info.wave}`, body, [
     { label: 'Upgrades Shop', cls: '', cb: () => showUpgradeShop(true) },
-    { label: 'Try Again', cls: 'secondary', cb: () => location.reload() },
+    { label: 'Back to Title', cls: 'secondary', cb: () => { hideOverlay(); refreshTitle(); } },
   ]);
-};
+}
+
+function refreshHud() {
+  if (!game || canvas.hidden) return;
+  wave.textContent = `WAVE ${game.wave}`;
+  kills.textContent = `${State.lifetime_kills} kills`;
+  gold.textContent = `${State.gold} g`;
+  embers.textContent = `${State.embers} 🜂`;
+  level.textContent = `L${State.hero_level}`;
+  hpfill.style.width = (100 * game.heroHp / game.heroMaxHp).toFixed(1) + '%';
+  log.textContent = game.combatLog.join('\n');
+}
+setInterval(refreshHud, 100);
+
+function showClassPicker(after) {
+  if (State.unlocked_classes.length === 1) {
+    after(State.unlocked_classes[0]);
+    return;
+  }
+  const choices = State.unlocked_classes.map(cid => ({
+    label: `${cid[0].toUpperCase()}${cid.slice(1)} — ${PASSIVE_DESC[cid] || ''}`,
+    cls: '',
+    cb: () => { hideOverlay(); after(cid); },
+  }));
+  choices.push({ label: 'Cancel', cls: 'secondary', cb: () => hideOverlay() });
+  showOverlay('Choose primary class', 'Each class shapes the SKILL and passive.', choices);
+}
+
+function showPerkPicker() {
+  if (!game) return;
+  const taken = game.takenPerks;
+  const picks = rollPerks(game.primaryClass, taken, 3);
+  if (picks.length === 0) return;
+  game.paused = true;
+  const choices = picks.map(p => ({
+    label: `${p.label} — ${p.desc}`,
+    cls: '',
+    cb: () => {
+      applyPerk(game, p);
+      game.paused = false;
+      hideOverlay();
+      game.log(`Perk: ${p.label}`);
+    },
+  }));
+  showOverlay(`Wave ${game.wave} — pick a perk`, 'Choose a power to carry into the next push.', choices);
+}
 
 function showUpgradeShop(reloadOnBack) {
   function rebuild() {
@@ -123,30 +165,38 @@ function showUpgradeShop(reloadOnBack) {
       };
     });
     choices.push({
-      label: reloadOnBack ? 'New Run' : 'Resume',
+      label: reloadOnBack ? 'Back to Title' : 'Resume',
       cls: 'secondary',
-      cb: () => { if (reloadOnBack) location.reload(); else hideOverlay(); },
+      cb: () => {
+        if (reloadOnBack) {
+          hideOverlay();
+          refreshTitle();
+        } else hideOverlay();
+      },
     });
     showOverlay('UPGRADES', `Spend gold. Survives death.\n${State.gold} gold`, choices);
   }
   rebuild();
 }
 
-// First-run flow: show class picker if ≥2 unlocked, else tutorial.
-function bootFlow() {
-  if (State.unlocked_classes.length >= 2) {
-    showClassPicker(() => {
-      if (!localStorage.getItem('hearthkeep.tutorial')) showTutorial();
-    });
-  } else if (!localStorage.getItem('hearthkeep.tutorial')) {
-    showTutorial();
-  }
-}
-function showTutorial() {
-  showOverlay('HEARTHKEEP',
-    'Tap STRIKE for a heavy hit.\nSKILL is your class active (6s cd).\nBoss every 10 waves.\nPerk pick every 5 waves.\n\nYou auto-attack — survive.',
-    [{ label: 'Begin', cls: '', cb: () => { localStorage.setItem('hearthkeep.tutorial', '1'); hideOverlay(); } }]);
-}
-bootFlow();
+document.getElementById('btn-strike').addEventListener('click', () => game && game.strike());
+document.getElementById('btn-skill').addEventListener('click', () => game && game.skill());
+document.getElementById('btn-pause').addEventListener('click', () => {
+  if (!game) return;
+  game.paused = !game.paused;
+  if (game.paused) {
+    showOverlay('Paused', '', [
+      { label: 'Resume', cls: '', cb: () => { game.paused = false; hideOverlay(); } },
+      { label: 'Upgrades', cls: 'secondary', cb: () => showUpgradeShop(false) },
+      { label: 'Quit to Title', cls: 'secondary', cb: () => { hideOverlay(); refreshTitle(); } },
+    ]);
+  } else hideOverlay();
+});
+
+btnNewRun.addEventListener('click', () => {
+  showClassPicker(startGame);
+});
+btnShop.addEventListener('click', () => showUpgradeShop(true));
 
 window.addEventListener('beforeunload', () => persist());
+refreshTitle();

@@ -53,6 +53,9 @@ export class Game {
     this.comboDecay = 0;
     this.comboPeak = 0;
     this.rebirthBonus = 1.0 + (State.rebirths || 0) * 0.25;
+    // Class-signature passive state (per-run)
+    this.warriorRage = 0;
+    this.wizardHitCount = 0;
     // Perk accumulators (per-run)
     this.takenPerks = new Set();
     this.dmgMult = 1.0;
@@ -230,6 +233,7 @@ export class Game {
     d *= this.rebirthBonus;
     d *= this.dmgMult;
     if (this.primaryClass === 'bard') d *= 1.05;
+    if (this.primaryClass === 'warrior') d += this.warriorRage * 0.5;
     let v = Math.max(1, Math.round(d));
     if (Math.random() < (this.critBonus + bonusCrit())) v *= 2;
     return v;
@@ -246,8 +250,25 @@ export class Game {
       if (d < bestD) { bestD = d; best = e; }
     }
     if (!best) return;
-    this._damageEnemy(best, this.heroDmg());
+    const dmg = this.heroDmg();
+    this._damageEnemy(best, dmg);
     this._spawnStrike(best.x, best.y);
+    // Wizard signature: every 5th hit chains to a 2nd target.
+    if (this.primaryClass === 'wizard') {
+      this.wizardHitCount++;
+      if (this.wizardHitCount % 5 === 0) {
+        let second = null, secondD = this.heroRange();
+        for (const e of this.enemies) {
+          if (e.dead || e === best) continue;
+          const d = Math.hypot(e.x - best.x, e.y - best.y);
+          if (d < secondD) { secondD = d; second = e; }
+        }
+        if (second) {
+          this._damageEnemy(second, dmg);
+          this._spawnStrike(second.x, second.y);
+        }
+      }
+    }
   }
 
   strike() {
@@ -300,6 +321,8 @@ export class Game {
       this.combo++;
       this.comboDecay = 1.5;
       if (this.combo > this.comboPeak) this.comboPeak = this.combo;
+      if (this.primaryClass === 'warrior') this.warriorRage = Math.min(20, this.warriorRage + 1);
+      if (this.primaryClass === 'necromancer') this.heroHp = Math.min(this.heroMaxHp, this.heroHp + 1);
     }
     State.lifetime_kills++;
     this.killsThisRun++;
@@ -325,6 +348,7 @@ export class Game {
 
   _nextWave() {
     this.wave++;
+    this.warriorRage = 0;
     this.waveKillsProgress = 0;
     this.waveKillsTarget = Math.floor(8 + this.wave * 1.5);
     if (this.wave > State.best_wave) State.best_wave = this.wave;
@@ -343,6 +367,10 @@ export class Game {
 
   _heroTakeDamage(amount) {
     if (this.deadScreenOpen) return;
+    if (this.primaryClass === 'rogue' && Math.random() < 0.05) {
+      this.floater('EVADE', this.heroPos.x, this.heroPos.y, '#d4a24c');
+      return;
+    }
     this.heroHp = Math.max(0, this.heroHp - amount);
     this.shakeMag = Math.min(20, 6 + amount * 0.5);
     if (this.heroHp <= 0) this._onDie();

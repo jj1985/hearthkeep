@@ -8,8 +8,18 @@
   <link rel="stylesheet" href="src/style.css">
 </head>
 <body>
-  <canvas id="game"></canvas>
-  <div id="hud">
+  <div id="title-screen">
+    <h1 id="title-heading">HEARTHKEEP</h1>
+    <p id="title-subtitle">of the Sundered Realms</p>
+    <div id="title-stats"></div>
+    <div id="title-actions">
+      <button id="btn-newrun">NEW RUN</button>
+      <button id="btn-shop">UPGRADES</button>
+    </div>
+    <p id="title-tip"></p>
+  </div>
+  <canvas id="game" hidden></canvas>
+  <div id="hud" hidden>
     <div id="topbar">
       <span id="wave">WAVE 1</span>
       <span id="kills">0 kills</span>
