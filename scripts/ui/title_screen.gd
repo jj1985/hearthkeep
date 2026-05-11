@@ -102,6 +102,8 @@ func _on_challenge_toggled(on: bool) -> void:
 
 func _refresh_milestone_hint() -> void:
     var lines: Array[String] = []
+    if GameState.dragonslayer:
+        lines.append("⚔ Dragonslayer")
     if GameState.rebirths > 0:
         lines.append("Mark %d" % GameState.rebirths)
     if GameState.deepest_floor > 0:

@@ -12,6 +12,7 @@ var saved_dye_sets: Dictionary = {}          # set_name -> { slot -> color_id }
 var stash: Array[Dictionary] = []
 var meta_perk_points: int = 0
 var defeated_dragons: Array[String] = []
+var dragonslayer: bool = false
 var buildings: Dictionary = {                # building_id -> tier (0..3)
     "stash": 1,
     "forge": 1,

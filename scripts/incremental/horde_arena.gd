@@ -571,6 +571,7 @@ func _hero_damage() -> int:
     d += Upgrades.bonus_damage()
     var f: float = float(d) * Upgrades.ember_damage_mult() * HordePerks.dmg_mult
     f *= 1.0 + GameState.rebirths * 0.25
+    if GameState.dragonslayer: f *= 1.10
     var syn: Dictionary = Synergies.for_loadout(HordeState.primary, HordeState.secondary, HordeState.tertiary)
     if not syn.is_empty(): f *= 1.0 + float(syn.get("dmg_mult", 0.0))
     if _temp_dmg_active(): f *= 1.5
@@ -647,6 +648,14 @@ func _damage_enemy(e: Dictionary, amount: int) -> void:
                 String(ENEMY_TYPES[String(e.get("id", ""))].get("label", "Boss")),
                 ember_reward,
             ])
+            var boss_kid: String = String(e.get("id", ""))
+            if boss_kid in ["boss_dragon", "boss_aethyrnax", "boss_warchief"]:
+                if not GameState.defeated_dragons.has(boss_kid):
+                    GameState.defeated_dragons.append(boss_kid)
+                if GameState.defeated_dragons.size() >= 3 and not GameState.dragonslayer:
+                    GameState.dragonslayer = true
+                    _achievement_banner("DRAGONSLAYER — permanent +10%% damage")
+                    GameState.add_embers(15)
             _floating_text("+%d Embers" % ember_reward,
                 Vector2(arena.size.x * 0.5 - 50, arena.size.y * 0.4), T.SECONDARY)
             _boss_burst(death_pos)
