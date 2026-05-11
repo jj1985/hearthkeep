@@ -27,6 +27,7 @@ enum State { SPLASH, TITLE, MENU }
 @onready var btn_codex: Button = $SafeArea/Menu/V/Codex
 @onready var btn_settings: Button = $SafeArea/Menu/V/Settings
 @onready var milestone_hint: Label = $SafeArea/Menu/V/MilestoneHint
+@onready var tip_label: Label = $SafeArea/Menu/V/Tip
 @onready var challenge_check: CheckBox = $SafeArea/Menu/V/ChallengeRow/ChallengeCheck
 @onready var class_picker: Panel = $SafeArea/ClassPicker
 @onready var class_choices: VBoxContainer = $SafeArea/ClassPicker/V/Choices
@@ -82,6 +83,40 @@ func _wire_buttons() -> void:
     _refresh_milestone_hint()
     _refresh_challenge_row()
     challenge_check.toggled.connect(_on_challenge_toggled)
+    _start_tip_rotation()
+
+const TIPS := [
+    "Tap STRIKE for a heavy hit — burst targets at low HP.",
+    "Every 5th wave offers a perk pick — rerolls cost gold.",
+    "Mythic enemies (3% spawn chance) drop a random power-up.",
+    "Bosses every 10 waves drop Embers + open a 2-card boon pick.",
+    "Wave 50 endless is a one-time +25 ember reward.",
+    "Reborn at wave 50 — each Mark stacks +25% damage + gold.",
+    "Felling all 3 named dragons grants permanent +10% damage.",
+    "Treasure chests drop every 15 waves with 3-second auto-open.",
+    "Tempests (every 13th wave) double spawns at half HP.",
+    "The Bestiary panel logs every enemy you've ever killed.",
+    "Daily Challenge: opt in for 2× rewards under a random curse.",
+    "Level up every 5 for a permanent stat pick — survives rebirth.",
+]
+var _tip_idx: int = 0
+
+func _start_tip_rotation() -> void:
+    if tip_label == null: return
+    _tip_idx = randi() % TIPS.size()
+    tip_label.text = TIPS[_tip_idx]
+    tip_label.add_theme_color_override("font_color", T.ON_SURFACE_MUTED)
+    var t := Timer.new()
+    t.wait_time = 4.0
+    t.one_shot = false
+    t.autostart = true
+    add_child(t)
+    t.timeout.connect(_advance_tip)
+
+func _advance_tip() -> void:
+    if tip_label == null: return
+    _tip_idx = (_tip_idx + 1) % TIPS.size()
+    tip_label.text = TIPS[_tip_idx]
 
 func _refresh_challenge_row() -> void:
     if GameState.daily_curse == "":
