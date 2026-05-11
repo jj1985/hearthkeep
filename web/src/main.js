@@ -502,4 +502,12 @@ if (daily) {
 
 
 window.addEventListener('beforeunload', () => persist());
+
+// Register the service worker. Cache-first means after first load
+// the game runs entirely offline.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
 refreshTitle();

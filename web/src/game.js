@@ -91,6 +91,7 @@ export class Game {
     this.sunfirePulseT = 8;
     // Boss telegraph countdown
     this.bossWarn = null; // { t, label }
+    this.weather = []; // [{x, y, vy, color, size}]
     // Perk accumulators (per-run)
     this.takenPerks = new Set();
     this.onBossBoon = null;     // fn(picks, applyCb)
@@ -335,6 +336,7 @@ export class Game {
 
     if (this.shakeMag > 0) this.shakeMag = Math.max(0, this.shakeMag - 80 * dt);
 
+    this._tickWeather(dt);
     this._tickChest(dt);
 
     this.enemies = this.enemies.filter(e => !e.dead);
@@ -733,6 +735,37 @@ export class Game {
     }
   }
 
+  _zoneWeather() {
+    const z = zoneForWave(this.wave).name;
+    return ({
+      'Greenmarch':  { color: 'rgba(140, 215, 140, 0.4)', density: 14 },
+      'Ashen Vale':  { color: 'rgba(170, 140, 110, 0.5)', density: 22 },
+      'Frostwatch':  { color: 'rgba(210, 230, 255, 0.6)', density: 28 },
+      'Emberlands':  { color: 'rgba(255, 140, 70, 0.5)',  density: 24 },
+      'The Void':    { color: 'rgba(160, 120, 220, 0.4)', density: 18 },
+      'Forgehold':   { color: 'rgba(255, 165, 80, 0.55)', density: 28 },
+      'Sunfire':     { color: 'rgba(255, 215, 100, 0.55)',density: 30 },
+    })[z] || { color: 'rgba(255,255,255,0.3)', density: 12 };
+  }
+
+  _tickWeather(dt) {
+    const cfg = this._zoneWeather();
+    // Maintain population.
+    while (this.weather.length < cfg.density) {
+      this.weather.push({
+        x: Math.random() * this.size.w,
+        y: -Math.random() * 40,
+        vy: 14 + Math.random() * 30,
+        size: 1 + Math.random() * 2,
+      });
+    }
+    for (const p of this.weather) {
+      p.y += p.vy * dt;
+      if (p.y > this.size.h + 8) { p.y = -10; p.x = Math.random() * this.size.w; }
+    }
+    this._weatherColor = cfg.color;
+  }
+
   spawnChest() {
     this.chest = {
       x: this.size.w * 0.5 + 80,
@@ -807,6 +840,11 @@ export class Game {
     // floor — tinted by zone
     ctx.fillStyle = zoneForWave(this.wave).floor;
     ctx.fillRect(0, 96, w, h - 200);
+    // weather
+    if (this._weatherColor) {
+      ctx.fillStyle = this._weatherColor;
+      for (const p of this.weather) ctx.fillRect(p.x, p.y, p.size, p.size + 1);
+    }
     // range ring (faint)
     ctx.strokeStyle = 'rgba(212, 162, 76, 0.12)';
     ctx.lineWidth = 2;
