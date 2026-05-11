@@ -2,6 +2,7 @@ import { Game } from './game.js';
 import { State, persist, processDailyLogin, rebirth, canRebirth } from './state.js';
 import { rollPerks, applyPerk } from './perks.js';
 import { UPGRADES, rank, cost, canBuy, buy } from './upgrades.js';
+import * as Ach from './achievements.js';
 
 const canvas = document.getElementById('game');
 const hud = document.getElementById('hud');
@@ -115,16 +116,52 @@ function startGame(klass) {
 }
 
 function onDeath(info) {
+  // Scan achievements and apply any newly-completed ember rewards.
+  const achPay = Ach.scanAndClaim();
   const body = [
     `Kills: ${info.kills}`,
     `Gold spilled: -${info.gold_lost}`,
     `Peak combo: x${info.combo}`,
-    `Embers earned: +${info.embers}`,
-  ].join('\n');
+    `Embers earned: +${info.embers + achPay}`,
+    achPay > 0 ? `(includes +${achPay} achievement embers)` : '',
+  ].filter(s => s).join('\n');
   showOverlay(`FALLEN ON WAVE ${info.wave}`, body, [
     { label: 'Upgrades Shop', cls: '', cb: () => showUpgradeShop(true) },
     { label: 'Back to Title', cls: 'secondary', cb: () => { hideOverlay(); refreshTitle(); } },
   ]);
+}
+
+function showAchievements() {
+  const choices = Ach.ROWS.map(r => {
+    const [cur, tgt] = r.progress();
+    const done = Ach.isDone(r);
+    const claimed = Ach.isClaimed(r);
+    const mark = claimed ? '✓' : (done ? '◆' : '○');
+    return {
+      label: `${mark} ${r.label}  ·  ${cur}/${tgt}  +${r.reward}🜂`,
+      cls: claimed ? 'secondary' : '',
+      cb: () => {},
+    };
+  });
+  choices.push({ label: 'Back', cls: 'secondary', cb: () => hideOverlay() });
+  showOverlay('ACHIEVEMENTS', `Claim by reaching the target.`, choices);
+}
+
+function showBestiary() {
+  const seen = State.bestiary || {};
+  const choices = [];
+  // Show all enemies in order they unlock, mask name if not seen.
+  const order = [
+    'skeleton', 'goblin', 'brute', 'ghoul', 'drake', 'wraith', 'ogre',
+    'sapper', 'archer', 'shaman', 'boss_warchief', 'boss_vyxhasis',
+  ];
+  for (const id of order) {
+    const e = seen[id];
+    const lbl = e ? `${id} — ${e.kills} kills` : '? ? ? ? ?';
+    choices.push({ label: lbl, cls: e ? '' : 'secondary', cb: () => {} });
+  }
+  choices.push({ label: 'Back', cls: 'secondary', cb: () => hideOverlay() });
+  showOverlay('BESTIARY', 'Discovered enemies and lifetime kill counts.', choices);
 }
 
 function refreshHud() {
@@ -223,6 +260,30 @@ btnNewRun.addEventListener('click', () => {
   showClassPicker(startGame);
 });
 btnShop.addEventListener('click', () => showUpgradeShop(true));
+
+// Expose Achievements + Bestiary as title-screen extras.
+function ensureExtraTitleButtons() {
+  const wrap = document.getElementById('title-actions');
+  if (!document.getElementById('btn-ach')) {
+    const a = document.createElement('button');
+    a.id = 'btn-ach';
+    a.textContent = 'ACHIEVEMENTS';
+    a.style.background = 'var(--surface-bright)';
+    a.style.color = 'var(--on-surface)';
+    a.addEventListener('click', showAchievements);
+    wrap.appendChild(a);
+  }
+  if (!document.getElementById('btn-bestiary')) {
+    const b = document.createElement('button');
+    b.id = 'btn-bestiary';
+    b.textContent = 'BESTIARY';
+    b.style.background = 'var(--surface-bright)';
+    b.style.color = 'var(--on-surface)';
+    b.addEventListener('click', showBestiary);
+    wrap.appendChild(b);
+  }
+}
+ensureExtraTitleButtons();
 
 // Daily-login: fire once per page-load if the day rolled over.
 const daily = processDailyLogin();

@@ -14,6 +14,8 @@ const DEFAULTS = {
   rebirths: 0,
   last_login_day: 0,
   login_streak: 0,
+  bestiary: {},          // enemy_id -> { first_seen, kills }
+  ach_claimed: {},
 };
 
 export const State = Object.assign({}, DEFAULTS, Save.load());

@@ -407,6 +407,10 @@ export class Game {
     for (const m of fired) {
       this._showBanner(m.label);
     }
+    // Bestiary tally + first-seen stamp.
+    const bid = e.id;
+    if (!State.bestiary[bid]) State.bestiary[bid] = { first_seen: Date.now(), kills: 0 };
+    State.bestiary[bid].kills++;
     if (e.mythic) this._dropPowerup(e.x, e.y);
     if (e.boss) {
       const ember = 1 + Math.floor(this.wave / 10);
