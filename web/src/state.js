@@ -21,6 +21,16 @@ const DEFAULTS = {
   level_perks: {},       // perm_dmg / perm_hp / perm_atk / perm_gold / perm_range / perm_crit -> stacks
   top_runs: [],          // [{wave, kills, combo, class, when}] sorted desc by wave, cap 5
   run_history: [],       // [{wave, kills, combo, embers, class, when}] cap 8
+  daily_curse: '',       // one of CURSES keys (rolled per day)
+  challenge_active: false,
+  curses_cleared: 0,
+};
+
+export const CURSES = {
+  bare_hands:   { label: 'Bare Hands',   desc: 'SKILL is disabled.' },
+  glass_cannon: { label: 'Glass Cannon', desc: 'Hero HP halved.' },
+  spendthrift:  { label: 'Spendthrift',  desc: 'No mid-run merchant.' },
+  steady_pace:  { label: 'Pacifist',     desc: 'STRIKE is disabled.' },
 };
 
 export const State = Object.assign({}, DEFAULTS, Save.load());
@@ -65,6 +75,10 @@ export function processDailyLogin() {
   State.last_login_day = day;
   const bonus = 1 + Math.min(6, Math.floor(State.login_streak / 2));
   State.embers += bonus;
+  // Roll the daily curse deterministically off the day number.
+  const keys = Object.keys(CURSES);
+  State.daily_curse = keys[day % keys.length];
+  State.challenge_active = false;
   persist();
   return { bonus, streak: State.login_streak, broke };
 }

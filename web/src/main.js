@@ -3,6 +3,8 @@ import { State, persist, processDailyLogin, rebirth, canRebirth } from './state.
 import { rollPerks, applyPerk } from './perks.js';
 import { UPGRADES, rank, cost, canBuy, buy } from './upgrades.js';
 import * as Ach from './achievements.js';
+import { CURSES } from './state.js';
+import { setMuted, isMuted } from './sfx.js';
 
 const canvas = document.getElementById('game');
 const hud = document.getElementById('hud');
@@ -69,7 +71,13 @@ function refreshTitle() {
   canvas.hidden = true;
   clearChildren(titleStats);
   const lines = [];
+  if (State.daily_curse && CURSES[State.daily_curse]) {
+    const c = CURSES[State.daily_curse];
+    const tag = State.challenge_active ? '✦ ACTIVE  ·  ' : '';
+    lines.push(`${tag}Daily curse: ${c.label} — ${c.desc} (toggle for 2× rewards)`);
+  }
   if (State.dragonslayer) lines.push(`⚔ Dragonslayer  ·  permanent +10% damage`);
+  if (State.curses_cleared > 0) lines.push(`Curses cleared: ${State.curses_cleared}`);
   if (State.rebirths > 0) lines.push(`✦ Mark ${State.rebirths}  ·  +${State.rebirths * 25}% dmg + gold`);
   if (State.best_wave > 0) lines.push(`Best wave: ${State.best_wave}`);
   if (State.bosses_felled > 0) lines.push(`Bosses felled: ${State.bosses_felled}`);
@@ -408,6 +416,21 @@ function ensureExtraTitleButtons() {
   addBtn('btn-ach',      'ACHIEVEMENTS', showAchievements);
   addBtn('btn-bestiary', 'BESTIARY',     showBestiary);
   addBtn('btn-history',  'RUN HISTORY',  showRunHistory);
+  addBtn('btn-curse',    'DAILY CURSE',  toggleCurse);
+  addBtn('btn-mute',     isMuted() ? 'UNMUTE' : 'MUTE', toggleMute);
+}
+
+function toggleCurse() {
+  if (!State.daily_curse) return;
+  State.challenge_active = !State.challenge_active;
+  persist();
+  refreshTitle();
+}
+
+function toggleMute() {
+  setMuted(!isMuted());
+  const b = document.getElementById('btn-mute');
+  if (b) b.textContent = isMuted() ? 'UNMUTE' : 'MUTE';
 }
 ensureExtraTitleButtons();
 

@@ -2,6 +2,7 @@
 import { State, persist, grantXp, checkKillMilestones, recordRun } from './state.js';
 import { bonusDamage, bonusAtk, bonusRange, bonusHp, bonusCrit } from './upgrades.js';
 import { synergyFor } from './synergies.js';
+import { Sfx } from './sfx.js';
 
 const CLASS_COLOR = {
   warrior: '#d9892e',
@@ -22,6 +23,7 @@ const ENEMY_TYPES = {
   sapper:     { label: 'Sapper',     color: '#f27333', hp: 30,  speed: 50,  gold: 8,  size: 20, minWave: 14, explodes: true },
   archer:     { label: 'Archer',     color: '#b3d966', hp: 25,  speed: 50,  gold: 6,  size: 18, minWave: 11, ranged: true },
   shaman:     { label: 'Shaman',     color: '#73d98c', hp: 50,  speed: 60,  gold: 16, size: 20, minWave: 18, heals: true },
+  summoner:   { label: 'Summoner',   color: '#b380d9', hp: 70,  speed: 45,  gold: 18, size: 22, minWave: 22, summons: true },
 };
 
 const ZONES = [
@@ -126,7 +128,15 @@ export class Game {
     hp += (State.hero_level - 1);
     hp += bonusHp();
     hp += (State.level_perks?.perm_hp || 0) * 5;
+    if (State.challenge_active && State.daily_curse === 'glass_cannon') hp = Math.max(10, Math.floor(hp / 2));
     return Math.max(20, hp);
+  }
+
+  challengeBonus() {
+    return State.challenge_active ? 2 : 1;
+  }
+  curseDisables(c) {
+    return State.challenge_active && State.daily_curse === c;
   }
 
   // --- Loop ---
@@ -192,6 +202,19 @@ export class Game {
             dmg: 3 + Math.floor(this.wave / 3), life: 2.5,
           });
           e.shotCd = 2.0;
+        }
+        continue;
+      }
+      // Summoner: kite + periodically spawn a skeleton minion.
+      if (e.summons) {
+        e.summonCd -= dt;
+        const want = 260;
+        const step = e.speed * dt * (d < want ? -1 : 0.4);
+        e.x += (dx / d) * step;
+        e.y += (dy / d) * step;
+        if (e.summonCd <= 0) {
+          this._spawnMinion(e.x, e.y);
+          e.summonCd = 5.0;
         }
         continue;
       }
@@ -307,6 +330,7 @@ export class Game {
       explodes: !!def.explodes,
       ranged: !!def.ranged, shotCd: 1.5,
       heals: !!def.heals, healCd: 3.0,
+      summons: !!def.summons, summonCd: 4.0,
     });
     if (isMythic) {
       this.floater(`MYTHIC ${def.label.toUpperCase()}`, this.size.w / 2 - 60, 80, '#e8d2a0');
@@ -375,6 +399,7 @@ export class Game {
     const dmg = this.heroDmg();
     this._damageEnemy(best, dmg);
     this._spawnStrike(best.x, best.y);
+    Sfx.hit();
     // Wizard signature: every 5th hit chains to a 2nd target.
     if (this.primaryClass === 'wizard') {
       this.wizardHitCount++;
@@ -395,6 +420,7 @@ export class Game {
 
   strike() {
     if (this.paused) return;
+    if (this.curseDisables('steady_pace')) return;
     const r = this.heroRange() * 1.3;
     let best = null, bestD = r;
     for (const e of this.enemies) {
@@ -406,10 +432,12 @@ export class Game {
     this._damageEnemy(best, this.heroDmg() * 4);
     this._spawnStrike(best.x, best.y);
     this.shakeMag = 14;
+    Sfx.strike();
   }
 
   skill() {
     if (this.paused || this.skillCd > 0) return;
+    if (this.curseDisables('bare_hands')) return;
     const dmg = this.heroDmg();
     if (this.primaryClass === 'wizard') {
       // Fireball — single nuke
@@ -425,6 +453,7 @@ export class Game {
       this.shakeMag = 20;
     }
     this.skillCd = 6;
+    Sfx.crit();
   }
 
   _damageEnemy(e, amount) {
@@ -441,7 +470,8 @@ export class Game {
       const permGold = 1 + (State.level_perks?.perm_gold || 0) * 0.05;
       const s = this.synergy();
       const synGold = s?.gold ? 1 + s.gold : 1;
-      const gold = Math.max(1, Math.round(e.gold * this.rebirthBonus * this.goldMult * this.comboMult() * permGold * synGold));
+      const chal = this.challengeBonus();
+      const gold = Math.max(1, Math.round(e.gold * this.rebirthBonus * this.goldMult * this.comboMult() * permGold * synGold * chal));
       State.gold += gold;
       this.combo++;
       this.comboDecay = 1.5;
@@ -471,7 +501,8 @@ export class Game {
     State.bestiary[bid].kills++;
     if (e.mythic) this._dropPowerup(e.x, e.y);
     if (e.boss) {
-      const ember = 1 + Math.floor(this.wave / 10);
+      Sfx.boss();
+      const ember = Math.round((1 + Math.floor(this.wave / 10)) * this.challengeBonus());
       State.embers += ember;
       this.runEmbersEarned += ember;
       State.bosses_felled++;
@@ -494,7 +525,10 @@ export class Game {
       if (this.onBossBoon) this.onBossBoon();
     } else {
       this.waveKillsProgress++;
-      if (this.waveKillsProgress >= this.waveKillsTarget) this._nextWave();
+      if (this.waveKillsProgress >= this.waveKillsTarget) {
+        Sfx.levelup();
+        this._nextWave();
+      }
     }
   }
 
@@ -553,9 +587,17 @@ export class Game {
     if (this.wave === 25 && !this.tertiaryClass && this.onSlotUnlock) this.onSlotUnlock('tertiary');
     if (this.wave % 10 === 0) this._spawnBoss();
     if (this.wave % 15 === 0) this.spawnChest();
+    if (this.wave === 30 && State.challenge_active && !this._claimedCurseToday) {
+      this._claimedCurseToday = true;
+      State.curses_cleared = (State.curses_cleared || 0) + 1;
+      State.embers += 5;
+      this.runEmbersEarned += 5;
+      this.floater('CURSE BROKEN — +5 Ember', this.size.w / 2 - 100, 60, '#d4582c');
+      persist();
+    }
     if (this.wave % 5 === 0 && this.onPerkRequest) {
       this.onPerkRequest();
-    } else if (this.wave % 7 === 0 && this.onMerchant) {
+    } else if (this.wave % 7 === 0 && this.onMerchant && !this.curseDisables('spendthrift')) {
       this.onMerchant();
     }
     persist();
@@ -569,6 +611,7 @@ export class Game {
     }
     this.heroHp = Math.max(0, this.heroHp - amount);
     this.frenzy = Math.min(this.FRENZY_CAP, this.frenzy + 1);
+    Sfx.hurt();
     this.shakeMag = Math.min(20, 6 + amount * 0.5);
     if (this.heroHp <= 0) this._onDie();
   }
@@ -608,6 +651,20 @@ export class Game {
       }
     }
     this.shakeMag = Math.max(this.shakeMag, 10);
+  }
+
+  _spawnMinion(x, y) {
+    const def = ENEMY_TYPES.skeleton;
+    const hpScale = 1 + (this.wave - 1) * 0.18;
+    const maxHp = Math.round(def.hp * hpScale);
+    this.enemies.push({
+      id: 'skeleton', label: def.label, color: def.color,
+      x, y, hp: maxHp, maxHp,
+      speed: def.speed + this.wave * 1.5,
+      gold: 0,  // minions don't pay
+      size: def.size, mythic: false, boss: false,
+      explodes: false, ranged: false, heals: false, summons: false,
+    });
   }
 
   _dropPowerup(x, y) {
