@@ -1,5 +1,5 @@
 // HTML5 horde arena — canvas renderer, ECS-lite update loop.
-import { State, persist, grantXp, xpToNext, checkKillMilestones } from './state.js';
+import { State, persist, grantXp, checkKillMilestones } from './state.js';
 
 const CLASS_COLOR = {
   warrior: '#d9892e',
@@ -51,6 +51,18 @@ export class Game {
     this.comboDecay = 0;
     this.comboPeak = 0;
     this.rebirthBonus = 1.0 + (State.rebirths || 0) * 0.25;
+    // Perk accumulators (per-run)
+    this.takenPerks = new Set();
+    this.dmgMult = 1.0;
+    this.goldMult = 1.0;
+    this.waveBonusMult = 1.0;
+    this.critBonus = 0.0;
+    this.atkBonus = 0.0;
+    this.rangeBonus = 0.0;
+    this.spawnSlow = 0.0;
+    this.mythicBonus = 0.0;
+    this.contactReduction = 0.0;
+    this.onPerkRequest = null;    // fn(picks, applyCb) → modal opens
     this.size = { w: 0, h: 0 };
     this.heroPos = { x: 0, y: 0 };
     this._resize();
@@ -105,7 +117,9 @@ export class Game {
     if (this.spawnTimer <= 0) {
       this._spawn();
       const soft = this.wave > 5 ? 1.0 : (2.2 - (this.wave - 1) * 0.2);
-      this.spawnTimer = Math.max(0.25, soft - this.wave * 0.04);
+      let t = soft - this.wave * 0.04;
+      t /= Math.max(0.4, 1.0 - this.spawnSlow);
+      this.spawnTimer = Math.max(0.25, t);
     }
     if (this.attackTimer <= 0) {
       this._heroAuto();
@@ -128,8 +142,8 @@ export class Game {
       e.x += (dx / d) * e.speed * dt;
       e.y += (dy / d) * e.speed * dt;
       if (d < 22 + e.size * 0.4) {
-        // bite + die
-        const bite = 2 + Math.floor(this.wave / 4) * (e.boss ? 6 : (e.mythic ? 3 : 1));
+        let bite = 2 + Math.floor(this.wave / 4) * (e.boss ? 6 : (e.mythic ? 3 : 1));
+        bite = Math.max(1, Math.round(bite * (1 - this.contactReduction)));
         this._heroTakeDamage(bite);
         this._killEnemy(e, false);
       }
@@ -162,7 +176,7 @@ export class Game {
     if (pool.length === 0) pool.push('skeleton');
     const id = pool[Math.floor(Math.random() * pool.length)];
     const def = ENEMY_TYPES[id];
-    const isMythic = this.wave >= 5 && Math.random() < 0.03;
+    const isMythic = this.wave >= 5 && Math.random() < (0.03 + this.mythicBonus);
     const sz = isMythic ? def.size * 1.4 : def.size;
     const hpScale = 1 + (this.wave - 1) * 0.18;
     const maxHp = Math.round(def.hp * hpScale * (isMythic ? 10 : 1));
@@ -201,8 +215,7 @@ export class Game {
 
   // --- Hero acts ---
   atkRate() {
-    let r = 2.5;
-    return r;
+    return 2.5 + this.atkBonus;
   }
 
   heroDmg() {
@@ -210,11 +223,14 @@ export class Game {
     d += Math.floor(this.wave / 2);
     d += (State.hero_level - 1) * 0.5;
     d *= this.rebirthBonus;
+    d *= this.dmgMult;
     if (this.primaryClass === 'bard') d *= 1.05;
-    return Math.max(1, Math.round(d));
+    let v = Math.max(1, Math.round(d));
+    if (Math.random() < this.critBonus) v *= 2;
+    return v;
   }
 
-  heroRange() { return 220; }
+  heroRange() { return 220 + this.rangeBonus; }
 
   _heroAuto() {
     const r = this.heroRange();
@@ -273,7 +289,8 @@ export class Game {
     if (e.dead) return;
     e.dead = true;
     if (byPlayer) {
-      State.gold += Math.max(1, Math.round(e.gold * this.rebirthBonus));
+      const gold = Math.max(1, Math.round(e.gold * this.rebirthBonus * this.goldMult));
+      State.gold += gold;
       this.combo++;
       this.comboDecay = 1.5;
       if (this.combo > this.comboPeak) this.comboPeak = this.combo;
@@ -306,11 +323,14 @@ export class Game {
     this.waveKillsTarget = Math.floor(8 + this.wave * 1.5);
     if (this.wave > State.best_wave) State.best_wave = this.wave;
     this.heroHp = Math.min(this.heroMaxHp, this.heroHp + Math.floor(this.heroMaxHp / 4));
-    const bonus = 5 + this.wave * this.wave;
+    const bonus = Math.round((5 + this.wave * this.wave) * this.waveBonusMult);
     State.gold += bonus;
     this.floater(`WAVE ${this.wave}  +${bonus}g`, this.heroPos.x, this.heroPos.y, '#d4a24c');
     this.log(`Wave ${this.wave} cleared (+${bonus}g)`);
     if (this.wave % 10 === 0) this._spawnBoss();
+    if (this.wave % 5 === 0 && this.onPerkRequest) {
+      this.onPerkRequest();
+    }
     persist();
   }
 
