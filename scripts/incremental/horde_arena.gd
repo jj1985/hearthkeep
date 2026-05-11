@@ -1099,12 +1099,14 @@ func _spawn_boss() -> void:
 
 func _spawn_strike(pos: Vector2) -> void:
     var c := ColorRect.new()
-    c.color = Color(1.0, 0.95, 0.6, 0.9)
+    var base: Color = _class_color(HordeState.primary)
+    c.color = Color(base.r * 1.1, base.g * 1.1, base.b * 1.1, 0.9)
     c.size = Vector2(14, 14)
     c.position = pos - c.size * 0.5
     fx_layer.add_child(c)
     var tw := create_tween()
-    tw.tween_property(c, "modulate:a", 0.0, 0.18)
+    tw.parallel().tween_property(c, "scale", Vector2(1.6, 1.6), 0.18)
+    tw.parallel().tween_property(c, "modulate:a", 0.0, 0.18)
     tw.tween_callback(c.queue_free)
 
 func _floating_text(s: String, pos: Vector2, color: Color) -> void:
