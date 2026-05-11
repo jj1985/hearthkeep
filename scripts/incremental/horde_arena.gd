@@ -1889,6 +1889,14 @@ func _on_pause() -> void:
     _refresh_pause_stats()
     SaveSystem.save()
 
+const CLASS_PASSIVE_PAUSE := {
+    "warrior":     "Rage stacks on kill",
+    "rogue":       "5% innate dodge",
+    "wizard":      "Chain hits every 5th",
+    "necromancer": "Kills heal 1 HP",
+    "bard":        "+5% global damage",
+}
+
 func _refresh_pause_stats() -> void:
     if pause_stats == null: return
     var crit_pct: float = (Upgrades.crit_chance() + HordePerks.crit_bonus) * 100.0
@@ -1900,6 +1908,9 @@ func _refresh_pause_stats() -> void:
             HordePerks.wave_bonus_mult,
         ],
     ]
+    var passive: String = String(CLASS_PASSIVE_PAUSE.get(HordeState.primary, ""))
+    if passive != "":
+        lines.append("Class: %s — %s" % [HordeState.primary.capitalize(), passive])
     pause_stats.text = "\n".join(lines)
 
 func _on_motion_toggled(reduced: bool) -> void:
