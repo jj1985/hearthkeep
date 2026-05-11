@@ -13,6 +13,7 @@ extends Control
 const T := preload("res://scripts/ui/ui_tokens.gd")
 const UiStyle_ := preload("res://scripts/ui/ui_style.gd")
 const Achievements := preload("res://scripts/incremental/achievements.gd")
+const Synergies := preload("res://scripts/incremental/synergies.gd")
 
 const ENEMY_TYPES := {
     "skeleton":   {"label": "Skeleton",   "color": Color(0.85, 0.85, 0.78), "hp_base": 6,   "speed": 70.0,  "gold": 1,  "size": 28, "min_wave": 1},
@@ -330,6 +331,9 @@ func _loadout_text() -> String:
     if HordeState.secondary != "": parts.append(HordeState.secondary.capitalize())
     if HordeState.tertiary != "": parts.append(HordeState.tertiary.capitalize())
     var s: String = " / ".join(parts)
+    var syn: Dictionary = Synergies.for_loadout(HordeState.primary, HordeState.secondary, HordeState.tertiary)
+    if not syn.is_empty():
+        s += "  ·  ✦ %s" % String(syn["label"])
     if GameState.rebirths > 0:
         s += "  ·  Mark %d" % GameState.rebirths
     return s
@@ -553,6 +557,8 @@ func _hero_damage() -> int:
     d += Upgrades.bonus_damage()
     var f: float = float(d) * Upgrades.ember_damage_mult() * HordePerks.dmg_mult
     f *= 1.0 + GameState.rebirths * 0.25
+    var syn: Dictionary = Synergies.for_loadout(HordeState.primary, HordeState.secondary, HordeState.tertiary)
+    if not syn.is_empty(): f *= 1.0 + float(syn.get("dmg_mult", 0.0))
     if _temp_dmg_active(): f *= 1.5
     if rng.randf() < (Upgrades.crit_chance() + HordePerks.crit_bonus):
         f *= 2.0
@@ -560,6 +566,8 @@ func _hero_damage() -> int:
 
 func _hero_atk_rate() -> float:
     var r := HERO_ATTACK_RATE + Upgrades.bonus_atk_speed() + HordePerks.atk_speed_bonus
+    var syn: Dictionary = Synergies.for_loadout(HordeState.primary, HordeState.secondary, HordeState.tertiary)
+    if not syn.is_empty(): r += float(syn.get("atk_speed_bonus", 0.0))
     if _temp_atk_active(): r += 1.0
     return r
 
@@ -606,10 +614,12 @@ func _damage_enemy(e: Dictionary, amount: int) -> void:
         combo += 1
         combo_decay = COMBO_WINDOW
         if combo > combo_peak: combo_peak = combo
+        var syn: Dictionary = Synergies.for_loadout(HordeState.primary, HordeState.secondary, HordeState.tertiary)
+        var syn_gold: float = 1.0 + float(syn.get("gold_mult", 0.0)) if not syn.is_empty() else 1.0
         var gold_amt: int = int(round(int(e.get("gold", 1))
             * Upgrades.ember_gold_mult() * HordePerks.gold_mult * _combo_mult()
             * (1.0 + GameState.rebirths * 0.25)
-            * _challenge_reward_mult()))
+            * _challenge_reward_mult() * syn_gold))
         HordeState.record_kill(String(e.get("id", "skeleton")), gold_amt)
         _pop(hud_kills); _pop(hud_gold)
         if bool(e.get("mythic", false)):
