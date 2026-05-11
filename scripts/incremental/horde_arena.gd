@@ -27,6 +27,7 @@ const ENEMY_TYPES := {
     "ogre":       {"label": "Ogre",       "color": Color(0.55, 0.55, 0.30), "hp_base": 220, "speed": 40.0,  "gold": 55, "size": 44, "min_wave": 20},
     "boss_warchief":{"label":"Krrik III", "color": Color(0.95, 0.75, 0.25), "hp_base": 240, "speed": 50.0,  "gold": 60, "size": 56, "boss": true},
     "boss_dragon":{"label":"Vyxhasis",    "color": Color(0.85, 0.25, 0.55), "hp_base": 600, "speed": 45.0,  "gold": 200,"size": 72, "boss": true},
+    "boss_aethyrnax":{"label":"Aethyrnax","color": Color(0.40, 0.85, 0.95), "hp_base": 1400,"speed": 55.0,  "gold": 500,"size": 84, "boss": true},
 }
 
 const HERO_RADIUS := 22.0
@@ -51,6 +52,7 @@ const HERO_RANGE := 220.0
 @onready var milestone_row_label: Label = $HUD/MilestoneRow/Label
 @onready var milestone_row_bar: ProgressBar = $HUD/MilestoneRow/Bar
 @onready var perk_row: HBoxContainer = $HUD/PerkRow
+@onready var combat_log: Label = $HUD/CombatLog
 @onready var overlay_scrim: ColorRect = $Overlay/Scrim
 @onready var overlay_flash: ColorRect = $Overlay/Flash
 @onready var milestone_overlay: Panel = $Overlay/Milestone
@@ -105,6 +107,16 @@ const DPS_WINDOW := 3.0
 
 var arrows: Array = []   # [{node, vel, dmg}]
 const ARROW_SPEED := 220.0
+
+var log_lines: Array[String] = []
+const LOG_CAP := 4
+
+func _log(s: String) -> void:
+    log_lines.append(s)
+    while log_lines.size() > LOG_CAP: log_lines.pop_front()
+    if combat_log != null:
+        combat_log.text = "\n".join(log_lines)
+        combat_log.add_theme_color_override("font_color", T.ON_SURFACE_MUTED)
 
 # Mid-run merchant buffs — apply through wave N, then expire.
 var temp_dmg_until: int = -1
@@ -607,6 +619,10 @@ func _damage_enemy(e: Dictionary, amount: int) -> void:
             GameState.add_embers(ember_reward)
             run_embers_earned += ember_reward
             GameState.bosses_felled += 1
+            _log("BOSS DOWN: %s (+%d ember)" % [
+                String(ENEMY_TYPES[String(e.get("id", ""))].get("label", "Boss")),
+                ember_reward,
+            ])
             _floating_text("+%d Embers" % ember_reward,
                 Vector2(arena.size.x * 0.5 - 50, arena.size.y * 0.4), T.SECONDARY)
             _boss_burst(death_pos)
@@ -652,6 +668,7 @@ func _on_player_strike() -> void:
 
 func _next_wave() -> void:
     HordeState.advance_wave()
+    _log("Wave %d cleared" % HordeState.wave)
     wave_kills_progress = 0
     wave_kills_target = int(8 + HordeState.wave * 1.5)
     # Heal 25% on wave clear so the run isn't a death spiral.
@@ -727,6 +744,24 @@ func _boss_tick(e: Dictionary, delta: float) -> void:
         node.modulate = Color(1, 1, 1, 0.4)   # transparent = airborne
         SfxBus.play("dragon_phase_air", -4.0)
         _floating_text("AIRBORNE", node.position + node.size * 0.5, T.RARITY_RARE)
+    elif id == "boss_aethyrnax":
+        # Aethyrnax alternates between CHARGE and FLY each cycle.
+        var swap: int = int(e.get("phase_count", 0))
+        e["phase_count"] = swap + 1
+        if swap % 2 == 0:
+            e["phase_kind"] = "charge"
+            e["phase_active"] = 0.8
+            e["speed"] = float(e["base_speed"]) * 5.0
+            node.modulate = Color(0.6, 1.4, 1.4)
+            SfxBus.play("hit_heavy", -2.0)
+            _floating_text("CHARGE!", node.position + node.size * 0.5, T.SECONDARY)
+        else:
+            e["phase_kind"] = "fly"
+            e["phase_active"] = 1.4
+            e["speed"] = float(e["base_speed"]) * 0.6
+            node.modulate = Color(1, 1, 1, 0.35)
+            SfxBus.play("dragon_phase_air", -2.0)
+            _floating_text("SOARING", node.position + node.size * 0.5, T.RARITY_RARE)
 
 func _shaman_heal(shaman: Dictionary, sp: Vector2) -> void:
     # Heal nearest non-shaman ally for 20% of its missing HP.
@@ -880,6 +915,7 @@ func _detonate_at(pos: Vector2, radius: float, damage: int) -> void:
 func _telegraph_boss() -> void:
     var boss_id: String = "boss_warchief"
     if HordeState.wave >= 30: boss_id = "boss_dragon"
+    if HordeState.wave >= 50: boss_id = "boss_aethyrnax"
     var def: Dictionary = ENEMY_TYPES[boss_id]
     var name: String = String(def["label"])
     # Three quick floating warnings + a screen flash, then spawn.
@@ -898,6 +934,7 @@ func _telegraph_boss() -> void:
 func _spawn_boss() -> void:
     var boss_id: String = "boss_warchief"
     if HordeState.wave >= 30: boss_id = "boss_dragon"
+    if HordeState.wave >= 50: boss_id = "boss_aethyrnax"
     var def: Dictionary = ENEMY_TYPES[boss_id]
     var sz: int = int(def["size"])
     var p := Panel.new()
@@ -1185,6 +1222,7 @@ func _on_perk_chosen(perk: Dictionary) -> void:
         Vector2(arena.size.x * 0.5 - 80, 100), T.PRIMARY)
     _refresh_perk_row()
     _style_range_ring()
+    _log("Perk: %s" % String(perk["label"]))
     _close_milestone()
 
 func _refresh_perk_row() -> void:

@@ -53,3 +53,13 @@ func test_shaman_marked_as_healing() -> void:
 
 func test_archer_marked_as_ranged() -> void:
     assert_true(bool(_enemies()["archer"].get("ranged", false)))
+
+func test_three_named_bosses_present() -> void:
+    var bosses: Array = []
+    for k in _enemies().keys():
+        if bool(_enemies()[k].get("boss", false)):
+            bosses.append(k)
+    assert_eq(bosses.size(), 3)
+    assert_true(bosses.has("boss_warchief"))
+    assert_true(bosses.has("boss_dragon"))
+    assert_true(bosses.has("boss_aethyrnax"))
