@@ -383,7 +383,9 @@ func _process(delta: float) -> void:
         var soft: float = 1.0 if HordeState.wave > 5 else lerp(2.2, 1.4, (HordeState.wave - 1) / 4.0)
         var t: float = soft - HordeState.wave * 0.04
         t /= max(0.4, 1.0 - HordePerks.spawn_slow)
-        spawn_timer = max(0.25, t)
+        if _is_tempest_wave():
+            t *= 0.5
+        spawn_timer = max(0.15, t)
     if attack_timer <= 0.0:
         _hero_attack()
         attack_timer = 1.0 / _hero_atk_rate()
@@ -501,6 +503,7 @@ func _spawn_enemy() -> void:
     bar.add_theme_stylebox_override("fill", bar_fg)
     p.add_child(bar)
     var hp_scale: float = 1.0 + (HordeState.wave - 1) * 0.18
+    if _is_tempest_wave(): hp_scale *= 0.5
     var max_hp: int = int(round(int(def["hp_base"]) * hp_scale * (10.0 if is_mythic else 1.0)))
     enemies.append({
         "node": p,
@@ -614,6 +617,9 @@ func _companion_tick(delta: float) -> void:
     _damage_enemy(best, dmg)
     _spawn_strike(best["node"].position + best["node"].size * 0.5)
     companion_atk_t = 1.0 / COMPANION_ATK_RATE
+
+func _is_tempest_wave() -> bool:
+    return HordeState.wave > 0 and HordeState.wave % 13 == 0
 
 func _hero_attack() -> void:
     var hero_center: Vector2 = hero.position + hero.size * 0.5
@@ -813,6 +819,8 @@ func _next_wave() -> void:
         hero.position + hero.size * 0.5, T.PRIMARY)
     _pop(hud_gold)
     _flash_screen(T.PRIMARY, 0.18, 0.22)
+    if _is_tempest_wave():
+        _achievement_banner("TEMPEST — double spawns, half HP")
     SfxBus.play("levelup", -8.0)
     if HordeState.wave % 10 == 0:
         _telegraph_boss()
