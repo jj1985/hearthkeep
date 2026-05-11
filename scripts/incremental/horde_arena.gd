@@ -706,6 +706,7 @@ func _damage_enemy(e: Dictionary, amount: int) -> void:
                 String(ENEMY_TYPES[String(e.get("id", ""))].get("label", "Boss")),
                 ember_reward,
             ])
+            _open_boss_loot_picker()
             var boss_kid: String = String(e.get("id", ""))
             if boss_kid in ["boss_dragon", "boss_aethyrnax", "boss_warchief"]:
                 if not GameState.defeated_dragons.has(boss_kid):
@@ -1347,6 +1348,50 @@ func _on_merchant_buy(offer: Dictionary) -> void:
     _close_milestone()
     _floating_text("Bought: %s" % String(offer["label"]),
         Vector2(arena.size.x * 0.5 - 100, 80), T.SECONDARY)
+
+const BOSS_LOOT := [
+    {"id":"berserk",   "label":"Berserk",    "desc":"+40%% damage this run.", "kind":"dmg_mult", "value":0.40},
+    {"id":"sanctuary", "label":"Sanctuary",  "desc":"+50%% max HP this run.", "kind":"sanctuary","value":0.50},
+    {"id":"hoard",     "label":"Hoard",      "desc":"+50%% gold drops this run.", "kind":"gold_mult","value":0.50},
+    {"id":"storm",     "label":"Storm",      "desc":"+0.5 atk/sec this run.", "kind":"atk_speed","value":0.5},
+]
+
+func _open_boss_loot_picker() -> void:
+    var pool: Array = BOSS_LOOT.duplicate()
+    pool.shuffle()
+    var picks: Array = pool.slice(0, 2)
+    milestone_title.text = "Boss loot — choose a boon"
+    milestone_body.text = "A reward for felling the boss. Active this run only."
+    for c in milestone_choices.get_children():
+        c.queue_free()
+    for p in picks:
+        var d: Dictionary = p
+        var b := Button.new()
+        b.text = "%s — %s" % [String(d["label"]),
+            String(d["desc"]).replace("%%", "%")]
+        b.custom_minimum_size = Vector2(0, 64)
+        UiStyle_.apply_primary(b)
+        b.pressed.connect(_on_boss_loot_chosen.bind(d))
+        milestone_choices.add_child(b)
+    paused_for_milestone = true
+    milestone_overlay.visible = true
+    overlay_scrim.visible = true
+    SfxBus.play("chest_open", -4.0)
+
+func _on_boss_loot_chosen(perk: Dictionary) -> void:
+    var kind: String = String(perk["kind"])
+    var v: float = float(perk["value"])
+    match kind:
+        "dmg_mult": HordePerks.dmg_mult *= 1.0 + v
+        "gold_mult": HordePerks.gold_mult *= 1.0 + v
+        "atk_speed": HordePerks.atk_speed_bonus += v
+        "sanctuary":
+            HordeState.hero_max_hp = int(HordeState.hero_max_hp * (1.0 + v))
+            HordeState.hero_hp = HordeState.hero_max_hp
+    _floating_text("✦ %s" % String(perk["label"]),
+        Vector2(arena.size.x * 0.5 - 80, 100), T.PRIMARY)
+    _refresh_hud()
+    _close_milestone()
 
 func _open_perk_picker() -> void:
     reroll_cost = 50
