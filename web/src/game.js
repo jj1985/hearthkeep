@@ -1,6 +1,7 @@
 // HTML5 horde arena — canvas renderer, ECS-lite update loop.
 import { State, persist, grantXp, checkKillMilestones } from './state.js';
 import { bonusDamage, bonusAtk, bonusRange, bonusHp, bonusCrit } from './upgrades.js';
+import { synergyFor } from './synergies.js';
 
 const CLASS_COLOR = {
   warrior: '#d9892e',
@@ -63,6 +64,8 @@ export class Game {
     this.heroHp = this.maxHp();
     this.heroMaxHp = this.heroHp;
     this.primaryClass = 'warrior';
+    this.secondaryClass = '';
+    this.tertiaryClass = '';
     this.killsThisRun = 0;
     this.paused = false;
     this.deadScreenOpen = false;
@@ -75,6 +78,8 @@ export class Game {
     // Class-signature passive state (per-run)
     this.warriorRage = 0;
     this.wizardHitCount = 0;
+    this.frenzy = 0;          // hits taken since last guaranteed-crit
+    this.FRENZY_CAP = 5;
     // Perk accumulators (per-run)
     this.takenPerks = new Set();
     this.onBossBoon = null;     // fn(picks, applyCb)
@@ -90,6 +95,7 @@ export class Game {
     this.onPerkRequest = null;    // fn(picks, applyCb) → modal opens
     this.onMerchant = null;       // fn() → modal opens
     this.onLevelPick = null;      // fn(level)
+    this.onSlotUnlock = null;     // fn('secondary'|'tertiary')
     this.lastSeenLevel = State.hero_level;
     this.size = { w: 0, h: 0 };
     this.heroPos = { x: 0, y: 0 };
@@ -147,7 +153,8 @@ export class Game {
       const soft = this.wave > 5 ? 1.0 : (2.2 - (this.wave - 1) * 0.2);
       let t = soft - this.wave * 0.04;
       t /= Math.max(0.4, 1.0 - this.spawnSlow);
-      this.spawnTimer = Math.max(0.25, t);
+      if (this.isTempest()) t *= 0.5;
+      this.spawnTimer = Math.max(0.15, t);
     }
     if (this.attackTimer <= 0) {
       this._heroAuto();
@@ -278,7 +285,8 @@ export class Game {
     const def = ENEMY_TYPES[id];
     const isMythic = this.wave >= 5 && Math.random() < (0.03 + this.mythicBonus);
     const sz = isMythic ? def.size * 1.4 : def.size;
-    const hpScale = 1 + (this.wave - 1) * 0.18;
+    let hpScale = 1 + (this.wave - 1) * 0.18;
+    if (this.isTempest()) hpScale *= 0.5;
     const maxHp = Math.round(def.hp * hpScale * (isMythic ? 10 : 1));
     const edge = Math.floor(Math.random() * 4);
     let x, y;
@@ -317,8 +325,15 @@ export class Game {
   }
 
   // --- Hero acts ---
+  synergy() {
+    return synergyFor([this.primaryClass, this.secondaryClass, this.tertiaryClass]);
+  }
+
   atkRate() {
-    return 2.5 + this.atkBonus + bonusAtk() + (State.level_perks?.perm_atk || 0) * 0.1;
+    let r = 2.5 + this.atkBonus + bonusAtk() + (State.level_perks?.perm_atk || 0) * 0.1;
+    const s = this.synergy();
+    if (s?.atk) r += s.atk;
+    return r;
   }
 
   heroDmg() {
@@ -331,10 +346,14 @@ export class Game {
     d *= this.dmgMult;
     if (State.dragonslayer) d *= 1.10;
     if (this.primaryClass === 'bard') d *= 1.05;
+    const s = this.synergy();
+    if (s?.dmg) d *= 1 + s.dmg;
     if (this.primaryClass === 'warrior') d += this.warriorRage * 0.5;
     let v = Math.max(1, Math.round(d));
     const permCrit = (State.level_perks?.perm_crit || 0) * 0.02;
-    if (Math.random() < (this.critBonus + bonusCrit() + permCrit)) v *= 2;
+    let critted = Math.random() < (this.critBonus + bonusCrit() + permCrit);
+    if (this.frenzy >= this.FRENZY_CAP) { critted = true; this.frenzy = 0; }
+    if (critted) v *= 2;
     return v;
   }
 
@@ -416,7 +435,9 @@ export class Game {
     if (e.explodes) this._detonate(e.x, e.y, 60, Math.max(2, Math.round(this.heroDmg() * 0.5)));
     if (byPlayer) {
       const permGold = 1 + (State.level_perks?.perm_gold || 0) * 0.05;
-      const gold = Math.max(1, Math.round(e.gold * this.rebirthBonus * this.goldMult * this.comboMult() * permGold));
+      const s = this.synergy();
+      const synGold = s?.gold ? 1 + s.gold : 1;
+      const gold = Math.max(1, Math.round(e.gold * this.rebirthBonus * this.goldMult * this.comboMult() * permGold * synGold));
       State.gold += gold;
       this.combo++;
       this.comboDecay = 1.5;
@@ -473,6 +494,8 @@ export class Game {
     }
   }
 
+  isTempest() { return this.wave > 0 && this.wave % 13 === 0; }
+
   comboMult() {
     if (this.combo <= 0) return 1;
     // Saturating: at combo=30 ≈ 1.5x, asymptote 2.0x.
@@ -490,6 +513,12 @@ export class Game {
     State.gold += bonus;
     this.floater(`WAVE ${this.wave}  +${bonus}g`, this.heroPos.x, this.heroPos.y, '#d4a24c');
     this.log(`Wave ${this.wave} cleared (+${bonus}g)`);
+    if (this.isTempest()) {
+      this.floater('TEMPEST — 2× spawns, ½ HP', this.size.w / 2 - 100, 60, '#d4582c');
+      this.log('TEMPEST wave incoming');
+    }
+    if (this.wave === 10 && !this.secondaryClass && this.onSlotUnlock) this.onSlotUnlock('secondary');
+    if (this.wave === 25 && !this.tertiaryClass && this.onSlotUnlock) this.onSlotUnlock('tertiary');
     if (this.wave % 10 === 0) this._spawnBoss();
     if (this.wave % 15 === 0) this.spawnChest();
     if (this.wave % 5 === 0 && this.onPerkRequest) {
@@ -507,6 +536,7 @@ export class Game {
       return;
     }
     this.heroHp = Math.max(0, this.heroHp - amount);
+    this.frenzy = Math.min(this.FRENZY_CAP, this.frenzy + 1);
     this.shakeMag = Math.min(20, 6 + amount * 0.5);
     if (this.heroHp <= 0) this._onDie();
   }

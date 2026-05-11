@@ -121,7 +121,29 @@ function startGame(klass, startWave = 1) {
   game.onBossBoon = showBossBoon;
   game.onMerchant = showMerchant;
   game.onLevelPick = showLevelPerkPick;
+  game.onSlotUnlock = showSlotPicker;
   game.onDeath = onDeath;
+}
+
+function showSlotPicker(slot) {
+  const taken = new Set([game.primaryClass, game.secondaryClass, game.tertiaryClass]);
+  const options = State.unlocked_classes.filter(c => !taken.has(c));
+  if (options.length === 0) return;
+  game.paused = true;
+  const choices = options.map(c => ({
+    label: `${c[0].toUpperCase()}${c.slice(1)}`,
+    cls: '',
+    cb: () => {
+      if (slot === 'secondary') game.secondaryClass = c;
+      else game.tertiaryClass = c;
+      game.paused = false;
+      hideOverlay();
+      game.log(`${slot} = ${c}`);
+    },
+  }));
+  choices.push({ label: 'Skip', cls: 'secondary', cb: () => { game.paused = false; hideOverlay(); } });
+  const s = slot === 'secondary' ? 'secondary' : 'tertiary';
+  showOverlay(`Choose your ${s} class`, 'A new slot opened. Synergies fire when class pairs/trios match.', choices);
 }
 
 const LEVEL_PERKS = [
@@ -278,6 +300,11 @@ function refreshStatusRow() {
   if (game.contactReduction > 0.001) add(`Aegis ${Math.round(game.contactReduction * 100)}%`, 'def');
   if (game.primaryClass === 'warrior' && game.warriorRage > 0) add(`Rage x${game.warriorRage}`, 'temp');
   if (game.skillCd > 0) add(`Skill ${game.skillCd.toFixed(1)}s`, 'def');
+  if (game.frenzy > 0) {
+    add(game.frenzy >= game.FRENZY_CAP ? `Frenzy READY` : `Frenzy ${game.frenzy}/${game.FRENZY_CAP}`, 'temp');
+  }
+  const syn = game.synergy && game.synergy();
+  if (syn) add(`✦ ${syn.label}`);
 }
 setInterval(refreshHud, 100);
 
