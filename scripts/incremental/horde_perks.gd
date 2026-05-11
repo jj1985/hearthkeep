@@ -27,6 +27,7 @@ const ALL_PERKS := [
     {"id":"sidestep",    "label":"Sidestep",      "desc":"30%% chance to dodge arrows.",         "tags":["rogue","support"], "kind":"dodge", "value":0.30},
     {"id":"aegis",       "label":"Aegis",         "desc":"-50%% contact damage.",                "tags":["warrior","melee"], "kind":"contact_red", "value":0.50},
     {"id":"venom",       "label":"Venom",         "desc":"+1 poison stack on each hit (1dmg/s 3s).","tags":["necromancer","rogue"], "kind":"poison", "value":1.0},
+    {"id":"rime",        "label":"Rime",          "desc":"Hits slow enemies 50%% for 2s.",           "tags":["wizard","arcane"], "kind":"slow", "value":1.0},
 ]
 
 # Run-scoped accumulators. Reset by reset_for_run().
@@ -42,6 +43,7 @@ var mythic_rate_bonus: float = 0.0
 var dodge_chance: float = 0.0
 var contact_reduction: float = 0.0
 var poison_stacks_per_hit: int = 0
+var slow_on_hit: bool = false
 
 func reset_for_run() -> void:
     dmg_mult = 1.0
@@ -55,6 +57,7 @@ func reset_for_run() -> void:
     dodge_chance = 0.0
     contact_reduction = 0.0
     poison_stacks_per_hit = 0
+    slow_on_hit = false
     taken_ids.clear()
 
 # Roll three perks weighted toward the active class trio's tags.
@@ -104,4 +107,5 @@ func apply(perk: Dictionary) -> void:
         "dodge": dodge_chance = clamp(dodge_chance + v, 0.0, 0.9)
         "contact_red": contact_reduction = clamp(contact_reduction + v, 0.0, 0.9)
         "poison": poison_stacks_per_hit = int(min(5, poison_stacks_per_hit + int(v)))
+        "slow": slow_on_hit = true
     perk_taken.emit(perk)

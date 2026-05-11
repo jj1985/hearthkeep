@@ -393,6 +393,15 @@ func _process(delta: float) -> void:
 
 func _tick_poison(delta: float) -> void:
     for e in enemies.duplicate():
+        # Rime expiry — restore base speed when the slow timer elapses.
+        if bool(e.get("slowed", false)):
+            e["slow_t"] = float(e.get("slow_t", 0.0)) - delta
+            if float(e["slow_t"]) <= 0.0:
+                e["slowed"] = false
+                e["speed"] = float(e.get("base_run_speed", e["speed"]))
+                var n_s: Panel = e.get("node")
+                if n_s != null and is_instance_valid(n_s):
+                    n_s.self_modulate = Color(1, 1, 1)
         var stacks: int = int(e.get("poison", 0))
         if stacks <= 0: continue
         e["poison_t"] = float(e.get("poison_t", 0.0)) - delta
@@ -637,6 +646,16 @@ func _damage_enemy(e: Dictionary, amount: int) -> void:
         e["poison"] = min(5, int(e.get("poison", 0)) + HordePerks.poison_stacks_per_hit)
         e["poison_t"] = 3.0
         e["poison_tick"] = 1.0
+    # Rime: hits apply 50% speed slow for 2s. Refreshes duration.
+    if HordePerks.slow_on_hit:
+        if not bool(e.get("slowed", false)):
+            e["slowed"] = true
+            e["base_run_speed"] = float(e["speed"])
+            e["speed"] = float(e["speed"]) * 0.5
+            var node_blue: Panel = e.get("node")
+            if node_blue != null and is_instance_valid(node_blue):
+                node_blue.self_modulate = Color(0.7, 0.85, 1.05)
+        e["slow_t"] = 2.0
     # Hit-stop stagger: skip movement for 0.08s and shove back 4px from
     # the hero. Bosses get a softer 0.04s/2px so they don't lock up.
     var nh: Panel = e.get("node")

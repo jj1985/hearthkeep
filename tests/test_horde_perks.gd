@@ -74,6 +74,10 @@ func test_dodge_caps_at_90_pct() -> void:
         HordePerks.apply({"id":"sidestep%d" % i, "kind":"dodge", "value":0.30})
     assert_almost_eq(HordePerks.dodge_chance, 0.9, 0.001)
 
+func test_rime_sets_slow_on_hit_flag() -> void:
+    HordePerks.apply({"id":"rime", "kind":"slow", "value":1.0})
+    assert_true(HordePerks.slow_on_hit)
+
 func test_venom_caps_at_5_stacks_per_hit() -> void:
     for i in 8:
         HordePerks.apply({"id":"venom%d" % i, "kind":"poison", "value":1.0})
