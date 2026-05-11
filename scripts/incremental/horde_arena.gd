@@ -89,6 +89,7 @@ var idle_timer: float = 0.0
 var skill_cd: float = 0.0
 const SKILL_COOLDOWN := 6.0
 var reroll_cost: int = 0
+var sunfire_pulse_t: float = 8.0
 
 var companion_orbit_t: float = 0.0
 var companion_atk_t: float = 0.0
@@ -392,6 +393,11 @@ func _process(delta: float) -> void:
     _move_enemies(delta)
     _move_arrows(delta)
     _tick_poison(delta)
+    if HordeState.wave >= 71:
+        sunfire_pulse_t -= delta
+        if sunfire_pulse_t <= 0.0:
+            sunfire_pulse_t = 8.0
+            _detonate_at(arena.size * 0.5, 280.0, max(1, int(_hero_damage() * 0.2)))
 
 func _tick_poison(delta: float) -> void:
     for e in enemies.duplicate():
