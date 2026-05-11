@@ -32,6 +32,8 @@ const ZONES = [
   { min: 21, name: 'Frostwatch', floor: '#101620' },
   { min: 31, name: 'Emberlands', floor: '#1f0d09' },
   { min: 41, name: 'The Void',   floor: '#0d0a18' },
+  { min: 51, name: 'Forgehold',  floor: '#291408' },
+  { min: 71, name: 'Sunfire',    floor: '#332108' },
 ];
 
 export function zoneForWave(w) {
@@ -85,6 +87,10 @@ export class Game {
     // Companion (unlocks at first boss kill)
     this.companionOrbitT = 0;
     this.companionAtkT = 1;
+    // Sunfire pulse (zone 7+)
+    this.sunfirePulseT = 8;
+    // Boss telegraph countdown
+    this.bossWarn = null; // { t, label }
     // Perk accumulators (per-run)
     this.takenPerks = new Set();
     this.onBossBoon = null;     // fn(picks, applyCb)
@@ -174,6 +180,39 @@ export class Game {
       this.attackTimer = 1.0 / this.atkRate();
     }
     if (this.hasCompanion()) this._tickCompanion(dt);
+
+    // Sunfire ambient pulse (enemy-only AoE).
+    if (this.wave >= 71) {
+      this.sunfirePulseT -= dt;
+      if (this.sunfirePulseT <= 0) {
+        this.sunfirePulseT = 8;
+        const dmg = Math.max(1, Math.round(this.heroDmg() * 0.2));
+        for (const e of this.enemies) {
+          if (e.dead) continue;
+          const d = Math.hypot(e.x - this.heroPos.x, e.y - this.heroPos.y);
+          if (d < 280) this._damageEnemy(e, dmg);
+        }
+        // Ring visual
+        for (let i = 0; i < 16; i++) {
+          const a = (Math.PI * 2 * i) / 16;
+          this.fx.push({
+            x: this.heroPos.x, y: this.heroPos.y,
+            vx: Math.cos(a) * 280, vy: Math.sin(a) * 280,
+            life: 0.5, color: '#ff8533', size: 6, fade: true,
+          });
+        }
+      }
+    }
+
+    // Boss telegraph countdown.
+    if (this.bossWarn) {
+      this.bossWarn.t -= dt;
+      if (this.bossWarn.t <= 0) {
+        const id = this.bossWarn.id;
+        this.bossWarn = null;
+        this._actuallySpawnBoss(id);
+      }
+    }
     if (this.idleTimer <= 0) {
       this.idleTimer = 1;
       const idle = Math.round(0.4 + (State.best_wave || 0) * 0.15);
@@ -339,6 +378,12 @@ export class Game {
 
   _spawnBoss() {
     const id = this.wave >= 50 ? 'aethyrnax' : (this.wave >= 30 ? 'vyxhasis' : 'warchief');
+    this.bossWarn = { t: 3.0, id, label: BOSS_TYPES[id].label };
+    this.floater(`INCOMING: ${BOSS_TYPES[id].label}`, this.size.w / 2 - 100, 60, '#d4582c');
+    this.log(`Telegraph: ${BOSS_TYPES[id].label} in 3s`);
+  }
+
+  _actuallySpawnBoss(id) {
     const def = BOSS_TYPES[id];
     const hpScale = 1 + (this.wave - 1) * 0.18;
     const maxHp = Math.round(def.hp * hpScale);
@@ -863,6 +908,16 @@ export class Game {
       ctx.font = 'bold 12px system-ui';
       ctx.textAlign = 'center';
       ctx.fillText(this.chest.t.toFixed(1), this.chest.x, this.chest.y - 22 + bob);
+    }
+
+    // boss telegraph
+    if (this.bossWarn) {
+      const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 100);
+      ctx.fillStyle = `rgba(216, 50, 50, ${pulse})`;
+      ctx.font = 'bold 22px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText(`INCOMING: ${this.bossWarn.label}  ${this.bossWarn.t.toFixed(1)}s`,
+        this.size.w / 2, 110);
     }
 
     // floaters
