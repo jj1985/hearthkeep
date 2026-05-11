@@ -84,6 +84,8 @@ export class Game {
     this.wizardHitCount = 0;
     this.frenzy = 0;          // hits taken since last guaranteed-crit
     this.FRENZY_CAP = 5;
+    this.iframeT = 0;
+    this.untouchedSinceWave = true; // perfect-clear tracker
     // Companion (unlocks at first boss kill)
     this.companionOrbitT = 0;
     this.companionAtkT = 1;
@@ -163,6 +165,7 @@ export class Game {
     this.attackTimer -= dt;
     this.idleTimer -= dt;
     if (this.skillCd > 0) this.skillCd -= dt;
+    if (this.iframeT > 0) this.iframeT -= dt;
     if (this.comboDecay > 0) {
       this.comboDecay -= dt;
       if (this.comboDecay <= 0) this.combo = 0;
@@ -225,6 +228,7 @@ export class Game {
     // Move enemies + contact
     for (const e of this.enemies) {
       if (e.dead) continue;
+      if (e.boss) this._bossPhaseTick(e, dt);
       const dx = this.heroPos.x - e.x;
       const dy = this.heroPos.y - e.y;
       const d = Math.hypot(dx, dy) || 1;
@@ -285,6 +289,7 @@ export class Game {
       e.x += (dx / d) * e.speed * dt;
       e.y += (dy / d) * e.speed * dt;
       if (d < 22 + e.size * 0.4) {
+        if (e.boss && e.phase === 'fly') continue; // airborne ignores contact
         let bite = 2 + Math.floor(this.wave / 4) * (e.boss ? 6 : (e.mythic ? 3 : 1));
         bite = Math.max(1, Math.round(bite * (1 - this.contactReduction)));
         this._heroTakeDamage(bite);
@@ -392,11 +397,55 @@ export class Game {
     this.enemies.push({
       id: `boss_${id}`, label: def.label, color: def.color,
       x: this.size.w / 2, y: -def.size,
-      hp: maxHp, maxHp, speed: def.speed,
+      hp: maxHp, maxHp, speed: def.speed, baseSpeed: def.speed,
       gold: def.gold, size: def.size,
       mythic: false, boss: true,
+      phase: '', phaseT: 0, phaseCd: 4.0, phaseCount: 0, alpha: 1,
     });
     this.floater(`${def.label} appears!`, this.size.w / 2 - 80, 80, '#d4582c');
+  }
+
+  _bossPhaseTick(e, dt) {
+    if (e.phaseT > 0) {
+      e.phaseT -= dt;
+      if (e.phaseT <= 0) {
+        e.phase = '';
+        e.speed = e.baseSpeed;
+        e.alpha = 1;
+        e.phaseCd = 4.0;
+      }
+      return;
+    }
+    e.phaseCd -= dt;
+    if (e.phaseCd > 0) return;
+    e.phaseCount++;
+    const id = e.id;
+    if (id === 'boss_warchief') {
+      e.phase = 'charge';
+      e.phaseT = 1.0;
+      e.speed = e.baseSpeed * 4;
+      this.floater('CHARGE!', e.x, e.y, '#d4582c');
+    } else if (id === 'boss_vyxhasis') {
+      e.phase = 'fly';
+      e.phaseT = 1.2;
+      e.speed = e.baseSpeed * 0.5;
+      e.alpha = 0.35;
+      this.floater('AIRBORNE', e.x, e.y, '#5a8fb3');
+    } else if (id === 'boss_aethyrnax') {
+      // Aethyrnax alternates CHARGE and FLY.
+      if (e.phaseCount % 2 === 1) {
+        e.phase = 'charge';
+        e.phaseT = 0.8;
+        e.speed = e.baseSpeed * 5;
+        this.floater('CHARGE!', e.x, e.y, '#d4582c');
+      } else {
+        e.phase = 'fly';
+        e.phaseT = 1.4;
+        e.speed = e.baseSpeed * 0.6;
+        e.alpha = 0.4;
+        this.floater('SOARING', e.x, e.y, '#5a8fb3');
+      }
+    }
   }
 
   // --- Hero acts ---
@@ -486,17 +535,35 @@ export class Game {
     if (this.paused || this.skillCd > 0) return;
     if (this.curseDisables('bare_hands')) return;
     const dmg = this.heroDmg();
-    if (this.primaryClass === 'wizard') {
-      // Fireball — single nuke
+    const k = this.primaryClass;
+    if (k === 'wizard') {
+      // FIREBALL — 12× damage to highest-HP target
       let best = null, bestHp = 0;
       for (const e of this.enemies) if (e.hp > bestHp) { bestHp = e.hp; best = e; }
-      if (best) this._damageEnemy(best, dmg * 12);
-    } else if (this.primaryClass === 'rogue') {
+      if (best) {
+        this._damageEnemy(best, dmg * 12);
+        this._spawnStrike(best.x, best.y);
+      }
+      this.floater('FIREBALL', this.heroPos.x - 30, this.heroPos.y - 30, '#5a8fb3');
+    } else if (k === 'rogue') {
+      // BLINK — full heal + 1.5s i-frames (set a flag the take-damage check reads)
       this.heroHp = this.heroMaxHp;
-      this.floater('FULL HEAL', this.heroPos.x - 30, this.heroPos.y, '#6fa060');
+      this.iframeT = 1.5;
+      this.floater('BLINK — invulnerable', this.heroPos.x - 60, this.heroPos.y - 30, '#6fd07f');
+    } else if (k === 'necromancer') {
+      // REAP — drain AoE: damages all enemies, heals hero per kill that lands
+      for (const e of this.enemies) this._damageEnemy(e, dmg);
+      this.floater('REAP', this.heroPos.x - 20, this.heroPos.y - 30, '#9966c8');
+      this.shakeMag = 14;
+    } else if (k === 'bard') {
+      // ANTHEM — +0.5 atk/sec for 8 seconds (run-temp)
+      this.atkBonus += 0.5;
+      this.floater('ANTHEM — +0.5 atk/s 8s', this.heroPos.x - 80, this.heroPos.y - 30, '#d4a4cc');
+      setTimeout(() => { this.atkBonus = Math.max(0, this.atkBonus - 0.5); }, 8000);
     } else {
-      // Cleave AOE for warrior/necromancer/bard default
+      // WARRIOR CLEAVE — 2× damage to every enemy on screen
       for (const e of this.enemies) this._damageEnemy(e, dmg * 2);
+      this.floater('CLEAVE', this.heroPos.x - 30, this.heroPos.y - 30, '#d9892e');
       this.shakeMag = 20;
     }
     this.skillCd = 6;
@@ -504,6 +571,10 @@ export class Game {
   }
 
   _damageEnemy(e, amount) {
+    if (e.boss && e.phase === 'fly') {
+      this.floater('MISS', e.x, e.y, '#a39a85');
+      return;
+    }
     e.hp -= amount;
     this.floater(`-${Math.round(amount)}`, e.x, e.y, amount < 10 ? '#c8a030' : '#d4582c');
     if (e.hp <= 0) this._killEnemy(e, true);
@@ -524,7 +595,7 @@ export class Game {
       this.comboDecay = 1.5;
       if (this.combo > this.comboPeak) this.comboPeak = this.combo;
       if (this.primaryClass === 'warrior') this.warriorRage = Math.min(20, this.warriorRage + 1);
-      if (this.primaryClass === 'necromancer') this.heroHp = Math.min(this.heroMaxHp, this.heroHp + 1);
+      if (this.primaryClass === 'necromancer') this.heroHp = Math.min(this.heroMaxHp, this.heroHp + 2);
     }
     State.lifetime_kills++;
     this.killsThisRun++;
@@ -616,6 +687,14 @@ export class Game {
   }
 
   _nextWave() {
+    // Perfect-clear bonus on the wave we just finished.
+    if (this.untouchedSinceWave && this.wave > 1) {
+      const bonus = 5 + this.wave * 10;
+      State.gold += bonus;
+      this.floater(`PERFECT +${bonus}g`, this.heroPos.x, this.heroPos.y - 20, '#d4a24c');
+      this.log(`Perfect clear: +${bonus}g`);
+    }
+    this.untouchedSinceWave = true;
     this.wave++;
     this.warriorRage = 0;
     this.waveKillsProgress = 0;
@@ -652,11 +731,16 @@ export class Game {
 
   _heroTakeDamage(amount) {
     if (this.deadScreenOpen) return;
+    if (this.iframeT > 0) {
+      this.floater('IFRAME', this.heroPos.x, this.heroPos.y, '#6fd07f');
+      return;
+    }
     if (this.primaryClass === 'rogue' && Math.random() < 0.05) {
       this.floater('EVADE', this.heroPos.x, this.heroPos.y, '#d4a24c');
       return;
     }
     this.heroHp = Math.max(0, this.heroHp - amount);
+    this.untouchedSinceWave = false;
     this.frenzy = Math.min(this.FRENZY_CAP, this.frenzy + 1);
     Sfx.hurt();
     this.shakeMag = Math.min(20, 6 + amount * 0.5);
@@ -854,6 +938,7 @@ export class Game {
 
     // enemies
     for (const e of this.enemies) {
+      ctx.globalAlpha = e.alpha ?? 1;
       ctx.fillStyle = e.color;
       const r = e.size / 2;
       ctx.beginPath();
@@ -871,6 +956,7 @@ export class Game {
       ctx.fillRect(e.x - barW / 2, e.y - r - 8, barW, 3);
       ctx.fillStyle = '#d95940';
       ctx.fillRect(e.x - barW / 2, e.y - r - 8, barW * frac, 3);
+      ctx.globalAlpha = 1;
     }
 
     // arrows
