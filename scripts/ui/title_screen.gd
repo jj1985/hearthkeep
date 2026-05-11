@@ -266,14 +266,24 @@ func _on_new_run() -> void:
     SaveSystem.save()
     get_tree().change_scene_to_file("res://scenes/horde.tscn")
 
+const CLASS_PASSIVE_DESC := {
+    "warrior":     "Kills add a rage stack (+0.5 dmg, resets on wave clear)",
+    "rogue":       "5% innate dodge on any incoming damage",
+    "wizard":      "Every 5th hit chains to a 2nd target",
+    "necromancer": "Each kill heals 1 HP",
+    "bard":        "+5% damage globally",
+}
+
 func _open_class_picker() -> void:
     for c in class_choices.get_children(): c.queue_free()
     for cid in GameState.unlocked_classes:
+        var s_cid: String = String(cid)
         var b := Button.new()
-        b.text = String(cid).capitalize()
+        var desc: String = CLASS_PASSIVE_DESC.get(s_cid, "")
+        b.text = "%s — %s" % [s_cid.capitalize(), desc] if desc != "" else s_cid.capitalize()
         b.custom_minimum_size = Vector2(0, 56)
         UiStyle_.apply_primary(b)
-        b.pressed.connect(_pick_class.bind(String(cid)))
+        b.pressed.connect(_pick_class.bind(s_cid))
         class_choices.add_child(b)
     UiStyle_.apply_secondary(class_cancel)
     if not class_cancel.is_connected("pressed", Callable(self, "_close_class_picker")):
