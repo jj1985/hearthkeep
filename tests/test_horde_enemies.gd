@@ -31,12 +31,14 @@ func test_min_wave_monotonic_with_hp() -> void:
         assert_gt(int(_enemies()[k]["hp_base"]), sk_hp,
             "%s should have more HP than skeleton" % k)
 
-func test_zone_resolution_walks_through_all_five() -> void:
+func test_zone_resolution_walks_through_all_seven() -> void:
     assert_eq(String(HordeArena._zone_for_wave(1)["name"]),  "Greenmarch")
     assert_eq(String(HordeArena._zone_for_wave(15)["name"]), "Ashen Vale")
     assert_eq(String(HordeArena._zone_for_wave(25)["name"]), "Frostwatch")
     assert_eq(String(HordeArena._zone_for_wave(35)["name"]), "Emberlands")
-    assert_eq(String(HordeArena._zone_for_wave(99)["name"]), "The Void")
+    assert_eq(String(HordeArena._zone_for_wave(45)["name"]), "The Void")
+    assert_eq(String(HordeArena._zone_for_wave(60)["name"]), "Forgehold")
+    assert_eq(String(HordeArena._zone_for_wave(99)["name"]), "Sunfire")
 
 func test_eleven_normal_enemy_types_present() -> void:
     var normals: Array = []

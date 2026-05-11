@@ -219,6 +219,8 @@ const ZONES := [
     {"min":21, "name":"Frostwatch", "floor": Color(0.07, 0.09, 0.13)},
     {"min":31, "name":"Emberlands", "floor": Color(0.13, 0.06, 0.05)},
     {"min":41, "name":"The Void",   "floor": Color(0.05, 0.04, 0.10)},
+    {"min":51, "name":"Forgehold",  "floor": Color(0.16, 0.08, 0.04)},
+    {"min":71, "name":"Sunfire",    "floor": Color(0.18, 0.13, 0.05)},
 ]
 
 static func _zone_for_wave(w: int) -> Dictionary:
