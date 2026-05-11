@@ -24,6 +24,22 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 color = Color(0.09, 0.085, 0.12, 1)
 
+[node name="Weather" type="CPUParticles2D" parent="Arena"]
+position = Vector2(180, 0)
+amount = 30
+lifetime = 5.0
+preprocess = 1.5
+emission_shape = 3
+emission_rect_extents = Vector2(240, 4)
+direction = Vector2(0, 1)
+gravity = Vector2(0, 20)
+initial_velocity_min = 8.0
+initial_velocity_max = 24.0
+scale_amount_min = 1.0
+scale_amount_max = 2.0
+color = Color(1, 1, 1, 0.5)
+emitting = true
+
 [node name="Enemies" type="Control" parent="Arena"]
 anchor_right = 1.0
 anchor_bottom = 1.0

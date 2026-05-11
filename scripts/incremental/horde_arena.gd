@@ -41,6 +41,7 @@ const HERO_RANGE := 220.0
 @onready var bg: ColorRect = $Bg
 @onready var arena: Control = $Arena
 @onready var floor_rect: ColorRect = $Arena/Floor
+@onready var weather: CPUParticles2D = $Arena/Weather
 @onready var hero: Panel = $Arena/Hero
 @onready var range_ring: Panel = $Arena/RangeRing
 @onready var companion: Panel = $Arena/Companion
@@ -314,6 +315,24 @@ func _refresh_hud() -> void:
         if floor_rect.color != target:
             var tw := create_tween()
             tw.tween_property(floor_rect, "color", target, 0.6)
+    _apply_weather_for_zone(String(z["name"]))
+
+const WEATHER_BY_ZONE := {
+    "Greenmarch":  Color(0.55, 0.85, 0.55, 0.35),  # green motes
+    "Ashen Vale":  Color(0.65, 0.55, 0.45, 0.40),  # ash
+    "Frostwatch":  Color(0.85, 0.95, 1.00, 0.55),  # snow
+    "Emberlands":  Color(1.00, 0.55, 0.20, 0.45),  # embers
+    "The Void":    Color(0.60, 0.45, 0.85, 0.35),  # specks
+    "Forgehold":   Color(1.00, 0.65, 0.30, 0.50),  # forge sparks
+    "Sunfire":     Color(1.00, 0.85, 0.35, 0.50),  # solar motes
+}
+
+func _apply_weather_for_zone(name: String) -> void:
+    if weather == null: return
+    var c: Color = WEATHER_BY_ZONE.get(name, Color(1, 1, 1, 0.4))
+    weather.color = c
+    weather.emission_rect_extents = Vector2(arena.size.x * 0.5, 4.0)
+    weather.position = Vector2(arena.size.x * 0.5, 0)
     hud_kills.text = "%d kills" % GameState.lifetime_kills
     hud_gold.text = "%d gold" % GameState.gold
     hud_loadout.text = _loadout_text()
