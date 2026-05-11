@@ -91,6 +91,8 @@ var skill_cd: float = 0.0
 const SKILL_COOLDOWN := 6.0
 var reroll_cost: int = 0
 var sunfire_pulse_t: float = 8.0
+var frenzy_charge: int = 0
+const FRENZY_CAP := 5
 
 var companion_orbit_t: float = 0.0
 var companion_atk_t: float = 0.0
@@ -645,7 +647,11 @@ func _hero_damage() -> int:
     if not syn.is_empty(): f *= 1.0 + float(syn.get("dmg_mult", 0.0))
     if _temp_dmg_active(): f *= 1.5
     var perm_crit: float = int(GameState.level_perks.get("perm_crit", 0)) * 0.02
-    if rng.randf() < (Upgrades.crit_chance() + HordePerks.crit_bonus + perm_crit):
+    var critted: bool = rng.randf() < (Upgrades.crit_chance() + HordePerks.crit_bonus + perm_crit)
+    if frenzy_charge >= FRENZY_CAP:
+        critted = true
+        frenzy_charge = 0
+    if critted:
         f *= 2.0
     return int(round(f))
 
@@ -1500,6 +1506,9 @@ func _refresh_status_row() -> void:
         statuses.append({"label": "Venom x%d" % HordePerks.poison_stacks_per_hit, "color": T.SUCCESS})
     if HordePerks.slow_on_hit:
         statuses.append({"label": "Rime", "color": T.TERTIARY})
+    if frenzy_charge > 0:
+        statuses.append({"label": "Frenzy %d/%d" % [frenzy_charge, FRENZY_CAP],
+            "color": T.RARITY_LEGENDARY if frenzy_charge >= FRENZY_CAP else T.WARNING})
     for s in statuses:
         var d: Dictionary = s
         var chip := Panel.new()
@@ -1575,6 +1584,7 @@ func _on_quit() -> void:
 func _hero_take_damage(amount: int) -> void:
     if dead_screen_open: return
     HordeState.hero_hp = max(0, HordeState.hero_hp - amount)
+    frenzy_charge = min(FRENZY_CAP, frenzy_charge + 1)
     _refresh_hud()
     SfxBus.play("low_hp" if HordeState.hero_hp < HordeState.hero_max_hp / 4 else "hit", -10.0)
     var alpha: float = clamp(0.15 + amount * 0.04, 0.18, 0.55)
