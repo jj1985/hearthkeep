@@ -54,6 +54,7 @@ const HERO_RANGE := 220.0
 @onready var milestone_row_label: Label = $HUD/MilestoneRow/Label
 @onready var milestone_row_bar: ProgressBar = $HUD/MilestoneRow/Bar
 @onready var perk_row: HBoxContainer = $HUD/PerkRow
+@onready var status_row: HBoxContainer = $HUD/StatusRow
 @onready var xp_bar: ProgressBar = $HUD/XPBar
 @onready var combat_log: Label = $HUD/CombatLog
 @onready var overlay_scrim: ColorRect = $Overlay/Scrim
@@ -308,6 +309,7 @@ func _refresh_hud() -> void:
     hud_gold.text = "%d gold" % GameState.gold
     hud_loadout.text = _loadout_text()
     hud_idle.text = "+%.1f g/s" % _idle_gold_per_sec()
+    _refresh_status_row()
     hud_embers.text = "%d ember  ·  L%d" % [GameState.embers, GameState.hero_level]
     if xp_bar != null:
         xp_bar.max_value = max(1, GameState.xp_to_next_level())
@@ -1471,6 +1473,52 @@ func _on_perk_chosen(perk: Dictionary) -> void:
     _style_range_ring()
     _log("Perk: %s" % String(perk["label"]))
     _close_milestone()
+
+func _refresh_status_row() -> void:
+    if status_row == null: return
+    for c in status_row.get_children(): c.queue_free()
+    var statuses: Array = []
+    if _temp_dmg_active():
+        statuses.append({"label": "Oil  %d" % (temp_dmg_until - HordeState.wave + 1), "color": T.SECONDARY})
+    if _temp_atk_active():
+        statuses.append({"label": "Drum %d" % (temp_atk_until - HordeState.wave + 1), "color": T.SECONDARY})
+    if HordePerks.dmg_mult > 1.001:
+        statuses.append({"label": "Dmg %.2f×" % HordePerks.dmg_mult, "color": T.PRIMARY})
+    if HordePerks.gold_mult > 1.001:
+        statuses.append({"label": "Gold %.2f×" % HordePerks.gold_mult, "color": T.PRIMARY})
+    if HordePerks.atk_speed_bonus > 0.05:
+        statuses.append({"label": "Spd +%.1f" % HordePerks.atk_speed_bonus, "color": T.PRIMARY})
+    if HordePerks.wave_bonus_mult > 1.001:
+        statuses.append({"label": "Wave %.2f×" % HordePerks.wave_bonus_mult, "color": T.PRIMARY})
+    if HordePerks.crit_bonus > 0.001:
+        statuses.append({"label": "Crit +%.0f%%" % (HordePerks.crit_bonus * 100), "color": T.PRIMARY})
+    if HordePerks.dodge_chance > 0.001:
+        statuses.append({"label": "Dodge %.0f%%" % (HordePerks.dodge_chance * 100), "color": T.TERTIARY})
+    if HordePerks.contact_reduction > 0.001:
+        statuses.append({"label": "Aegis %.0f%%" % (HordePerks.contact_reduction * 100), "color": T.TERTIARY})
+    if HordePerks.poison_stacks_per_hit > 0:
+        statuses.append({"label": "Venom x%d" % HordePerks.poison_stacks_per_hit, "color": T.SUCCESS})
+    if HordePerks.slow_on_hit:
+        statuses.append({"label": "Rime", "color": T.TERTIARY})
+    for s in statuses:
+        var d: Dictionary = s
+        var chip := Panel.new()
+        chip.custom_minimum_size = Vector2(0, 22)
+        var sb := StyleBoxFlat.new()
+        sb.bg_color = T.SURFACE_BRIGHT
+        sb.corner_radius_top_left = 11; sb.corner_radius_top_right = 11
+        sb.corner_radius_bottom_left = 11; sb.corner_radius_bottom_right = 11
+        sb.border_color = d["color"]
+        sb.border_width_top = 1; sb.border_width_bottom = 1
+        sb.border_width_left = 1; sb.border_width_right = 1
+        chip.add_theme_stylebox_override("panel", sb)
+        var lbl := Label.new()
+        lbl.text = "  %s  " % String(d["label"])
+        lbl.add_theme_color_override("font_color", d["color"])
+        lbl.add_theme_font_size_override("font_size", T.FS_BODY_SM)
+        chip.add_child(lbl)
+        lbl.position = Vector2(0, 2)
+        status_row.add_child(chip)
 
 func _refresh_perk_row() -> void:
     if perk_row == null: return
