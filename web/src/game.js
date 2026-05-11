@@ -392,7 +392,7 @@ export class Game {
     e.dead = true;
     if (e.explodes) this._detonate(e.x, e.y, 60, Math.max(2, Math.round(this.heroDmg() * 0.5)));
     if (byPlayer) {
-      const gold = Math.max(1, Math.round(e.gold * this.rebirthBonus * this.goldMult));
+      const gold = Math.max(1, Math.round(e.gold * this.rebirthBonus * this.goldMult * this.comboMult()));
       State.gold += gold;
       this.combo++;
       this.comboDecay = 1.5;
@@ -421,6 +421,12 @@ export class Game {
       this.waveKillsProgress++;
       if (this.waveKillsProgress >= this.waveKillsTarget) this._nextWave();
     }
+  }
+
+  comboMult() {
+    if (this.combo <= 0) return 1;
+    // Saturating: at combo=30 ≈ 1.5x, asymptote 2.0x.
+    return 1 + this.combo / (this.combo + 30);
   }
 
   _nextWave() {

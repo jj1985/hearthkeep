@@ -1,5 +1,5 @@
 import { Game } from './game.js';
-import { State, persist } from './state.js';
+import { State, persist, processDailyLogin, rebirth, canRebirth } from './state.js';
 import { rollPerks, applyPerk } from './perks.js';
 import { UPGRADES, rank, cost, canBuy, buy } from './upgrades.js';
 
@@ -68,10 +68,12 @@ function refreshTitle() {
   canvas.hidden = true;
   clearChildren(titleStats);
   const lines = [];
+  if (State.rebirths > 0) lines.push(`⚔ Mark ${State.rebirths}  ·  +${State.rebirths * 25}% dmg + gold`);
   if (State.best_wave > 0) lines.push(`Best wave: ${State.best_wave}`);
   if (State.bosses_felled > 0) lines.push(`Bosses felled: ${State.bosses_felled}`);
   if (State.lifetime_kills > 0) lines.push(`Lifetime kills: ${State.lifetime_kills}`);
   lines.push(`Gold: ${State.gold}  ·  Embers: ${State.embers}  ·  Level: ${State.hero_level}`);
+  if (State.login_streak > 0) lines.push(`Login streak: ${State.login_streak} day(s)`);
   lines.push(`Unlocked: ${State.unlocked_classes.join(', ')}`);
   for (const l of lines) {
     const p = document.createElement('p');
@@ -79,6 +81,27 @@ function refreshTitle() {
     titleStats.appendChild(p);
   }
   titleTip.textContent = TIPS[Math.floor(Math.random() * TIPS.length)];
+  refreshRebirthButton();
+}
+
+function refreshRebirthButton() {
+  const existing = document.getElementById('btn-rebirth');
+  if (existing) existing.remove();
+  if (!canRebirth()) return;
+  const b = document.createElement('button');
+  b.id = 'btn-rebirth';
+  b.textContent = `REBIRTH — Mark ${State.rebirths + 1} (+25%)`;
+  b.style.background = 'var(--secondary)';
+  b.style.color = '#1a1208';
+  b.addEventListener('click', () => {
+    showOverlay('Rebirth?',
+      'Wipes upgrades, gold, kills, unlocked classes, and milestones.\nKeeps Embers + hero level + a permanent +25% Mark.',
+      [
+        { label: 'Yes, ascend', cls: '', cb: () => { rebirth(); hideOverlay(); refreshTitle(); } },
+        { label: 'Not yet', cls: 'secondary', cb: () => hideOverlay() },
+      ]);
+  });
+  document.getElementById('title-actions').appendChild(b);
 }
 
 function startGame(klass) {
@@ -106,7 +129,10 @@ function onDeath(info) {
 
 function refreshHud() {
   if (!game || canvas.hidden) return;
-  wave.textContent = `WAVE ${game.wave}`;
+  const c = game.combo;
+  wave.textContent = c > 1
+    ? `WAVE ${game.wave}  ·  x${c} (${game.comboMult().toFixed(2)}×)`
+    : `WAVE ${game.wave}`;
   kills.textContent = `${State.lifetime_kills} kills`;
   gold.textContent = `${State.gold} g`;
   embers.textContent = `${State.embers} 🜂`;
@@ -197,6 +223,19 @@ btnNewRun.addEventListener('click', () => {
   showClassPicker(startGame);
 });
 btnShop.addEventListener('click', () => showUpgradeShop(true));
+
+// Daily-login: fire once per page-load if the day rolled over.
+const daily = processDailyLogin();
+if (daily) {
+  showOverlay(
+    `Day ${daily.streak} streak`,
+    daily.broke
+      ? `+${daily.bonus} Embers for today's login.`
+      : `+${daily.bonus} Embers — keep the streak alive.`,
+    [{ label: 'Continue', cls: '', cb: () => { hideOverlay(); refreshTitle(); } }],
+  );
+}
+
 
 window.addEventListener('beforeunload', () => persist());
 refreshTitle();

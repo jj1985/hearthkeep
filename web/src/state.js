@@ -12,6 +12,8 @@ const DEFAULTS = {
   hero_xp: 0,
   upgrades: {},
   rebirths: 0,
+  last_login_day: 0,
+  login_streak: 0,
 };
 
 export const State = Object.assign({}, DEFAULTS, Save.load());
@@ -42,6 +44,39 @@ export const KILL_UNLOCKS = [
   { id: 'unlock_necromancer', kills: 1500, klass: 'necromancer', label: 'Necromancer path opens' },
   { id: 'unlock_bard', kills: 5000, klass: 'bard', label: 'Bard path opens' },
 ];
+
+// Daily login. Returns null (no claim today) or {bonus, streak, broke}.
+export function processDailyLogin() {
+  const day = Math.floor(Date.now() / 86400000);
+  if (day === State.last_login_day) return null;
+  let broke = false;
+  if (State.last_login_day === 0 || day - State.last_login_day > 1) {
+    State.login_streak = 1; broke = true;
+  } else {
+    State.login_streak++;
+  }
+  State.last_login_day = day;
+  const bonus = 1 + Math.min(6, Math.floor(State.login_streak / 2));
+  State.embers += bonus;
+  persist();
+  return { bonus, streak: State.login_streak, broke };
+}
+
+// Rebirth: wipes per-track upgrades, gold, lifetime kills, best_wave,
+// bosses_felled. Preserves embers + rebirths count + hero_level.
+export function rebirth() {
+  State.rebirths++;
+  State.gold = 0;
+  State.lifetime_kills = 0;
+  State.bosses_felled = 0;
+  State.best_wave = 0;
+  State.unlocked_classes = ['warrior'];
+  State.meta_milestones = {};
+  State.upgrades = {};
+  persist();
+}
+
+export function canRebirth() { return State.best_wave >= 50; }
 
 export function checkKillMilestones() {
   const fired = [];
