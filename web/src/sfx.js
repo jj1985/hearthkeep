@@ -1,8 +1,11 @@
 // Tiny procedural SFX layer via WebAudio. No assets, no engine fight.
 // Lazy-init the AudioContext on first user interaction (mobile autoplay).
 
+import { State } from './state.js';
+
 let ctx = null;
 let muted = false;
+function masterGain() { return Math.max(0, Math.min(1, State.sfx_volume ?? 0.7)); }
 
 function ensureCtx() {
   if (ctx) return ctx;
@@ -25,7 +28,7 @@ function blip(freq, dur, shape = 'square', gain = 0.08) {
   const g = c.createGain();
   o.type = shape;
   o.frequency.setValueAtTime(freq, c.currentTime);
-  g.gain.setValueAtTime(gain, c.currentTime);
+  g.gain.setValueAtTime(gain * masterGain(), c.currentTime);
   g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + dur);
   o.connect(g).connect(c.destination);
   o.start();
@@ -41,7 +44,7 @@ function sweep(f0, f1, dur, gain = 0.08) {
   o.type = 'sawtooth';
   o.frequency.setValueAtTime(f0, c.currentTime);
   o.frequency.linearRampToValueAtTime(f1, c.currentTime + dur);
-  g.gain.setValueAtTime(gain, c.currentTime);
+  g.gain.setValueAtTime(gain * masterGain(), c.currentTime);
   g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + dur);
   o.connect(g).connect(c.destination);
   o.start();

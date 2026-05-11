@@ -1,5 +1,5 @@
 // HTML5 horde arena — canvas renderer, ECS-lite update loop.
-import { State, persist, grantXp, checkKillMilestones, recordRun } from './state.js';
+import { State, persist, grantXp, checkKillMilestones, recordRun, grantEmbers } from './state.js';
 import { bonusDamage, bonusAtk, bonusRange, bonusHp, bonusCrit } from './upgrades.js';
 import { synergyFor } from './synergies.js';
 import { Sfx } from './sfx.js';
@@ -550,7 +550,7 @@ export class Game {
     if (e.boss) {
       Sfx.boss();
       const ember = Math.round((1 + Math.floor(this.wave / 10)) * this.challengeBonus());
-      State.embers += ember;
+      grantEmbers(ember);
       this.runEmbersEarned += ember;
       State.bosses_felled++;
       this.floater(`+${ember} Ember`, e.x, e.y, '#d4582c');
@@ -563,7 +563,7 @@ export class Game {
       if (!State.dragonslayer
           && have.has('warchief') && have.has('vyxhasis') && have.has('aethyrnax')) {
         State.dragonslayer = true;
-        State.embers += 15;
+        grantEmbers(15);
         this.runEmbersEarned += 15;
         this.floater('DRAGONSLAYER — +10% perm dmg', this.size.w / 2 - 110, 80, '#e8d2a0');
         this.log('DRAGONSLAYER honor earned');
@@ -637,7 +637,7 @@ export class Game {
     if (this.wave === 30 && State.challenge_active && !this._claimedCurseToday) {
       this._claimedCurseToday = true;
       State.curses_cleared = (State.curses_cleared || 0) + 1;
-      State.embers += 5;
+      grantEmbers(5);
       this.runEmbersEarned += 5;
       this.floater('CURSE BROKEN — +5 Ember', this.size.w / 2 - 100, 60, '#d4582c');
       persist();
@@ -785,7 +785,7 @@ export class Game {
         this.floater(`+${g} gold`, this.chest.x, this.chest.y, '#d4a24c');
         this.log(`Chest: +${g} gold`);
       } else if (roll < 0.9) {
-        State.embers += 3;
+        grantEmbers(3);
         this.runEmbersEarned += 3;
         this.floater('+3 Ember', this.chest.x, this.chest.y, '#d4582c');
         this.log('Chest: +3 ember');

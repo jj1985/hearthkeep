@@ -1,5 +1,5 @@
 import { Game, zoneForWave } from './game.js';
-import { State, persist, processDailyLogin, rebirth, canRebirth } from './state.js';
+import { State, persist, processDailyLogin, rebirth, canRebirth, grantEmbers } from './state.js';
 import { rollPerks, applyPerk } from './perks.js';
 import { UPGRADES, rank, cost, canBuy, buy } from './upgrades.js';
 import * as Ach from './achievements.js';
@@ -82,6 +82,7 @@ function refreshTitle() {
   if (State.best_wave > 0) lines.push(`Best wave: ${State.best_wave}`);
   if (State.bosses_felled > 0) lines.push(`Bosses felled: ${State.bosses_felled}`);
   if (State.lifetime_kills > 0) lines.push(`Lifetime kills: ${State.lifetime_kills}`);
+  if ((State.lifetime_embers || 0) > 0) lines.push(`Glory (lifetime 🜂): ${State.lifetime_embers}`);
   lines.push(`Gold: ${State.gold}  ·  Embers: ${State.embers}  ·  Level: ${State.hero_level}`);
   if (State.login_streak > 0) lines.push(`Login streak: ${State.login_streak} day(s)`);
   lines.push(`Unlocked: ${State.unlocked_classes.join(', ')}`);
@@ -188,7 +189,7 @@ const MERCHANT_OFFERS = [
   { id: 'drum',  label: 'Battle Drum',   desc: '+1.0 atk/sec, 3 waves.',  cost: 80,
     apply: g => { g.atkBonus += 1.0; setTimeout(() => { g.atkBonus = Math.max(0, g.atkBonus - 1.0); }, 60_000); } },
   { id: 'trade', label: 'Ember Bargain', desc: 'Trade 30g for 1 Ember.',  cost: 30,
-    apply: () => { State.embers += 1; persist(); } },
+    apply: () => { grantEmbers(1); persist(); } },
 ];
 
 function showMerchant() {
@@ -386,7 +387,13 @@ document.getElementById('btn-pause').addEventListener('click', () => {
   if (!game) return;
   game.paused = !game.paused;
   if (game.paused) {
-    showOverlay('Paused', '', [
+    const stats = [
+      `Damage: ${game.heroDmg()}   ·   Atk/sec: ${game.atkRate().toFixed(2)}`,
+      `Range: ${Math.round(game.heroRange())}   ·   Crit: ${Math.round((game.critBonus + 0) * 100)}%`,
+      `Gold mult: ${(game.goldMult * game.rebirthBonus * (1 + (State.level_perks?.perm_gold || 0) * 0.05) * game.challengeBonus()).toFixed(2)}×`,
+      game.synergy ? (game.synergy()?.label ? `Synergy: ${game.synergy().label}` : '') : '',
+    ].filter(Boolean).join('\n');
+    showOverlay('Paused', stats, [
       { label: 'Resume', cls: '', cb: () => { game.paused = false; hideOverlay(); } },
       { label: 'Upgrades', cls: 'secondary', cb: () => showUpgradeShop(false) },
       { label: 'Quit to Title', cls: 'secondary', cb: () => { hideOverlay(); refreshTitle(); } },
@@ -418,7 +425,48 @@ function ensureExtraTitleButtons() {
   addBtn('btn-bestiary', 'BESTIARY',     showBestiary);
   addBtn('btn-history',  'RUN HISTORY',  showRunHistory);
   addBtn('btn-curse',    'DAILY CURSE',  toggleCurse);
-  addBtn('btn-mute',     isMuted() ? 'UNMUTE' : 'MUTE', toggleMute);
+  addBtn('btn-settings', 'SETTINGS',     showSettings);
+}
+
+function showSettings() {
+  // We can't put a real slider into a button-only modal, so step
+  // through 0 / 25 / 50 / 75 / 100 with a single button that cycles.
+  function nextVol(curr) { return Math.round(((curr * 100 + 25) % 125)) / 100; }
+  function rebuild() {
+    const muted = isMuted();
+    const choices = [
+      {
+        label: `SFX Volume: ${Math.round((State.sfx_volume || 0) * 100)}%`,
+        cls: 'secondary',
+        cb: () => {
+          State.sfx_volume = nextVol(State.sfx_volume || 0);
+          persist();
+          rebuild();
+        },
+      },
+      {
+        label: muted ? 'Audio: MUTED' : 'Audio: ON',
+        cls: 'secondary',
+        cb: () => { setMuted(!isMuted()); rebuild(); },
+      },
+      {
+        label: 'Reset save (DANGER)',
+        cls: 'secondary',
+        cb: () => {
+          showOverlay('Reset save?',
+            'This wipes ALL progress permanently.',
+            [
+              { label: 'Yes, wipe everything', cls: '',
+                cb: () => { localStorage.clear(); location.reload(); } },
+              { label: 'Cancel', cls: 'secondary', cb: () => showSettings() },
+            ]);
+        },
+      },
+      { label: 'Back', cls: 'secondary', cb: () => hideOverlay() },
+    ];
+    showOverlay('SETTINGS', `Volume cycles 0 → 100% in 25% steps.`, choices);
+  }
+  rebuild();
 }
 
 function toggleCurse() {
@@ -428,11 +476,6 @@ function toggleCurse() {
   refreshTitle();
 }
 
-function toggleMute() {
-  setMuted(!isMuted());
-  const b = document.getElementById('btn-mute');
-  if (b) b.textContent = isMuted() ? 'UNMUTE' : 'MUTE';
-}
 ensureExtraTitleButtons();
 
 function showRunHistory() {

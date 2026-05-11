@@ -24,6 +24,8 @@ const DEFAULTS = {
   daily_curse: '',       // one of CURSES keys (rolled per day)
   challenge_active: false,
   curses_cleared: 0,
+  lifetime_embers: 0,    // Glory — never-decreasing total
+  sfx_volume: 0.7,
 };
 
 export const CURSES = {
@@ -40,6 +42,12 @@ for (const k of Object.keys(DEFAULTS)) {
 }
 
 export function persist() { Save.save(State); }
+
+export function grantEmbers(amount) {
+  if (!amount || amount <= 0) return;
+  State.embers += amount;
+  State.lifetime_embers = (State.lifetime_embers || 0) + amount;
+}
 
 // ---- XP / leveling ----
 export function xpToNext() { return 20 + (State.hero_level - 1) * 15; }
@@ -74,7 +82,7 @@ export function processDailyLogin() {
   }
   State.last_login_day = day;
   const bonus = 1 + Math.min(6, Math.floor(State.login_streak / 2));
-  State.embers += bonus;
+  grantEmbers(bonus);
   // Roll the daily curse deterministically off the day number.
   const keys = Object.keys(CURSES);
   State.daily_curse = keys[day % keys.length];

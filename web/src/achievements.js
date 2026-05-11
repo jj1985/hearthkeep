@@ -1,4 +1,4 @@
-import { State, persist } from './state.js';
+import { State, persist, grantEmbers } from './state.js';
 
 export const ROWS = [
   { id: 'unlock_rogue',  label: 'Unlock Rogue (100 kills)',        reward: 2,
@@ -50,7 +50,7 @@ export function scanAndClaim() {
     }
   }
   if (total > 0) {
-    State.embers += total;
+    grantEmbers(total);
     persist();
   }
   return total;
