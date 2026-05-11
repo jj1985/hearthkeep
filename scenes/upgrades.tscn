@@ -46,6 +46,21 @@ horizontal_alignment = 1
 custom_minimum_size = Vector2(0, 44)
 text = "ACHIEVEMENTS"
 
+[node name="BestiaryToggle" type="Button" parent="V"]
+custom_minimum_size = Vector2(0, 44)
+text = "BESTIARY"
+
+[node name="BestiaryScroll" type="ScrollContainer" parent="V"]
+visible = false
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+custom_minimum_size = Vector2(0, 220)
+
+[node name="BestiaryRows" type="VBoxContainer" parent="V/BestiaryScroll"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 6
+
 [node name="AchScroll" type="ScrollContainer" parent="V"]
 visible = false
 size_flags_vertical = 3

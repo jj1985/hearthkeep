@@ -16,6 +16,7 @@ var dragonslayer: bool = false
 var hero_level: int = 1
 var hero_xp: int = 0
 var level_perks: Dictionary = {}  # perm_hp / perm_dmg / perm_atk / perm_gold / perm_range / perm_crit -> count
+var bestiary: Dictionary = {}     # monster_id -> first-encounter unix timestamp
 var buildings: Dictionary = {                # building_id -> tier (0..3)
     "stash": 1,
     "forge": 1,
@@ -54,6 +55,8 @@ var daily_quest: Dictionary = {}           # {target_id, target_count, progress,
 
 func tally_kill(monster_id: String) -> void:
     lifetime_kills_by_type[monster_id] = int(lifetime_kills_by_type.get(monster_id, 0)) + 1
+    if monster_id != "" and not bestiary.has(monster_id):
+        bestiary[monster_id] = int(Time.get_unix_time_from_system())
 
 func xp_to_next_level() -> int:
     return 20 + (hero_level - 1) * 15

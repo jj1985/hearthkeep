@@ -18,6 +18,10 @@ const UiStyle_ := preload("res://scripts/ui/ui_style.gd")
 @onready var btn_ach_toggle: Button = $V/AchToggle
 @onready var ach_scroll: ScrollContainer = $V/AchScroll
 @onready var ach_rows: VBoxContainer = $V/AchScroll/AchRows
+@onready var btn_bestiary_toggle: Button = $V/BestiaryToggle
+@onready var bestiary_scroll: ScrollContainer = $V/BestiaryScroll
+@onready var bestiary_rows: VBoxContainer = $V/BestiaryScroll/BestiaryRows
+const HordeArena := preload("res://scripts/incremental/horde_arena.gd")
 @onready var history_label: Label = $V/HistoryLabel
 @onready var top_runs_label: Label = $V/TopRunsLabel
 const Achievements := preload("res://scripts/incremental/achievements.gd")
@@ -39,6 +43,8 @@ func _ready() -> void:
     UiStyle_.apply_primary(btn_rebirth)
     btn_ach_toggle.pressed.connect(_on_ach_toggle)
     UiStyle_.apply_secondary(btn_ach_toggle)
+    btn_bestiary_toggle.pressed.connect(_on_bestiary_toggle)
+    UiStyle_.apply_secondary(btn_bestiary_toggle)
     var ach_pay: int = Achievements.scan_and_claim()
     if ach_pay > 0:
         SaveSystem.save()
@@ -152,6 +158,38 @@ func _on_jump(target_wave: int) -> void:
 func _on_ach_toggle() -> void:
     ach_scroll.visible = not ach_scroll.visible
     if ach_scroll.visible: _build_achievements()
+
+func _on_bestiary_toggle() -> void:
+    bestiary_scroll.visible = not bestiary_scroll.visible
+    if bestiary_scroll.visible: _build_bestiary()
+
+func _build_bestiary() -> void:
+    if bestiary_rows == null: return
+    for c in bestiary_rows.get_children(): c.queue_free()
+    var sorted_keys: Array = []
+    for k in HordeArena.ENEMY_TYPES.keys():
+        sorted_keys.append(String(k))
+    sorted_keys.sort()
+    for k in sorted_keys:
+        var def: Dictionary = HordeArena.ENEMY_TYPES[k]
+        var seen: bool = GameState.bestiary.has(k)
+        var n: int = int(GameState.lifetime_kills_by_type.get(k, 0))
+        var row := HBoxContainer.new()
+        row.theme_override_constants_separation = 8
+        var name_lbl := Label.new()
+        name_lbl.text = "%s %s" % [
+            "✓" if seen else "?",
+            String(def["label"]) if seen else "??????",
+        ]
+        name_lbl.size_flags_horizontal = 3
+        name_lbl.add_theme_color_override("font_color",
+            T.SUCCESS if seen else T.ON_SURFACE_DISABLED)
+        row.add_child(name_lbl)
+        var kills_lbl := Label.new()
+        kills_lbl.text = ("%d kills" % n) if seen else "—"
+        kills_lbl.add_theme_color_override("font_color", T.ON_SURFACE_MUTED)
+        row.add_child(kills_lbl)
+        bestiary_rows.add_child(row)
 
 func _build_achievements() -> void:
     if ach_rows == null: return
