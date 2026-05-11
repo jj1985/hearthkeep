@@ -95,6 +95,10 @@ var sunfire_pulse_t: float = 8.0
 var frenzy_charge: int = 0
 const FRENZY_CAP := 5
 
+# Class signature passives (warrior kill-rage stack, wizard chain counter).
+var warrior_rage: int = 0          # +0.5 dmg per stack until wave clear
+var wizard_hit_count: int = 0      # every 5th hit chains
+
 var companion_orbit_t: float = 0.0
 var companion_atk_t: float = 0.0
 const COMPANION_ATK_RATE := 1.0       # hits/sec
@@ -162,6 +166,8 @@ func _ready() -> void:
     rng.randomize()
     combo_peak = 0
     run_embers_earned = 0
+    warrior_rage = 0
+    wizard_hit_count = 0
     SaveSystem.load_save()
     # Run state is now restored by load_save (perks + wave + class loadout).
     # The title screen's NEW RUN handler resets HordeState/HordePerks before
@@ -638,6 +644,21 @@ func _hero_attack() -> void:
     _damage_enemy(best, dmg)
     _spawn_strike(best["node"].position + best["node"].size * 0.5)
     SfxBus.play("crit" if dmg > HERO_DAMAGE_BASE * 3 else "hit", -10.0)
+    # Wizard signature: every 5th hit chains to a second target.
+    if HordeState.primary == "wizard":
+        wizard_hit_count += 1
+        if wizard_hit_count % 5 == 0:
+            var second: Dictionary = {}
+            var second_d: float = _hero_range()
+            for e in enemies:
+                if e == best: continue
+                var n: Panel = e.get("node")
+                if n == null or not is_instance_valid(n): continue
+                var d2: float = (n.position + n.size * 0.5).distance_to(best["node"].position + best["node"].size * 0.5)
+                if d2 < second_d: second_d = d2; second = e
+            if not second.is_empty():
+                _damage_enemy(second, dmg)
+                _spawn_strike(second["node"].position + second["node"].size * 0.5)
 
 func _hero_damage() -> int:
     var d: int = HERO_DAMAGE_BASE
@@ -647,7 +668,10 @@ func _hero_damage() -> int:
     d += Upgrades.bonus_damage()
     d += int(round((GameState.hero_level - 1) * 0.5))
     d += int(GameState.level_perks.get("perm_dmg", 0))
+    if HordeState.primary == "warrior":
+        d += int(round(warrior_rage * 0.5))
     var f: float = float(d) * Upgrades.ember_damage_mult() * HordePerks.dmg_mult
+    if HordeState.primary == "bard": f *= 1.05  # Bard signature
     f *= 1.0 + GameState.rebirths * 0.25
     if GameState.dragonslayer: f *= 1.10
     var syn: Dictionary = Synergies.for_loadout(HordeState.primary, HordeState.secondary, HordeState.tertiary)
@@ -728,6 +752,12 @@ func _damage_enemy(e: Dictionary, amount: int) -> void:
         combo += 1
         combo_decay = COMBO_WINDOW
         if combo > combo_peak: combo_peak = combo
+        # Warrior signature: kills add a rage stack until wave-clear.
+        if HordeState.primary == "warrior":
+            warrior_rage = min(20, warrior_rage + 1)
+        # Necromancer signature: kills heal 1 HP.
+        if HordeState.primary == "necromancer":
+            HordeState.hero_hp = min(HordeState.hero_max_hp, HordeState.hero_hp + 1)
         var syn: Dictionary = Synergies.for_loadout(HordeState.primary, HordeState.secondary, HordeState.tertiary)
         var syn_gold: float = 1.0 + float(syn.get("gold_mult", 0.0)) if not syn.is_empty() else 1.0
         var perm_gold_mult: float = 1.0 + int(GameState.level_perks.get("perm_gold", 0)) * 0.05
@@ -803,6 +833,7 @@ func _on_player_strike() -> void:
 func _next_wave() -> void:
     HordeState.advance_wave()
     _log("Wave %d cleared" % HordeState.wave)
+    warrior_rage = 0
     wave_kills_progress = 0
     wave_kills_target = int(8 + HordeState.wave * 1.5)
     # Heal 25% on wave clear so the run isn't a death spiral.
@@ -1670,6 +1701,9 @@ func _on_quit() -> void:
 
 func _hero_take_damage(amount: int) -> void:
     if dead_screen_open: return
+    if HordeState.primary == "rogue" and rng.randf() < 0.05:
+        _floating_text("EVADE", hero.position + hero.size * 0.5, T.PRIMARY)
+        return
     HordeState.hero_hp = max(0, HordeState.hero_hp - amount)
     frenzy_charge = min(FRENZY_CAP, frenzy_charge + 1)
     _refresh_hud()
