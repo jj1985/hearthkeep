@@ -15,6 +15,7 @@ var defeated_dragons: Array[String] = []
 var dragonslayer: bool = false
 var hero_level: int = 1
 var hero_xp: int = 0
+var lifetime_embers_earned: int = 0  # "Glory" — never-decreasing total
 var level_perks: Dictionary = {}  # perm_hp / perm_dmg / perm_atk / perm_gold / perm_range / perm_crit -> count
 var bestiary: Dictionary = {}     # monster_id -> first-encounter unix timestamp
 var buildings: Dictionary = {                # building_id -> tier (0..3)
@@ -89,6 +90,8 @@ func add_gems(amount: int) -> void:
 
 func add_embers(amount: int) -> void:
     embers = max(0, embers + amount)
+    if amount > 0:
+        lifetime_embers_earned += amount
     EventBus.currency_changed.emit("embers", amount, embers)
 
 const RUN_HISTORY_CAP := 8

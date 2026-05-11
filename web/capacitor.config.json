@@ -1,0 +1,8 @@
+{
+  "appId": "com.hearthkeep.demo",
+  "appName": "Hearthkeep",
+  "webDir": ".",
+  "android": {
+    "allowMixedContent": false
+  }
+}

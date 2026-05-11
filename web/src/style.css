@@ -1,0 +1,38 @@
+:root {
+  --bg: #0b0a0f;
+  --surface: #15131c;
+  --surface-bright: #221f2c;
+  --primary: #d4a24c;
+  --secondary: #d4582c;
+  --tertiary: #5a8fb3;
+  --success: #6fa060;
+  --error: #a83232;
+  --warning: #c8a030;
+  --on-surface: #e8e2d2;
+  --muted: #a39a85;
+  --safe-top: env(safe-area-inset-top);
+  --safe-bot: env(safe-area-inset-bottom);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { width: 100%; height: 100%; background: var(--bg); color: var(--on-surface); font-family: system-ui, -apple-system, sans-serif; overflow: hidden; user-select: none; touch-action: manipulation; }
+#game { position: absolute; inset: 0; width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+#hud { position: absolute; inset: 0; pointer-events: none; padding: calc(8px + var(--safe-top)) 12px calc(8px + var(--safe-bot)); display: flex; flex-direction: column; gap: 8px; }
+#hud > * { pointer-events: auto; }
+#topbar { display: flex; flex-wrap: wrap; gap: 8px 14px; font-size: 13px; color: var(--on-surface); }
+#topbar span { background: rgba(34,31,44,0.7); padding: 4px 8px; border-radius: 8px; }
+#hpbar { height: 8px; background: rgba(0,0,0,0.5); border-radius: 4px; overflow: hidden; }
+#hpfill { height: 100%; background: linear-gradient(90deg, var(--error), var(--secondary)); width: 100%; transition: width 0.15s; }
+#combatlog { font-size: 11px; color: var(--muted); white-space: pre; flex: 1; overflow: hidden; }
+#bottombar { display: flex; gap: 8px; }
+#bottombar button { flex: 1; height: 56px; font-size: 14px; font-weight: 700; border: none; border-radius: 10px; background: var(--surface-bright); color: var(--on-surface); }
+#bottombar button:active { transform: scale(0.97); }
+#btn-strike { background: var(--primary) !important; color: #1a1208 !important; }
+#overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 10; }
+#overlay[hidden] { display: none; }
+#overlay-panel { background: var(--surface); border-radius: 16px; padding: 20px; max-width: 460px; width: 100%; }
+#overlay-title { font-size: 20px; color: var(--primary); margin-bottom: 8px; }
+#overlay-body { color: var(--muted); margin-bottom: 12px; white-space: pre-line; }
+#overlay-choices { display: flex; flex-direction: column; gap: 10px; }
+#overlay-choices button { padding: 14px; border-radius: 10px; border: none; background: var(--primary); color: #1a1208; font-weight: 700; font-size: 14px; cursor: pointer; }
+#overlay-choices button.secondary { background: var(--surface-bright); color: var(--on-surface); }
+.floater { position: absolute; pointer-events: none; font-weight: 700; font-size: 14px; transition: transform 0.6s ease-out, opacity 0.6s; }

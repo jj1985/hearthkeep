@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="theme-color" content="#0b0a0f">
+  <title>HEARTHKEEP</title>
+  <link rel="stylesheet" href="src/style.css">
+</head>
+<body>
+  <canvas id="game"></canvas>
+  <div id="hud">
+    <div id="topbar">
+      <span id="wave">WAVE 1</span>
+      <span id="kills">0 kills</span>
+      <span id="gold">0 g</span>
+      <span id="embers">0 🜂</span>
+      <span id="level">L1</span>
+    </div>
+    <div id="hpbar"><div id="hpfill"></div></div>
+    <div id="combatlog"></div>
+    <div id="bottombar">
+      <button id="btn-strike">STRIKE</button>
+      <button id="btn-skill">SKILL</button>
+      <button id="btn-pause">PAUSE</button>
+    </div>
+  </div>
+  <div id="overlay" hidden>
+    <div id="overlay-panel">
+      <h2 id="overlay-title"></h2>
+      <p id="overlay-body"></p>
+      <div id="overlay-choices"></div>
+    </div>
+  </div>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
