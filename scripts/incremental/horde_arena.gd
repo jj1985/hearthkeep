@@ -278,6 +278,11 @@ func _start_hero_pulse() -> void:
     var tw := create_tween().set_loops()
     tw.tween_property(hero, "modulate", Color(1.15, 1.15, 1.15, 1), 0.7)
     tw.tween_property(hero, "modulate", Color(1.0, 1.0, 1.0, 1), 0.7)
+    # Subtle vertical bob — anchored to the layout-time position.
+    var rest_y: float = hero.position.y
+    var bob := create_tween().set_loops()
+    bob.tween_property(hero, "position:y", rest_y - 2.0, 0.75).set_trans(Tween.TRANS_SINE)
+    bob.tween_property(hero, "position:y", rest_y, 0.75).set_trans(Tween.TRANS_SINE)
 
 func _hero_initials() -> String:
     var parts := [HordeState.primary]
