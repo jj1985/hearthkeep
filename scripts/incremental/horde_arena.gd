@@ -54,6 +54,7 @@ const HERO_RANGE := 220.0
 @onready var milestone_row_label: Label = $HUD/MilestoneRow/Label
 @onready var milestone_row_bar: ProgressBar = $HUD/MilestoneRow/Bar
 @onready var perk_row: HBoxContainer = $HUD/PerkRow
+@onready var xp_bar: ProgressBar = $HUD/XPBar
 @onready var combat_log: Label = $HUD/CombatLog
 @onready var overlay_scrim: ColorRect = $Overlay/Scrim
 @onready var overlay_flash: ColorRect = $Overlay/Flash
@@ -300,6 +301,9 @@ func _refresh_hud() -> void:
     hud_loadout.text = _loadout_text()
     hud_idle.text = "+%.1f g/s" % _idle_gold_per_sec()
     hud_embers.text = "%d ember  ·  L%d" % [GameState.embers, GameState.hero_level]
+    if xp_bar != null:
+        xp_bar.max_value = max(1, GameState.xp_to_next_level())
+        xp_bar.value = GameState.hero_xp
     hud_hp.max_value = max(1, HordeState.hero_max_hp)
     hud_hp.value = HordeState.hero_hp
     if combo > 1:

@@ -114,6 +114,15 @@ size_flags_horizontal = 3
 custom_minimum_size = Vector2(0, 10)
 show_percentage = false
 
+[node name="XPBar" type="ProgressBar" parent="HUD"]
+anchor_right = 1.0
+offset_left = 16.0
+offset_top = 82.0
+offset_right = -16.0
+offset_bottom = 90.0
+show_percentage = false
+custom_minimum_size = Vector2(0, 5)
+
 [node name="CombatLog" type="Label" parent="HUD"]
 anchor_right = 0.0
 anchor_bottom = 0.0
