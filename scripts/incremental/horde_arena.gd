@@ -825,6 +825,8 @@ func _next_wave() -> void:
     elif HordeState.wave % 7 == 0:
         if not _challenge_disables("spendthrift"):
             _open_merchant()
+    if HordeState.wave % 15 == 0:
+        _spawn_treasure_chest()
     if HordeState.wave == 50 and not bool(GameState.meta_unlocks.get("wave_50", false)):
         GameState.meta_unlocks["wave_50"] = true
         GameState.add_embers(25)
@@ -957,6 +959,50 @@ const POWERUPS := [
     {"id":"gold",   "label":"+50g",        "color": Color(0.85, 0.78, 0.45)},
     {"id":"haste",  "label":"+1 atk/s 8s", "color": Color(0.95, 0.55, 0.25)},
 ]
+
+func _spawn_treasure_chest() -> void:
+    var p := Panel.new()
+    p.custom_minimum_size = Vector2(28, 28)
+    p.size = Vector2(28, 28)
+    p.position = arena.size * 0.5 - Vector2(60, 60)
+    var sb := StyleBoxFlat.new()
+    sb.bg_color = Color(0.55, 0.40, 0.20)
+    sb.border_color = T.PRIMARY
+    sb.border_width_top = 3; sb.border_width_bottom = 3
+    sb.border_width_left = 3; sb.border_width_right = 3
+    sb.corner_radius_top_left = 4; sb.corner_radius_top_right = 4
+    sb.corner_radius_bottom_left = 4; sb.corner_radius_bottom_right = 4
+    p.add_theme_stylebox_override("panel", sb)
+    fx_layer.add_child(p)
+    var bob := create_tween().set_loops()
+    bob.tween_property(p, "position:y", p.position.y - 3.0, 0.5).set_trans(Tween.TRANS_SINE)
+    bob.tween_property(p, "position:y", p.position.y, 0.5).set_trans(Tween.TRANS_SINE)
+    var open_t := get_tree().create_timer(3.0, true, false, true)
+    open_t.timeout.connect(_open_treasure_chest.bind(p))
+
+func _open_treasure_chest(p: Panel) -> void:
+    if p == null or not is_instance_valid(p): return
+    var pos: Vector2 = p.position + p.size * 0.5
+    p.queue_free()
+    # Roll the reward
+    var roll: int = rng.randi_range(0, 99)
+    if roll < 60:
+        var gold: int = 150 + HordeState.wave * 10
+        GameState.add_gold(gold)
+        _floating_text("+%d gold" % gold, pos, T.PRIMARY)
+    elif roll < 90:
+        GameState.add_embers(3)
+        run_embers_earned += 3
+        _floating_text("+3 Embers", pos, T.SECONDARY)
+    else:
+        HordeState.hero_hp = HordeState.hero_max_hp
+        _floating_text("FULL HEAL", pos, T.SUCCESS)
+    _flash_screen(T.PRIMARY, 0.4, 0.3)
+    _shake(8)
+    SfxBus.play("chest_open", -3.0)
+    SfxBus.play("levelup", -4.0)
+    _refresh_hud()
+    SaveSystem.save()
 
 func _drop_powerup(pos: Vector2) -> void:
     var pick: Dictionary = POWERUPS[rng.randi_range(0, POWERUPS.size() - 1)]
