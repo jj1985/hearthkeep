@@ -881,11 +881,14 @@ export class Game {
       ctx.stroke();
     }
 
-    // hero
-    const hr = 22;
+    // hero — subtle idle bob + breathing pulse
+    const bob = Math.sin(performance.now() / 350) * 2;
+    const pulse = 1 + 0.06 * Math.sin(performance.now() / 700);
+    const hr = 22 * pulse;
+    const hy = this.heroPos.y + bob;
     ctx.fillStyle = CLASS_COLOR[this.primaryClass] || '#d4a24c';
     ctx.beginPath();
-    ctx.arc(this.heroPos.x, this.heroPos.y, hr, 0, Math.PI * 2);
+    ctx.arc(this.heroPos.x, hy, hr, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = '#fff';
     ctx.lineWidth = 2;
@@ -894,7 +897,7 @@ export class Game {
     ctx.font = 'bold 16px system-ui';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(this.primaryClass[0].toUpperCase(), this.heroPos.x, this.heroPos.y);
+    ctx.fillText(this.primaryClass[0].toUpperCase(), this.heroPos.x, hy);
 
     // chest
     if (this.chest) {

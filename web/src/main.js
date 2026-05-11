@@ -1,4 +1,4 @@
-import { Game } from './game.js';
+import { Game, zoneForWave } from './game.js';
 import { State, persist, processDailyLogin, rebirth, canRebirth } from './state.js';
 import { rollPerks, applyPerk } from './perks.js';
 import { UPGRADES, rank, cost, canBuy, buy } from './upgrades.js';
@@ -280,9 +280,10 @@ const statusrow = document.getElementById('statusrow');
 function refreshHud() {
   if (!game || canvas.hidden) return;
   const c = game.combo;
+  const z = zoneForWave(game.wave).name;
   wave.textContent = c > 1
-    ? `WAVE ${game.wave}  ·  x${c} (${game.comboMult().toFixed(2)}×)`
-    : `WAVE ${game.wave}`;
+    ? `WAVE ${game.wave} · ${z} · x${c} (${game.comboMult().toFixed(2)}×)`
+    : `WAVE ${game.wave} · ${z}`;
   kills.textContent = `${State.lifetime_kills} kills`;
   gold.textContent = `${State.gold} g`;
   embers.textContent = `${State.embers} 🜂`;
