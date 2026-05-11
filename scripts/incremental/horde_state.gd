@@ -36,6 +36,7 @@ func max_hp() -> int:
     var hp := HERO_HP_BASE
     hp += GameState.deepest_floor / 2
     hp += GameState.hero_level - 1
+    hp += int(GameState.level_perks.get("perm_hp", 0)) * 5
     if secondary != "": hp += 15
     if tertiary != "": hp += 20
     if GameState.challenge_active and GameState.daily_curse == "glass_cannon":

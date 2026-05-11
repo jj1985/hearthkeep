@@ -21,6 +21,7 @@ func save() -> void:
         "dragonslayer": GameState.dragonslayer,
         "hero_level": GameState.hero_level,
         "hero_xp": GameState.hero_xp,
+        "level_perks": GameState.level_perks,
         "buildings": GameState.buildings,
         "meta_unlocks": GameState.meta_unlocks,
         "run_count": GameState.run_count,
@@ -82,6 +83,7 @@ func load_save() -> bool:
     GameState.dragonslayer = bool(d.get("dragonslayer", false))
     GameState.hero_level = int(d.get("hero_level", 1))
     GameState.hero_xp = int(d.get("hero_xp", 0))
+    GameState.level_perks = d.get("level_perks", {})
     GameState.buildings = d.get("buildings", GameState.buildings)
     GameState.meta_unlocks = d.get("meta_unlocks", GameState.meta_unlocks)
     GameState.run_count = int(d.get("run_count", 0))

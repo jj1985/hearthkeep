@@ -575,25 +575,28 @@ func _hero_damage() -> int:
     d += HordeState.wave / 2
     d += Upgrades.bonus_damage()
     d += int(round((GameState.hero_level - 1) * 0.5))
+    d += int(GameState.level_perks.get("perm_dmg", 0))
     var f: float = float(d) * Upgrades.ember_damage_mult() * HordePerks.dmg_mult
     f *= 1.0 + GameState.rebirths * 0.25
     if GameState.dragonslayer: f *= 1.10
     var syn: Dictionary = Synergies.for_loadout(HordeState.primary, HordeState.secondary, HordeState.tertiary)
     if not syn.is_empty(): f *= 1.0 + float(syn.get("dmg_mult", 0.0))
     if _temp_dmg_active(): f *= 1.5
-    if rng.randf() < (Upgrades.crit_chance() + HordePerks.crit_bonus):
+    var perm_crit: float = int(GameState.level_perks.get("perm_crit", 0)) * 0.02
+    if rng.randf() < (Upgrades.crit_chance() + HordePerks.crit_bonus + perm_crit):
         f *= 2.0
     return int(round(f))
 
 func _hero_atk_rate() -> float:
     var r := HERO_ATTACK_RATE + Upgrades.bonus_atk_speed() + HordePerks.atk_speed_bonus
+    r += float(GameState.level_perks.get("perm_atk", 0)) * 0.1
     var syn: Dictionary = Synergies.for_loadout(HordeState.primary, HordeState.secondary, HordeState.tertiary)
     if not syn.is_empty(): r += float(syn.get("atk_speed_bonus", 0.0))
     if _temp_atk_active(): r += 1.0
     return r
 
 func _hero_range() -> float:
-    return HERO_RANGE + Upgrades.bonus_range() + HordePerks.range_bonus
+    return HERO_RANGE + Upgrades.bonus_range() + HordePerks.range_bonus + float(GameState.level_perks.get("perm_range", 0)) * 10.0
 
 func _damage_enemy(e: Dictionary, amount: int) -> void:
     # Airborne dragon ignores hits entirely.
@@ -637,10 +640,11 @@ func _damage_enemy(e: Dictionary, amount: int) -> void:
         if combo > combo_peak: combo_peak = combo
         var syn: Dictionary = Synergies.for_loadout(HordeState.primary, HordeState.secondary, HordeState.tertiary)
         var syn_gold: float = 1.0 + float(syn.get("gold_mult", 0.0)) if not syn.is_empty() else 1.0
+        var perm_gold_mult: float = 1.0 + int(GameState.level_perks.get("perm_gold", 0)) * 0.05
         var gold_amt: int = int(round(int(e.get("gold", 1))
             * Upgrades.ember_gold_mult() * HordePerks.gold_mult * _combo_mult()
             * (1.0 + GameState.rebirths * 0.25)
-            * _challenge_reward_mult() * syn_gold))
+            * _challenge_reward_mult() * syn_gold * perm_gold_mult))
         HordeState.record_kill(String(e.get("id", "skeleton")), gold_amt)
         _pop(hud_kills); _pop(hud_gold)
         if bool(e.get("mythic", false)):
@@ -1116,6 +1120,15 @@ func _boss_burst(pos: Vector2) -> void:
 func _on_milestone(_id: String, label: String) -> void:
     _show_milestone_toast(label)
 
+const LEVEL_PERK_CHOICES := [
+    {"id":"perm_hp",    "label":"Iron Body",   "desc":"+5 max HP."},
+    {"id":"perm_dmg",   "label":"Sharpened",   "desc":"+1 damage."},
+    {"id":"perm_atk",   "label":"Quickened",   "desc":"+0.1 atk/sec."},
+    {"id":"perm_gold",  "label":"Coinhand",    "desc":"+5%% gold drops."},
+    {"id":"perm_range", "label":"Longarm",     "desc":"+10 range."},
+    {"id":"perm_crit",  "label":"Keen Eye",    "desc":"+2%% crit chance."},
+]
+
 func _on_hero_leveled(new_level: int) -> void:
     _floating_text("LEVEL %d" % new_level, hero.position + hero.size * 0.5, T.PRIMARY)
     _flash_screen(T.PRIMARY, 0.18, 0.18)
@@ -1125,6 +1138,39 @@ func _on_hero_leveled(new_level: int) -> void:
     HordeState.hero_hp = min(HordeState.hero_max_hp, HordeState.hero_hp + 10)
     _refresh_hud()
     _log("Level %d" % new_level)
+    if new_level % 5 == 0:
+        _open_level_perk_picker(new_level)
+
+func _open_level_perk_picker(level: int) -> void:
+    var pool: Array = LEVEL_PERK_CHOICES.duplicate()
+    pool.shuffle()
+    var picks: Array = pool.slice(0, 3)
+    milestone_title.text = "Level %d — pick a permanent boost" % level
+    milestone_body.text = "Carry it across runs and rebirths."
+    for c in milestone_choices.get_children():
+        c.queue_free()
+    for p in picks:
+        var d: Dictionary = p
+        var b := Button.new()
+        b.text = "%s — %s" % [String(d["label"]),
+            String(d["desc"]).replace("%%", "%")]
+        b.custom_minimum_size = Vector2(0, 64)
+        UiStyle_.apply_primary(b)
+        b.pressed.connect(_on_level_perk_chosen.bind(d))
+        milestone_choices.add_child(b)
+    paused_for_milestone = true
+    milestone_overlay.visible = true
+    overlay_scrim.visible = true
+
+func _on_level_perk_chosen(perk: Dictionary) -> void:
+    var id: String = String(perk["id"])
+    GameState.level_perks[id] = int(GameState.level_perks.get(id, 0)) + 1
+    SaveSystem.save()
+    _floating_text("✦ %s" % String(perk["label"]),
+        Vector2(arena.size.x * 0.5 - 80, 100), T.PRIMARY)
+    HordeState.hero_max_hp = HordeState.max_hp()
+    _refresh_hud()
+    _close_milestone()
 
 func _on_class_unlocked(class_id: String) -> void:
     _show_milestone_toast("%s class unlocked" % class_id.capitalize())

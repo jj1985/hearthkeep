@@ -15,6 +15,7 @@ var defeated_dragons: Array[String] = []
 var dragonslayer: bool = false
 var hero_level: int = 1
 var hero_xp: int = 0
+var level_perks: Dictionary = {}  # perm_hp / perm_dmg / perm_atk / perm_gold / perm_range / perm_crit -> count
 var buildings: Dictionary = {                # building_id -> tier (0..3)
     "stash": 1,
     "forge": 1,
