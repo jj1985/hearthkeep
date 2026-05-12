@@ -6,6 +6,7 @@ import { Sfx } from './sfx.js';
 import { Music } from './music.js';
 import * as Trinkets from './trinkets.js';
 import { scanAndClaimVerbose } from './achievements.js';
+import { Quests } from './quests.js';
 
 const CLASS_COLOR = {
   warrior: '#d9892e',
@@ -111,6 +112,7 @@ export class Game {
     this.runStartT = performance.now();
     this.revivesUsed = 0;
     this.preRunBestWave = State.best_wave || 0;
+    this.quests = new Quests();
     this.speedrun = false;
     this.speedrunDone = false;
     this.hardcore = false;
@@ -815,12 +817,18 @@ export class Game {
       this.combo++;
       this.comboDecay = 1.5;
       if (this.combo > this.comboPeak) this.comboPeak = this.combo;
+      this._questTick('combo', this.combo);
       if (this.primaryClass === 'warrior') this.warriorRage = Math.min(20, this.warriorRage + 1);
       if (this.primaryClass === 'necromancer') this.heroHp = Math.min(this.heroMaxHp, this.heroHp + 2);
     }
     State.lifetime_kills++;
     this.killsThisRun++;
     this.killsByType[e.id] = (this.killsByType[e.id] || 0) + 1;
+    if (byPlayer) {
+      this._questTick('kills', 1);
+      if (e.mythic) this._questTick('mythics', 1);
+      if (e.boss) this._questTick('bosses', 1);
+    }
     const ups = grantXp(1);
     if (ups > 0) {
       this.floater(`LEVEL ${State.hero_level}`, this.heroPos.x, this.heroPos.y - 20, '#d4a24c');
@@ -953,6 +961,7 @@ export class Game {
     this.waveKillsTarget = Math.floor(8 + this.wave * 1.5);
     if (this.wave > State.best_wave) State.best_wave = this.wave;
     if (this.hardcore && this.wave > (State.hardcore_best_wave || 0)) State.hardcore_best_wave = this.wave;
+    this._questTick('wave', this.wave);
     // Live achievement scan — banner each one as it fires.
     const fired = scanAndClaimVerbose();
     for (const r of fired) {
@@ -1159,7 +1168,17 @@ export class Game {
       }
       this.shakeMag = 14;
       this.chest = null;
+      this._questTick('chests', 1);
       persist();
+    }
+  }
+
+  _questTick(metric, value) {
+    const fired = this.quests.tick(metric, value);
+    for (const q of fired) {
+      this.banner = { text: `Quest: ${q.label}  +${q.gold}g +${q.ember}🜂`, color: '#d4a24c', t: 2.6, t0: 2.6 };
+      this.runEmbersEarned += q.ember;
+      this.log(`Quest complete: ${q.label}`);
     }
   }
 

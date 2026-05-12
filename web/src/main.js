@@ -485,6 +485,9 @@ document.getElementById('btn-pause').addEventListener('click', () => {
       `Range: ${Math.round(game.heroRange())}   ·   Crit: ${Math.round((game.critBonus + 0) * 100)}%`,
       `Gold mult: ${(game.goldMult * game.rebirthBonus * (1 + (State.level_perks?.perm_gold || 0) * 0.05) * game.challengeBonus()).toFixed(2)}×`,
       game.synergy ? (game.synergy()?.label ? `Synergy: ${game.synergy().label}` : '') : '',
+      '',
+      'QUESTS',
+      game.quests ? game.quests.summary() : '',
     ].filter(Boolean).join('\n');
     showOverlay('Paused', stats, [
       { label: 'Resume', cls: '', cb: () => { game.paused = false; hideOverlay(); } },
