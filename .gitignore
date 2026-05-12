@@ -31,3 +31,9 @@ data_*/
 
 # Logs
 *.log
+
+# Web build artifacts
+web/node_modules/
+web/android/
+web/dist/
+web/Hearthkeep-*.apk

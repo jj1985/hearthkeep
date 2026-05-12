@@ -10,17 +10,28 @@ python3 -m http.server 8000
 # open http://localhost:8000
 ```
 
-## Build an APK (one-time setup)
+## Build an APK
 
 ```bash
-cd web
-npm install
-npx cap add android
-npx cap sync android
-npx cap open android      # opens Android Studio — Build → APK
+bash web/build-apk.sh
+# produces web/Hearthkeep-web-debug.apk (~3.8 MB)
 ```
 
-After that, iterate with: edit JS → `npx cap sync android` → rebuild in Android Studio.
+The script:
+1. Stages assets into `web/dist/`
+2. `npm install` if needed
+3. `npx cap add android` if needed
+4. `npx cap sync android`
+5. `./gradlew assembleDebug` and copies the APK back out
+
+Required tools (Homebrew on macOS):
+```bash
+brew install --cask zulu@17       # or any openjdk@17
+brew install --cask android-commandlinetools
+```
+
+After first build, iterate with: edit JS → `bash web/build-apk.sh` (it
+keeps `node_modules` + `android/` between runs).
 
 ## Files
 

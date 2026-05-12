@@ -1,7 +1,7 @@
 {
   "appId": "com.hearthkeep.demo",
   "appName": "Hearthkeep",
-  "webDir": ".",
+  "webDir": "dist",
   "android": {
     "allowMixedContent": false
   }
