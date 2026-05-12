@@ -26,7 +26,51 @@ const DEFAULTS = {
   curses_cleared: 0,
   lifetime_embers: 0,    // Glory — never-decreasing total
   sfx_volume: 0.7,
+  weekly: null,          // {week, target, kind, progress, reward, claimed}
 };
+
+const WEEKLY_MISSIONS = [
+  { kind: 'wave',     target: 30, reward: 30, label: 'Reach wave 30 in one run' },
+  { kind: 'kills',    target: 500, reward: 25, label: 'Get 500 kills in a single run' },
+  { kind: 'bosses',   target: 3,  reward: 30, label: 'Fell 3 bosses in a single run' },
+  { kind: 'embers',   target: 50, reward: 30, label: 'Bank 50 Embers this week' },
+  { kind: 'rebirths', target: 1,  reward: 50, label: 'Earn one Rebirth Mark' },
+];
+
+export function processWeekly() {
+  const week = Math.floor(Date.now() / (7 * 86400000));
+  if (!State.weekly || State.weekly.week !== week) {
+    const m = WEEKLY_MISSIONS[week % WEEKLY_MISSIONS.length];
+    State.weekly = { week, ...m, progress: 0, claimed: false };
+    persist();
+    return State.weekly;
+  }
+  return State.weekly;
+}
+
+// Called whenever a metric that might satisfy the weekly progresses.
+// `metric` = 'wave' | 'kills' | 'bosses' | 'embers' | 'rebirths'
+export function tickWeekly(metric, runValue) {
+  const w = State.weekly;
+  if (!w || w.kind !== metric || w.claimed) return false;
+  // Track "best in window" for wave/kills/bosses (single-run snapshots).
+  // For embers + rebirths, accumulate via current totals since week start.
+  if (metric === 'wave' || metric === 'kills' || metric === 'bosses') {
+    if (runValue > w.progress) w.progress = runValue;
+  } else if (metric === 'embers') {
+    if (State.embers > w.progress) w.progress = State.embers;
+  } else if (metric === 'rebirths') {
+    w.progress = State.rebirths;
+  }
+  if (w.progress >= w.target) {
+    w.claimed = true;
+    grantEmbers(w.reward);
+    persist();
+    return true;
+  }
+  persist();
+  return false;
+}
 
 export const CURSES = {
   bare_hands:   { label: 'Bare Hands',   desc: 'SKILL is disabled.' },

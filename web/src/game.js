@@ -1,8 +1,9 @@
 // HTML5 horde arena — canvas renderer, ECS-lite update loop.
-import { State, persist, grantXp, checkKillMilestones, recordRun, grantEmbers } from './state.js';
+import { State, persist, grantXp, checkKillMilestones, recordRun, grantEmbers, tickWeekly } from './state.js';
 import { bonusDamage, bonusAtk, bonusRange, bonusHp, bonusCrit } from './upgrades.js';
 import { synergyFor } from './synergies.js';
 import { Sfx } from './sfx.js';
+import { Music } from './music.js';
 
 const CLASS_COLOR = {
   warrior: '#d9892e',
@@ -407,6 +408,7 @@ export class Game {
       phase: '', phaseT: 0, phaseCd: 4.0, phaseCount: 0, alpha: 1,
     });
     this.floater(`${def.label} appears!`, this.size.w / 2 - 80, 80, '#d4582c');
+    Music.setIntensity(1);
   }
 
   _bossPhaseTick(e, dt) {
@@ -631,10 +633,14 @@ export class Game {
     if (e.mythic) this._dropPowerup(e.x, e.y);
     if (e.boss) {
       Sfx.boss();
+      Music.setIntensity(0);
       const ember = Math.round((1 + Math.floor(this.wave / 10)) * this.challengeBonus());
       grantEmbers(ember);
       this.runEmbersEarned += ember;
       State.bosses_felled++;
+      this._bossesThisRun = (this._bossesThisRun || 0) + 1;
+      tickWeekly('bosses', this._bossesThisRun);
+      tickWeekly('embers', 0);
       this.floater(`+${ember} Ember`, e.x, e.y, '#d4582c');
       this.shakeMag = 30;
       this._burst(e.x, e.y);
@@ -711,6 +717,8 @@ export class Game {
     this.waveKillsProgress = 0;
     this.waveKillsTarget = Math.floor(8 + this.wave * 1.5);
     if (this.wave > State.best_wave) State.best_wave = this.wave;
+    tickWeekly('wave', this.wave);
+    tickWeekly('kills', this.killsThisRun);
     this.heroHp = Math.min(this.heroMaxHp, this.heroHp + Math.floor(this.heroMaxHp / 4));
     const bonus = Math.round((5 + this.wave * this.wave) * this.waveBonusMult);
     State.gold += bonus;

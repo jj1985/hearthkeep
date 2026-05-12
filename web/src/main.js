@@ -1,10 +1,11 @@
 import { Game, zoneForWave } from './game.js';
-import { State, persist, processDailyLogin, rebirth, canRebirth, grantEmbers } from './state.js';
+import { State, persist, processDailyLogin, rebirth, canRebirth, grantEmbers, processWeekly } from './state.js';
 import { rollPerks, applyPerk } from './perks.js';
 import { UPGRADES, rank, cost, canBuy, buy } from './upgrades.js';
 import * as Ach from './achievements.js';
 import { CURSES } from './state.js';
 import { setMuted, isMuted } from './sfx.js';
+import { setMusicMuted, Music } from './music.js';
 
 const canvas = document.getElementById('game');
 const hud = document.getElementById('hud');
@@ -78,6 +79,12 @@ function refreshTitle() {
   }
   if (State.dragonslayer) lines.push(`⚔ Dragonslayer  ·  permanent +10% damage`);
   if (State.curses_cleared > 0) lines.push(`Curses cleared: ${State.curses_cleared}`);
+  // Weekly mission line
+  const w = processWeekly();
+  if (w) {
+    const mark = w.claimed ? '✓' : '○';
+    lines.push(`${mark} Weekly: ${w.label}  (${w.progress}/${w.target}, +${w.reward}🜂)`);
+  }
   if (State.rebirths > 0) lines.push(`✦ Mark ${State.rebirths}  ·  +${State.rebirths * 25}% dmg + gold`);
   if (State.best_wave > 0) lines.push(`Best wave: ${State.best_wave}`);
   if (State.bosses_felled > 0) lines.push(`Bosses felled: ${State.bosses_felled}`);
@@ -463,18 +470,19 @@ function showSettings() {
     const muted = isMuted();
     const choices = [
       {
-        label: `SFX Volume: ${Math.round((State.sfx_volume || 0) * 100)}%`,
+        label: `Volume: ${Math.round((State.sfx_volume || 0) * 100)}%`,
         cls: 'secondary',
         cb: () => {
           State.sfx_volume = nextVol(State.sfx_volume || 0);
           persist();
+          Music.updateGain();
           rebuild();
         },
       },
       {
         label: muted ? 'Audio: MUTED' : 'Audio: ON',
         cls: 'secondary',
-        cb: () => { setMuted(!isMuted()); rebuild(); },
+        cb: () => { const m = !isMuted(); setMuted(m); setMusicMuted(m); rebuild(); },
       },
       {
         label: 'Reset save (DANGER)',
