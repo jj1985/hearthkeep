@@ -43,7 +43,12 @@ find android -name "*.import" -delete 2>/dev/null || true
 
 cd android
 echo "[apk] gradle assembleDebug"
-./gradlew assembleDebug --no-daemon -q
+attempt() { ./gradlew assembleDebug --no-daemon -q; }
+if ! attempt; then
+  echo "[apk] gradle failed; scrubbing .import files and retrying once"
+  find . -name "*.import" -delete 2>/dev/null || true
+  attempt
+fi
 
 cd ..
 APK="android/app/build/outputs/apk/debug/app-debug.apk"
