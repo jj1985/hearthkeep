@@ -127,6 +127,7 @@ export class Game {
     this.timeScaleEndAt = 0;
     this.banner = null;     // { text, color, t, t0 }
     this.lastCritted = false;
+    this.heroThrust = { x: 0, y: 0, t: 0 }; // animated push toward last target
     // Perk accumulators (per-run)
     this.takenPerks = new Set();
     this.onBossBoon = null;     // fn(picks, applyCb)
@@ -430,6 +431,10 @@ export class Game {
     if (this.shakeMag > 0) this.shakeMag = Math.max(0, this.shakeMag - 80 * dt);
     if (this.flash > 0) this.flash = Math.max(0, this.flash - 4 * dt);
     if (this.banner) { this.banner.t -= dt; if (this.banner.t <= 0) this.banner = null; }
+    if (this.heroThrust.t > 0) {
+      this.heroThrust.t -= dt;
+      if (this.heroThrust.t <= 0) { this.heroThrust.x = 0; this.heroThrust.y = 0; this.heroThrust.t = 0; }
+    }
 
     this._tickWeather(dt);
     this._tickChest(dt);
@@ -599,6 +604,11 @@ export class Game {
     }
     if (!best) return;
     const dmg = this.heroDmg();
+    // Animate hero thrust toward the target.
+    const dxh = best.x - this.heroPos.x;
+    const dyh = best.y - this.heroPos.y;
+    const dn = Math.hypot(dxh, dyh) || 1;
+    this.heroThrust = { x: (dxh / dn) * 8, y: (dyh / dn) * 8, t: 0.15 };
     this._damageEnemy(best, dmg);
     this._spawnStrike(best.x, best.y);
     Sfx.hit();
@@ -1241,36 +1251,37 @@ export class Game {
     const pulse = 1 + 0.06 * Math.sin(performance.now() / 700);
     const lvlGrow = 1 + Math.min(0.4, (State.hero_level - 1) * 0.012);
     const hr = 22 * pulse * lvlGrow;
-    const hy = this.heroPos.y + bob;
+    const hx = this.heroPos.x + this.heroThrust.x;
+    const hy = this.heroPos.y + bob + this.heroThrust.y;
     // Hero shadow (soft ellipse below)
     ctx.fillStyle = 'rgba(0,0,0,0.35)';
     ctx.beginPath();
-    ctx.ellipse(this.heroPos.x, hy + hr + 4, hr * 0.95, hr * 0.42, 0, 0, Math.PI * 2);
+    ctx.ellipse(hx, hy + hr + 4, hr * 0.95, hr * 0.42, 0, 0, Math.PI * 2);
     ctx.fill();
 
     // Combo halo — radial gradient that grows with stack count.
     if (this.combo > 1) {
       const haloR = hr + 8 + Math.min(this.combo, 30) * 1.5;
       const cclr = CLASS_COLOR[this.primaryClass] || '#d4a24c';
-      const grad = ctx.createRadialGradient(this.heroPos.x, hy, hr, this.heroPos.x, hy, haloR);
+      const grad = ctx.createRadialGradient(hx, hy, hr, hx, hy, haloR);
       grad.addColorStop(0, cclr + '88');
       grad.addColorStop(1, cclr + '00');
       ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.arc(this.heroPos.x, hy, haloR, 0, Math.PI * 2);
+      ctx.arc(hx, hy, haloR, 0, Math.PI * 2);
       ctx.fill();
     }
     ctx.fillStyle = CLASS_COLOR[this.primaryClass] || '#d4a24c';
     ctx.strokeStyle = '#fff';
     ctx.lineWidth = 2;
-    this._drawHeroShape(this.heroPos.x, hy, hr);
+    this._drawHeroShape(hx, hy, hr);
     ctx.fill();
     ctx.stroke();
     ctx.fillStyle = '#1a1208';
     ctx.font = 'bold 16px system-ui';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(this.primaryClass[0].toUpperCase(), this.heroPos.x, hy);
+    ctx.fillText(this.primaryClass[0].toUpperCase(), hx, hy);
     // Wave-progress ring: fills clockwise as kills approach target.
     const frac = Math.max(0, Math.min(1, this.waveKillsProgress / Math.max(1, this.waveKillsTarget)));
     if (frac > 0) {
@@ -1278,7 +1289,7 @@ export class Game {
       ctx.strokeStyle = 'rgba(212, 162, 76, 0.85)';
       ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.arc(this.heroPos.x, hy, rR, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * frac);
+      ctx.arc(hx, hy, rR, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * frac);
       ctx.stroke();
     }
 
@@ -1304,6 +1315,34 @@ export class Game {
       ctx.textAlign = 'center';
       ctx.fillText(`INCOMING: ${this.bossWarn.label}  ${this.bossWarn.t.toFixed(1)}s`,
         this.size.w / 2, 110);
+    }
+
+    // Boss HP bar at the top of the arena (largest live boss).
+    let boss = null;
+    for (const e of this.enemies) {
+      if (e.dead || !e.boss) continue;
+      if (!boss || e.maxHp > boss.maxHp) boss = e;
+    }
+    if (boss) {
+      const bw = Math.min(540, w - 32);
+      const bx = (w - bw) / 2;
+      const by = 76;
+      ctx.fillStyle = 'rgba(0,0,0,0.55)';
+      ctx.fillRect(bx - 2, by - 2, bw + 4, 16);
+      ctx.fillStyle = '#222';
+      ctx.fillRect(bx, by, bw, 12);
+      const bfrac = Math.max(0, boss.hp / boss.maxHp);
+      const grad = ctx.createLinearGradient(bx, 0, bx + bw, 0);
+      grad.addColorStop(0, '#d4582c');
+      grad.addColorStop(1, '#d4a24c');
+      ctx.fillStyle = grad;
+      ctx.fillRect(bx, by, bw * bfrac, 12);
+      ctx.fillStyle = '#e8e2d2';
+      ctx.font = 'bold 12px system-ui';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`${boss.label}  ·  ${Math.max(0, Math.round(boss.hp))} / ${boss.maxHp}`,
+        w / 2, by + 6);
     }
 
     // Wave-clear banner — slides in from top, holds, fades.
