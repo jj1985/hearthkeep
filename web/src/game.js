@@ -35,6 +35,8 @@ const ENEMY_TYPES = {
   archer:     { label: 'Archer',     color: '#b3d966', hp: 25,  speed: 50,  gold: 6,  size: 18, minWave: 11, ranged: true },
   shaman:     { label: 'Shaman',     color: '#73d98c', hp: 50,  speed: 60,  gold: 16, size: 20, minWave: 18, heals: true },
   summoner:   { label: 'Summoner',   color: '#b380d9', hp: 70,  speed: 45,  gold: 18, size: 22, minWave: 22, summons: true },
+  spider:     { label: 'Spider',     color: '#73a039', hp: 18,  speed: 140, gold: 4,  size: 16, minWave: 7  },
+  witch:      { label: 'Witch',      color: '#c266c2', hp: 80,  speed: 75,  gold: 22, size: 22, minWave: 24, ranged: true },
 };
 
 const ZONES = [
@@ -149,6 +151,33 @@ export class Game {
     this.ctx.setTransform(r, 0, 0, r, 0, 0);
     this.size = { w, h };
     this.heroPos = { x: w / 2, y: h / 2 + 30 };
+  }
+
+  _drawHeroShape(x, y, r) {
+    const ctx = this.ctx;
+    const k = this.primaryClass;
+    ctx.beginPath();
+    let sides = 0, rot = 0;
+    switch (k) {
+      case 'warrior':     sides = 4; rot = Math.PI / 4;       break; // square (diamond rotated)
+      case 'rogue':       sides = 3; rot = -Math.PI / 2;      break; // triangle, point up
+      case 'wizard':      sides = 4; rot = 0;                 break; // diamond (rotated square)
+      case 'necromancer': sides = 6; rot = 0;                 break; // hexagon
+      case 'bard':        sides = 5; rot = -Math.PI / 2;      break; // pentagon
+      default:            sides = 0;                          break; // circle
+    }
+    if (sides === 0) {
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      return;
+    }
+    for (let i = 0; i < sides; i++) {
+      const a = rot + (Math.PI * 2 * i) / sides;
+      const px = x + Math.cos(a) * r;
+      const py = y + Math.sin(a) * r;
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
   }
 
   classMul(stat) {
@@ -1143,11 +1172,10 @@ export class Game {
       ctx.fill();
     }
     ctx.fillStyle = CLASS_COLOR[this.primaryClass] || '#d4a24c';
-    ctx.beginPath();
-    ctx.arc(this.heroPos.x, hy, hr, 0, Math.PI * 2);
-    ctx.fill();
     ctx.strokeStyle = '#fff';
     ctx.lineWidth = 2;
+    this._drawHeroShape(this.heroPos.x, hy, hr);
+    ctx.fill();
     ctx.stroke();
     ctx.fillStyle = '#1a1208';
     ctx.font = 'bold 16px system-ui';
