@@ -49,11 +49,11 @@ function hideOverlay() { overlay.hidden = true; }
 
 // --- Title scene ---
 const PASSIVE_DESC = {
-  warrior:     'Rage on kill — stacks until wave clear',
-  rogue:       '5% innate dodge, SKILL full heal',
-  wizard:      'Every 5th hit chains, SKILL fireball',
-  necromancer: 'Kills heal 1 HP, SKILL cleave',
-  bard:        '+5% global damage, SKILL cleave',
+  warrior:     'Rage on kill; +15% dmg, +20% HP, slow swing',
+  rogue:       'Innate dodge; +20% atk speed, frail',
+  wizard:      'Chain hits; +25% dmg, +20% range, fragile',
+  necromancer: 'Kills heal; balanced stats',
+  bard:        '+5% global dmg; +10% atk + HP + range',
 };
 
 const TIPS = [

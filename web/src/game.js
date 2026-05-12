@@ -14,6 +14,15 @@ const CLASS_COLOR = {
   bard: '#d4a4cc',
 };
 
+// Per-class stat-profile multipliers. Skewed so each class plays differently.
+const CLASS_STATS = {
+  warrior:     { dmg: 1.15, atk: 0.95, hp: 1.20, range: 0.90 },
+  rogue:       { dmg: 1.00, atk: 1.20, hp: 0.95, range: 1.00 },
+  wizard:      { dmg: 1.25, atk: 0.85, hp: 0.85, range: 1.20 },
+  necromancer: { dmg: 1.05, atk: 1.00, hp: 1.05, range: 1.05 },
+  bard:        { dmg: 0.95, atk: 1.10, hp: 1.10, range: 1.10 },
+};
+
 const ENEMY_TYPES = {
   skeleton:   { label: 'Skeleton',   color: '#ddd5b5', hp: 6,   speed: 70,  gold: 1, size: 18, minWave: 1 },
   goblin:     { label: 'Goblin',     color: '#73c059', hp: 10,  speed: 95,  gold: 2, size: 18, minWave: 3 },
@@ -138,13 +147,18 @@ export class Game {
     this.heroPos = { x: w / 2, y: h / 2 + 30 };
   }
 
+  classMul(stat) {
+    const p = CLASS_STATS[this.primaryClass] || CLASS_STATS.warrior;
+    return p[stat] ?? 1;
+  }
+
   maxHp() {
     let hp = 50;
     hp += Math.floor((State.best_wave || 0) / 2);
     hp += (State.hero_level - 1);
     hp += bonusHp();
     hp += (State.level_perks?.perm_hp || 0) * 5;
-    hp = Math.round(hp * (1 + Trinkets.hpBonus()));
+    hp = Math.round(hp * (1 + Trinkets.hpBonus()) * this.classMul('hp'));
     if (State.challenge_active && State.daily_curse === 'glass_cannon') hp = Math.max(10, Math.floor(hp / 2));
     return Math.max(20, hp);
   }
@@ -463,7 +477,7 @@ export class Game {
   }
 
   atkRate() {
-    let r = 2.5 + this.atkBonus + bonusAtk() + (State.level_perks?.perm_atk || 0) * 0.1;
+    let r = 2.5 * this.classMul('atk') + this.atkBonus + bonusAtk() + (State.level_perks?.perm_atk || 0) * 0.1;
     r += Trinkets.atkBonus();
     const s = this.synergy();
     if (s?.atk) r += s.atk;
@@ -471,7 +485,7 @@ export class Game {
   }
 
   heroDmg() {
-    let d = 4;
+    let d = 4 * this.classMul('dmg');
     d += Math.floor(this.wave / 2);
     d += (State.hero_level - 1) * 0.5;
     d += bonusDamage();
@@ -493,7 +507,10 @@ export class Game {
     return v;
   }
 
-  heroRange() { return 220 + this.rangeBonus + bonusRange() + (State.level_perks?.perm_range || 0) * 10 + Trinkets.rangeBonus(); }
+  heroRange() {
+    return (220 * this.classMul('range')) + this.rangeBonus + bonusRange()
+      + (State.level_perks?.perm_range || 0) * 10 + Trinkets.rangeBonus();
+  }
 
   _heroAuto() {
     const r = this.heroRange();
@@ -1071,7 +1088,8 @@ export class Game {
     // hero — subtle idle bob + breathing pulse
     const bob = Math.sin(performance.now() / 350) * 2;
     const pulse = 1 + 0.06 * Math.sin(performance.now() / 700);
-    const hr = 22 * pulse;
+    const lvlGrow = 1 + Math.min(0.4, (State.hero_level - 1) * 0.012);
+    const hr = 22 * pulse * lvlGrow;
     const hy = this.heroPos.y + bob;
     ctx.fillStyle = CLASS_COLOR[this.primaryClass] || '#d4a24c';
     ctx.beginPath();
