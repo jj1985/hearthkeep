@@ -3,6 +3,7 @@ import { State, persist, processDailyLogin, rebirth, canRebirth, grantEmbers, pr
 import { rollPerks, applyPerk } from './perks.js';
 import { UPGRADES, rank, cost, canBuy, buy } from './upgrades.js';
 import * as Ach from './achievements.js';
+import { TRINKETS, equipped, equip } from './trinkets.js';
 import { CURSES } from './state.js';
 import { setMuted, isMuted } from './sfx.js';
 import { setMusicMuted, Music } from './music.js';
@@ -458,8 +459,31 @@ function ensureExtraTitleButtons() {
   addBtn('btn-ach',      'ACHIEVEMENTS', showAchievements);
   addBtn('btn-bestiary', 'BESTIARY',     showBestiary);
   addBtn('btn-history',  'RUN HISTORY',  showRunHistory);
+  addBtn('btn-trinkets', 'TRINKETS',     showTrinkets);
   addBtn('btn-curse',    'DAILY CURSE',  toggleCurse);
   addBtn('btn-settings', 'SETTINGS',     showSettings);
+}
+
+function showTrinkets() {
+  const owned = State.trinkets || {};
+  const eq = equipped();
+  const choices = [];
+  for (const t of TRINKETS) {
+    const owns = !!owned[t.id];
+    const isEq = eq === t.id;
+    const mark = isEq ? '✦' : (owns ? '○' : '✗');
+    choices.push({
+      label: `${mark} ${t.label} — ${t.desc}`,
+      cls: owns ? '' : 'secondary',
+      cb: () => {
+        if (!owns) return;
+        equip(isEq ? '' : t.id);
+        showTrinkets();
+      },
+    });
+  }
+  choices.push({ label: 'Back', cls: 'secondary', cb: () => hideOverlay() });
+  showOverlay('TRINKETS', `One equipped at a time. Boss kills drop new ones.\nEquipped: ${eq || '— none —'}`, choices);
 }
 
 function showSettings() {

@@ -1,5 +1,5 @@
 // HEARTHKEEP service worker — cache-first for the static bundle.
-const CACHE = 'hearthkeep-v1';
+const CACHE = 'hearthkeep-v2';
 const ASSETS = [
   './',
   './index.html',
@@ -14,6 +14,8 @@ const ASSETS = [
   './src/achievements.js',
   './src/synergies.js',
   './src/sfx.js',
+  './src/music.js',
+  './src/trinkets.js',
 ];
 
 self.addEventListener('install', (e) => {

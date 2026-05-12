@@ -27,6 +27,8 @@ const DEFAULTS = {
   lifetime_embers: 0,    // Glory — never-decreasing total
   sfx_volume: 0.7,
   weekly: null,          // {week, target, kind, progress, reward, claimed}
+  trinkets: {},          // id -> true (owned)
+  equipped_trinket: '',
 };
 
 const WEEKLY_MISSIONS = [

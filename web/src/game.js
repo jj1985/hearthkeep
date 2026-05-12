@@ -4,6 +4,7 @@ import { bonusDamage, bonusAtk, bonusRange, bonusHp, bonusCrit } from './upgrade
 import { synergyFor } from './synergies.js';
 import { Sfx } from './sfx.js';
 import { Music } from './music.js';
+import * as Trinkets from './trinkets.js';
 
 const CLASS_COLOR = {
   warrior: '#d9892e',
@@ -142,6 +143,7 @@ export class Game {
     hp += (State.hero_level - 1);
     hp += bonusHp();
     hp += (State.level_perks?.perm_hp || 0) * 5;
+    hp = Math.round(hp * (1 + Trinkets.hpBonus()));
     if (State.challenge_active && State.daily_curse === 'glass_cannon') hp = Math.max(10, Math.floor(hp / 2));
     return Math.max(20, hp);
   }
@@ -361,7 +363,7 @@ export class Game {
     if (pool.length === 0) pool.push('skeleton');
     const id = pool[Math.floor(Math.random() * pool.length)];
     const def = ENEMY_TYPES[id];
-    const isMythic = this.wave >= 5 && Math.random() < (0.03 + this.mythicBonus);
+    const isMythic = this.wave >= 5 && Math.random() < (0.03 + this.mythicBonus + Trinkets.mythicBonus());
     const sz = isMythic ? def.size * 1.4 : def.size;
     let hpScale = 1 + (this.wave - 1) * 0.18;
     if (this.isTempest()) hpScale *= 0.5;
@@ -461,6 +463,7 @@ export class Game {
 
   atkRate() {
     let r = 2.5 + this.atkBonus + bonusAtk() + (State.level_perks?.perm_atk || 0) * 0.1;
+    r += Trinkets.atkBonus();
     const s = this.synergy();
     if (s?.atk) r += s.atk;
     return r;
@@ -476,18 +479,19 @@ export class Game {
     d *= this.dmgMult;
     if (State.dragonslayer) d *= 1.10;
     if (this.primaryClass === 'bard') d *= 1.05;
+    d *= 1 + Trinkets.dmgBonus();
     const s = this.synergy();
     if (s?.dmg) d *= 1 + s.dmg;
     if (this.primaryClass === 'warrior') d += this.warriorRage * 0.5;
     let v = Math.max(1, Math.round(d));
     const permCrit = (State.level_perks?.perm_crit || 0) * 0.02;
-    let critted = Math.random() < (this.critBonus + bonusCrit() + permCrit);
+    let critted = Math.random() < (this.critBonus + bonusCrit() + permCrit + Trinkets.critBonus());
     if (this.frenzy >= this.FRENZY_CAP) { critted = true; this.frenzy = 0; }
     if (critted) v *= 2;
     return v;
   }
 
-  heroRange() { return 220 + this.rangeBonus + bonusRange() + (State.level_perks?.perm_range || 0) * 10; }
+  heroRange() { return 220 + this.rangeBonus + bonusRange() + (State.level_perks?.perm_range || 0) * 10 + Trinkets.rangeBonus(); }
 
   _heroAuto() {
     const r = this.heroRange();
@@ -601,7 +605,8 @@ export class Game {
       const s = this.synergy();
       const synGold = s?.gold ? 1 + s.gold : 1;
       const chal = this.challengeBonus();
-      const gold = Math.max(1, Math.round(e.gold * this.rebirthBonus * this.goldMult * this.comboMult() * permGold * synGold * chal));
+      const trkGold = 1 + Trinkets.goldBonus();
+      const gold = Math.max(1, Math.round(e.gold * this.rebirthBonus * this.goldMult * this.comboMult() * permGold * synGold * chal * trkGold));
       State.gold += gold;
       this.combo++;
       this.comboDecay = 1.5;
@@ -644,6 +649,12 @@ export class Game {
       this.floater(`+${ember} Ember`, e.x, e.y, '#d4582c');
       this.shakeMag = 30;
       this._burst(e.x, e.y);
+      // Trinket drop?
+      const drop = Trinkets.tryDrop(e.id);
+      if (drop) {
+        this.floater(`+ ${drop.label}`, this.size.w / 2 - 80, 130, '#d4a24c');
+        this.log(`Trinket: ${drop.label}`);
+      }
       // Dragonslayer honor: all 3 named bosses ever felled.
       const bossKey = e.id.replace('boss_', '');
       if (!State.defeated_dragons.includes(bossKey)) State.defeated_dragons.push(bossKey);
@@ -720,7 +731,7 @@ export class Game {
     tickWeekly('wave', this.wave);
     tickWeekly('kills', this.killsThisRun);
     this.heroHp = Math.min(this.heroMaxHp, this.heroHp + Math.floor(this.heroMaxHp / 4));
-    const bonus = Math.round((5 + this.wave * this.wave) * this.waveBonusMult);
+    const bonus = Math.round((5 + this.wave * this.wave) * this.waveBonusMult * (1 + Trinkets.waveBonus()));
     State.gold += bonus;
     this.floater(`WAVE ${this.wave}  +${bonus}g`, this.heroPos.x, this.heroPos.y, '#d4a24c');
     this.log(`Wave ${this.wave} cleared (+${bonus}g)`);
