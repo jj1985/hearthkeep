@@ -1100,9 +1100,14 @@ export class Game {
 
     // enemies
     for (const e of this.enemies) {
-      ctx.globalAlpha = e.alpha ?? 1;
-      ctx.fillStyle = e.color;
+      ctx.globalAlpha = (e.alpha ?? 1);
+      // Shadow ellipse
       const r = e.size / 2;
+      ctx.fillStyle = 'rgba(0,0,0,0.25)';
+      ctx.beginPath();
+      ctx.ellipse(e.x, e.y + r + 2, r * 0.9, r * 0.4, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = e.color;
       ctx.beginPath();
       ctx.arc(e.x, e.y, r, 0, Math.PI * 2);
       ctx.fill();
@@ -1121,10 +1126,16 @@ export class Game {
       ctx.globalAlpha = 1;
     }
 
-    // arrows
+    // arrows + soft trail
     for (const a of this.arrows) {
-      ctx.strokeStyle = '#f5e8a8';
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = 'rgba(245, 232, 168, 0.30)';
+      ctx.beginPath();
+      ctx.moveTo(a.x - a.vx * 0.10, a.y - a.vy * 0.10);
+      ctx.lineTo(a.x - a.vx * 0.04, a.y - a.vy * 0.04);
+      ctx.stroke();
       ctx.lineWidth = 3;
+      ctx.strokeStyle = '#f5e8a8';
       ctx.beginPath();
       ctx.moveTo(a.x, a.y);
       ctx.lineTo(a.x - a.vx * 0.04, a.y - a.vy * 0.04);
@@ -1173,6 +1184,12 @@ export class Game {
     const lvlGrow = 1 + Math.min(0.4, (State.hero_level - 1) * 0.012);
     const hr = 22 * pulse * lvlGrow;
     const hy = this.heroPos.y + bob;
+    // Hero shadow (soft ellipse below)
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.beginPath();
+    ctx.ellipse(this.heroPos.x, hy + hr + 4, hr * 0.95, hr * 0.42, 0, 0, Math.PI * 2);
+    ctx.fill();
+
     // Combo halo — radial gradient that grows with stack count.
     if (this.combo > 1) {
       const haloR = hr + 8 + Math.min(this.combo, 30) * 1.5;
