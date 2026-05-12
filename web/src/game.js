@@ -1235,6 +1235,16 @@ export class Game {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(this.primaryClass[0].toUpperCase(), this.heroPos.x, hy);
+    // Wave-progress ring: fills clockwise as kills approach target.
+    const frac = Math.max(0, Math.min(1, this.waveKillsProgress / Math.max(1, this.waveKillsTarget)));
+    if (frac > 0) {
+      const rR = hr + 6;
+      ctx.strokeStyle = 'rgba(212, 162, 76, 0.85)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(this.heroPos.x, hy, rR, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * frac);
+      ctx.stroke();
+    }
 
     // chest
     if (this.chest) {
