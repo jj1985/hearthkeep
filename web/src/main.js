@@ -1,5 +1,5 @@
 import { Game, zoneForWave } from './game.js';
-import { State, persist, processDailyLogin, rebirth, canRebirth, grantEmbers, processWeekly, exportSave, importSave } from './state.js';
+import { State, persist, processDailyLogin, rebirth, canRebirth, grantEmbers, processWeekly, exportSave, importSave, nextKillMilestone } from './state.js';
 import { rollPerks, applyPerk } from './perks.js';
 import { UPGRADES, rank, cost, canBuy, buy, currencyOf } from './upgrades.js';
 import * as Ach from './achievements.js';
@@ -65,7 +65,20 @@ const TIPS = [
   'Treasure chests spawn every 15 waves (3-second open).',
   'Upgrade your hero between runs with gold.',
   'Add to home screen for app-icon access.',
+  'Tempest waves (every 13th) double spawns at half HP.',
+  'Trinkets drop from bosses — equip one at a time.',
+  'Felling all 3 dragons grants permanent Dragonslayer +10%.',
+  'Wizard fireballs are single-target nukes; Bard anthems boost speed.',
+  'Daily curse opt-in doubles all rewards.',
+  'Save export lets you back up your progress across devices.',
+  'Wave 50+ unlocks Rebirth — permanent +25% per Mark.',
+  'Ember Edge stacks +10% damage forever, per rank.',
 ];
+
+function tipOfDay() {
+  const day = Math.floor(Date.now() / 86400000);
+  return TIPS[day % TIPS.length];
+}
 
 function refreshTitle() {
   titleScreen.hidden = false;
@@ -80,6 +93,14 @@ function refreshTitle() {
   }
   if (State.dragonslayer) lines.push(`⚔ Dragonslayer  ·  permanent +10% damage`);
   if (State.curses_cleared > 0) lines.push(`Curses cleared: ${State.curses_cleared}`);
+  // Next-class milestone progress
+  const nm = nextKillMilestone();
+  if (nm) {
+    const pct = Math.min(100, Math.round(State.lifetime_kills / nm.kills * 100));
+    lines.push(`Next class: ${nm.klass} — ${State.lifetime_kills}/${nm.kills} (${pct}%)`);
+  } else {
+    lines.push('All classes unlocked.');
+  }
   // Weekly mission line
   const w = processWeekly();
   if (w) {
@@ -99,7 +120,7 @@ function refreshTitle() {
     p.textContent = l;
     titleStats.appendChild(p);
   }
-  titleTip.textContent = TIPS[Math.floor(Math.random() * TIPS.length)];
+  titleTip.textContent = '💡 ' + tipOfDay();
   refreshRebirthButton();
   refreshJumpButtons();
 }

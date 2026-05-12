@@ -181,6 +181,14 @@ export function recordRun(entry) {
   persist();
 }
 
+export function nextKillMilestone() {
+  for (const m of KILL_UNLOCKS) {
+    if (State.meta_milestones[m.id]) continue;
+    return m;
+  }
+  return null;
+}
+
 export function checkKillMilestones() {
   const fired = [];
   for (const m of KILL_UNLOCKS) {
