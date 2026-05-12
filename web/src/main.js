@@ -231,15 +231,42 @@ function showBossBoon() {
 function onDeath(info) {
   // Scan achievements and apply any newly-completed ember rewards.
   const achPay = Ach.scanAndClaim();
+  const mm = Math.floor(info.duration_s / 60);
+  const ss = info.duration_s % 60;
+  // Top-3 killed enemy types.
+  const top = Object.entries(info.kills_by_type || {})
+    .sort((a, b) => b[1] - a[1]).slice(0, 3)
+    .map(([k, v]) => `${k.replace('boss_', '')} x${v}`).join(', ');
+  const loadout = [info.primary, info.secondary, info.tertiary].filter(Boolean)
+    .map(c => c[0].toUpperCase() + c.slice(1)).join(' / ');
   const body = [
-    `Kills: ${info.kills}`,
-    `Gold spilled: -${info.gold_lost}`,
+    `Loadout: ${loadout}`,
+    `Run length: ${mm}:${ss.toString().padStart(2, '0')}`,
+    `Kills: ${info.kills}  ·  Peak DPS: ${info.peak_dps}`,
+    top ? `Top kills: ${top}` : '',
     `Peak combo: x${info.combo}`,
-    `Embers earned: +${info.embers + achPay}`,
-    achPay > 0 ? `(includes +${achPay} achievement embers)` : '',
-  ].filter(s => s).join('\n');
+    `Embers earned: +${info.embers + achPay}` + (achPay > 0 ? ` (incl. +${achPay} achievement)` : ''),
+    `Gold spilled: -${info.gold_lost}`,
+  ].filter(Boolean).join('\n');
+
+  const lastLoadout = { p: info.primary, s: info.secondary, t: info.tertiary };
   showOverlay(`FALLEN ON WAVE ${info.wave}`, body, [
-    { label: 'Upgrades Shop', cls: '', cb: () => showUpgradeShop(true) },
+    {
+      label: 'Rerun same loadout',
+      cls: '',
+      cb: () => {
+        hideOverlay();
+        startGame(lastLoadout.p, 1);
+        // Apply remembered secondary/tertiary classes after init.
+        setTimeout(() => {
+          if (game) {
+            game.secondaryClass = lastLoadout.s || '';
+            game.tertiaryClass = lastLoadout.t || '';
+          }
+        }, 50);
+      },
+    },
+    { label: 'Upgrades Shop', cls: 'secondary', cb: () => showUpgradeShop(true) },
     { label: 'Back to Title', cls: 'secondary', cb: () => { hideOverlay(); refreshTitle(); } },
   ]);
 }

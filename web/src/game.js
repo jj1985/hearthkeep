@@ -86,6 +86,10 @@ export class Game {
     this.FRENZY_CAP = 5;
     this.iframeT = 0;
     this.untouchedSinceWave = true; // perfect-clear tracker
+    this.killsByType = {};          // run-scoped: id -> count
+    this.peakDps = 0;
+    this.dpsSamples = [];           // recent dmg events: {t, amount}
+    this.runStartT = performance.now();
     // Companion (unlocks at first boss kill)
     this.companionOrbitT = 0;
     this.companionAtkT = 1;
@@ -576,6 +580,12 @@ export class Game {
       return;
     }
     e.hp -= amount;
+    // DPS sampling: keep the last 2s of damage events.
+    const tnow = performance.now();
+    this.dpsSamples.push({ t: tnow, a: amount });
+    while (this.dpsSamples.length && this.dpsSamples[0].t < tnow - 2000) this.dpsSamples.shift();
+    const dps = this.dpsSamples.reduce((s, x) => s + x.a, 0) / 2;
+    if (dps > this.peakDps) this.peakDps = dps;
     this.floater(`-${Math.round(amount)}`, e.x, e.y, amount < 10 ? '#c8a030' : '#d4582c');
     if (e.hp <= 0) this._killEnemy(e, true);
   }
@@ -599,6 +609,7 @@ export class Game {
     }
     State.lifetime_kills++;
     this.killsThisRun++;
+    this.killsByType[e.id] = (this.killsByType[e.id] || 0) + 1;
     const ups = grantXp(1);
     if (ups > 0) {
       this.floater(`LEVEL ${State.hero_level}`, this.heroPos.x, this.heroPos.y - 20, '#d4a24c');
@@ -762,6 +773,10 @@ export class Game {
       wave: this.wave, kills: this.killsThisRun,
       combo: this.comboPeak, embers: this.runEmbersEarned,
       gold_lost: lost,
+      kills_by_type: this.killsByType,
+      peak_dps: Math.round(this.peakDps),
+      duration_s: Math.round((performance.now() - this.runStartT) / 1000),
+      primary: this.primaryClass, secondary: this.secondaryClass, tertiary: this.tertiaryClass,
     });
   }
 
