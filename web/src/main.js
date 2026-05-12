@@ -6,6 +6,7 @@ import * as Ach from './achievements.js';
 import { TRINKETS, equipped, equip } from './trinkets.js';
 import { CURSES } from './state.js';
 import { setMuted, isMuted } from './sfx.js';
+import { Save } from './save.js';
 import { setMusicMuted, Music } from './music.js';
 
 const canvas = document.getElementById('game');
@@ -512,6 +513,30 @@ function ensureExtraTitleButtons() {
   addBtn('btn-settings', 'SETTINGS',     showSettings);
 }
 
+function showProfiles() {
+  const choices = [];
+  for (let i = 0; i < 3; i++) {
+    const sum = Save.slotSummary(i);
+    const desc = sum
+      ? `W${sum.best_wave} · ${sum.embers} 🜂 · Mark ${sum.rebirths} · L${sum.hero_level}`
+      : 'empty';
+    const active = Save.activeSlot() === i;
+    choices.push({
+      label: `${active ? '✦' : '○'} Slot ${i + 1} — ${desc}`,
+      cls: active ? '' : 'secondary',
+      cb: () => {
+        if (active) return;
+        Save.setActiveSlot(i);
+        location.reload();
+      },
+    });
+  }
+  choices.push({ label: 'Back', cls: 'secondary', cb: () => showSettings() });
+  showOverlay('PROFILES',
+    'Three independent save slots.\nSwitching slots reloads with that slot\'s state.',
+    choices);
+}
+
 function showGlory() {
   const g = State.lifetime_embers || 0;
   const choices = GLORY_TIERS.map(t => {
@@ -585,6 +610,11 @@ function showSettings() {
         label: muted ? 'Audio: MUTED' : 'Audio: ON',
         cls: 'secondary',
         cb: () => { const m = !isMuted(); setMuted(m); setMusicMuted(m); rebuild(); },
+      },
+      {
+        label: `Profiles — slot ${Save.activeSlot() + 1} of 3`,
+        cls: 'secondary',
+        cb: () => showProfiles(),
       },
       {
         label: 'Export save (to clipboard)',
