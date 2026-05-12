@@ -947,6 +947,22 @@ export class Game {
     // floor — tinted by zone
     ctx.fillStyle = zoneForWave(this.wave).floor;
     ctx.fillRect(0, 96, w, h - 200);
+    // Subtle grid that scrolls along the hero's facing direction.
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+    ctx.lineWidth = 1;
+    const off = (performance.now() / 60) % 40;
+    for (let x = -off; x < w; x += 40) {
+      ctx.beginPath();
+      ctx.moveTo(x, 96);
+      ctx.lineTo(x, h - 104);
+      ctx.stroke();
+    }
+    for (let y = 96; y < h - 104; y += 40) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(w, y);
+      ctx.stroke();
+    }
     // weather
     if (this._weatherColor) {
       ctx.fillStyle = this._weatherColor;

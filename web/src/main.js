@@ -1,5 +1,5 @@
 import { Game, zoneForWave } from './game.js';
-import { State, persist, processDailyLogin, rebirth, canRebirth, grantEmbers, processWeekly } from './state.js';
+import { State, persist, processDailyLogin, rebirth, canRebirth, grantEmbers, processWeekly, exportSave, importSave } from './state.js';
 import { rollPerks, applyPerk } from './perks.js';
 import { UPGRADES, rank, cost, canBuy, buy } from './upgrades.js';
 import * as Ach from './achievements.js';
@@ -483,6 +483,34 @@ function showSettings() {
         label: muted ? 'Audio: MUTED' : 'Audio: ON',
         cls: 'secondary',
         cb: () => { const m = !isMuted(); setMuted(m); setMusicMuted(m); rebuild(); },
+      },
+      {
+        label: 'Export save (to clipboard)',
+        cls: 'secondary',
+        cb: () => {
+          const blob = exportSave();
+          if (navigator.clipboard?.writeText) {
+            navigator.clipboard.writeText(blob).then(() => {
+              showOverlay('Exported', 'Save copied to clipboard.\nPaste into a text file to back up.',
+                [{ label: 'Back', cls: '', cb: () => showSettings() }]);
+            });
+          } else {
+            // Fallback: show in body, user can long-press to copy
+            showOverlay('Save data', blob,
+              [{ label: 'Back', cls: '', cb: () => showSettings() }]);
+          }
+        },
+      },
+      {
+        label: 'Import save (paste)',
+        cls: 'secondary',
+        cb: () => {
+          const v = prompt('Paste your save blob:');
+          if (!v) return showSettings();
+          if (importSave(v)) location.reload();
+          else showOverlay('Import failed', 'That doesn\'t look like a valid save.',
+            [{ label: 'Back', cls: '', cb: () => showSettings() }]);
+        },
       },
       {
         label: 'Reset save (DANGER)',

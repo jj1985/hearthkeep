@@ -87,6 +87,22 @@ for (const k of Object.keys(DEFAULTS)) {
 
 export function persist() { Save.save(State); }
 
+export function exportSave() {
+  return btoa(unescape(encodeURIComponent(JSON.stringify(State))));
+}
+
+export function importSave(s) {
+  try {
+    const obj = JSON.parse(decodeURIComponent(escape(atob(s.trim()))));
+    if (typeof obj !== 'object') return false;
+    for (const k of Object.keys(obj)) State[k] = obj[k];
+    persist();
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
 export function grantEmbers(amount) {
   if (!amount || amount <= 0) return;
   State.embers += amount;
