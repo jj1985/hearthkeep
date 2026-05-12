@@ -169,6 +169,36 @@ export function rebirth() {
 
 export function canRebirth() { return State.best_wave >= 50; }
 
+// Glory tiers — earned by lifetime embers. Each tier confers a permanent
+// stat bonus that game.js folds in via gloryTier helpers below.
+export const GLORY_TIERS = [
+  { id: 'novice',  title: 'Novice',   threshold: 50,   desc: '+5% damage' },
+  { id: 'rising',  title: 'Rising',   threshold: 200,  desc: '+5% gold drops' },
+  { id: 'ascendant', title: 'Ascendant', threshold: 500, desc: '+10% max HP' },
+  { id: 'mythic',  title: 'Mythic',   threshold: 1500, desc: '+0.2 atk/sec' },
+];
+
+export function gloryTier() {
+  const g = State.lifetime_embers || 0;
+  let tier = null;
+  for (const t of GLORY_TIERS) {
+    if (g >= t.threshold) tier = t;
+  }
+  return tier;
+}
+
+export function hasGlory(id) {
+  const g = State.lifetime_embers || 0;
+  const t = GLORY_TIERS.find(x => x.id === id);
+  return t ? g >= t.threshold : false;
+}
+
+export function nextGlory() {
+  const g = State.lifetime_embers || 0;
+  for (const t of GLORY_TIERS) if (g < t.threshold) return t;
+  return null;
+}
+
 // Push a run summary onto history + top-runs leaderboard.
 export function recordRun(entry) {
   if (!State.run_history) State.run_history = [];

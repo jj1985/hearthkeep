@@ -1,5 +1,5 @@
 import { Game, zoneForWave } from './game.js';
-import { State, persist, processDailyLogin, rebirth, canRebirth, grantEmbers, processWeekly, exportSave, importSave, nextKillMilestone } from './state.js';
+import { State, persist, processDailyLogin, rebirth, canRebirth, grantEmbers, processWeekly, exportSave, importSave, nextKillMilestone, gloryTier, nextGlory, GLORY_TIERS } from './state.js';
 import { rollPerks, applyPerk } from './perks.js';
 import { UPGRADES, rank, cost, canBuy, buy, currencyOf } from './upgrades.js';
 import * as Ach from './achievements.js';
@@ -111,7 +111,14 @@ function refreshTitle() {
   if (State.best_wave > 0) lines.push(`Best wave: ${State.best_wave}`);
   if (State.bosses_felled > 0) lines.push(`Bosses felled: ${State.bosses_felled}`);
   if (State.lifetime_kills > 0) lines.push(`Lifetime kills: ${State.lifetime_kills}`);
-  if ((State.lifetime_embers || 0) > 0) lines.push(`Glory (lifetime 🜂): ${State.lifetime_embers}`);
+  if ((State.lifetime_embers || 0) > 0) {
+    const tier = gloryTier();
+    const next = nextGlory();
+    let line = `Glory: ${State.lifetime_embers} 🜂`;
+    if (tier) line += ` · ${tier.title} (${tier.desc})`;
+    if (next) line += ` · next: ${next.title} at ${next.threshold}`;
+    lines.push(line);
+  }
   lines.push(`Gold: ${State.gold}  ·  Embers: ${State.embers}  ·  Level: ${State.hero_level}`);
   if (State.login_streak > 0) lines.push(`Login streak: ${State.login_streak} day(s)`);
   lines.push(`Unlocked: ${State.unlocked_classes.join(', ')}`);
@@ -484,8 +491,24 @@ function ensureExtraTitleButtons() {
   addBtn('btn-history',  'RUN HISTORY',  showRunHistory);
   addBtn('btn-trinkets', 'TRINKETS',     showTrinkets);
   addBtn('btn-stats',    'STATS',        showStats);
+  addBtn('btn-glory',    'GLORY',        showGlory);
   addBtn('btn-curse',    'DAILY CURSE',  toggleCurse);
   addBtn('btn-settings', 'SETTINGS',     showSettings);
+}
+
+function showGlory() {
+  const g = State.lifetime_embers || 0;
+  const choices = GLORY_TIERS.map(t => {
+    const earned = g >= t.threshold;
+    const mark = earned ? '✓' : '○';
+    return {
+      label: `${mark} ${t.title} (${t.threshold} 🜂) — ${t.desc}`,
+      cls: earned ? '' : 'secondary',
+      cb: () => {},
+    };
+  });
+  choices.push({ label: 'Back', cls: 'secondary', cb: () => hideOverlay() });
+  showOverlay('GLORY', `Lifetime embers: ${g}\nEach tier grants a permanent bonus.`, choices);
 }
 
 function showStats() {

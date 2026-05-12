@@ -1,5 +1,5 @@
 // HTML5 horde arena — canvas renderer, ECS-lite update loop.
-import { State, persist, grantXp, checkKillMilestones, recordRun, grantEmbers, tickWeekly } from './state.js';
+import { State, persist, grantXp, checkKillMilestones, recordRun, grantEmbers, tickWeekly, hasGlory } from './state.js';
 import { bonusDamage, bonusAtk, bonusRange, bonusHp, bonusCrit, emberDmgMult, emberGoldMult, maxRevives } from './upgrades.js';
 import { synergyFor } from './synergies.js';
 import { Sfx } from './sfx.js';
@@ -159,6 +159,7 @@ export class Game {
     hp += bonusHp();
     hp += (State.level_perks?.perm_hp || 0) * 5;
     hp = Math.round(hp * (1 + Trinkets.hpBonus()) * this.classMul('hp'));
+    if (hasGlory('ascendant')) hp = Math.round(hp * 1.10);
     if (State.challenge_active && State.daily_curse === 'glass_cannon') hp = Math.max(10, Math.floor(hp / 2));
     return Math.max(20, hp);
   }
@@ -479,6 +480,7 @@ export class Game {
   atkRate() {
     let r = 2.5 * this.classMul('atk') + this.atkBonus + bonusAtk() + (State.level_perks?.perm_atk || 0) * 0.1;
     r += Trinkets.atkBonus();
+    if (hasGlory('mythic')) r += 0.2;
     const s = this.synergy();
     if (s?.atk) r += s.atk;
     return r;
@@ -496,6 +498,7 @@ export class Game {
     if (this.primaryClass === 'bard') d *= 1.05;
     d *= 1 + Trinkets.dmgBonus();
     d *= emberDmgMult();
+    if (hasGlory('novice')) d *= 1.05;
     const s = this.synergy();
     if (s?.dmg) d *= 1 + s.dmg;
     if (this.primaryClass === 'warrior') d += this.warriorRage * 0.5;
@@ -643,7 +646,8 @@ export class Game {
       const synGold = s?.gold ? 1 + s.gold : 1;
       const chal = this.challengeBonus();
       const trkGold = 1 + Trinkets.goldBonus();
-      const gold = Math.max(1, Math.round(e.gold * this.rebirthBonus * this.goldMult * this.comboMult() * permGold * synGold * chal * trkGold * emberGoldMult()));
+      const gloryGold = hasGlory('rising') ? 1.05 : 1;
+      const gold = Math.max(1, Math.round(e.gold * this.rebirthBonus * this.goldMult * this.comboMult() * permGold * synGold * chal * trkGold * emberGoldMult() * gloryGold));
       State.gold += gold;
       this.combo++;
       this.comboDecay = 1.5;
