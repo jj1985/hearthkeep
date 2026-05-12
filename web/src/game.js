@@ -128,6 +128,7 @@ export class Game {
     this.banner = null;     // { text, color, t, t0 }
     this.lastCritted = false;
     this.heroThrust = { x: 0, y: 0, t: 0 }; // animated push toward last target
+    this.weaponAngle = -Math.PI / 4;        // pointing-at-last-target angle
     // Perk accumulators (per-run)
     this.takenPerks = new Set();
     this.onBossBoon = null;     // fn(picks, applyCb)
@@ -164,6 +165,81 @@ export class Game {
     this.ctx.setTransform(r, 0, 0, r, 0, 0);
     this.size = { w, h };
     this.heroPos = { x: w / 2, y: h / 2 + 30 };
+  }
+
+  _drawWeapon(x, y, r) {
+    const ctx = this.ctx;
+    const a = this.weaponAngle;
+    const cx = Math.cos(a);
+    const sx = Math.sin(a);
+    const base = { x: x + cx * (r + 2), y: y + sx * (r + 2) };
+    const k = this.primaryClass;
+    ctx.strokeStyle = '#e8e2d2';
+    ctx.lineWidth = 3;
+    switch (k) {
+      case 'warrior': {  // long sword
+        const tip = { x: x + cx * (r + 28), y: y + sx * (r + 28) };
+        ctx.beginPath();
+        ctx.moveTo(base.x, base.y);
+        ctx.lineTo(tip.x, tip.y);
+        ctx.stroke();
+        // Cross-guard
+        const px = -sx, py = cx;
+        ctx.beginPath();
+        ctx.moveTo(base.x - px * 6, base.y - py * 6);
+        ctx.lineTo(base.x + px * 6, base.y + py * 6);
+        ctx.stroke();
+        break;
+      }
+      case 'rogue': {  // short dagger
+        const tip = { x: x + cx * (r + 18), y: y + sx * (r + 18) };
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(base.x, base.y);
+        ctx.lineTo(tip.x, tip.y);
+        ctx.stroke();
+        break;
+      }
+      case 'wizard': {  // staff with glowing orb
+        const tip = { x: x + cx * (r + 30), y: y + sx * (r + 30) };
+        ctx.strokeStyle = '#8a6d3b';
+        ctx.beginPath();
+        ctx.moveTo(base.x, base.y);
+        ctx.lineTo(tip.x, tip.y);
+        ctx.stroke();
+        ctx.fillStyle = '#5a8fb3';
+        ctx.beginPath();
+        ctx.arc(tip.x, tip.y, 5, 0, Math.PI * 2);
+        ctx.fill();
+        break;
+      }
+      case 'necromancer': {  // scythe — line + curved blade
+        const tip = { x: x + cx * (r + 26), y: y + sx * (r + 26) };
+        ctx.strokeStyle = '#5a4a3a';
+        ctx.beginPath();
+        ctx.moveTo(base.x, base.y);
+        ctx.lineTo(tip.x, tip.y);
+        ctx.stroke();
+        const px = -sx, py = cx;
+        ctx.strokeStyle = '#9966c8';
+        ctx.beginPath();
+        ctx.arc(tip.x + px * 7, tip.y + py * 7, 10, a - 0.4, a + 1.6);
+        ctx.stroke();
+        break;
+      }
+      case 'bard': {  // lute body
+        ctx.fillStyle = '#a07050';
+        ctx.beginPath();
+        ctx.ellipse(base.x + cx * 8, base.y + sx * 8, 9, 6, a, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#d4a4cc';
+        ctx.beginPath();
+        ctx.moveTo(base.x, base.y);
+        ctx.lineTo(base.x + cx * 22, base.y + sx * 22);
+        ctx.stroke();
+        break;
+      }
+    }
   }
 
   _drawHeroShape(x, y, r) {
@@ -609,6 +685,7 @@ export class Game {
     const dyh = best.y - this.heroPos.y;
     const dn = Math.hypot(dxh, dyh) || 1;
     this.heroThrust = { x: (dxh / dn) * 8, y: (dyh / dn) * 8, t: 0.15 };
+    this.weaponAngle = Math.atan2(dyh, dxh);
     this._damageEnemy(best, dmg);
     this._spawnStrike(best.x, best.y);
     Sfx.hit();
@@ -1282,6 +1359,8 @@ export class Game {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(this.primaryClass[0].toUpperCase(), hx, hy);
+    // Class weapon — short line / shape jutting out toward last target.
+    this._drawWeapon(hx, hy, hr);
     // Wave-progress ring: fills clockwise as kills approach target.
     const frac = Math.max(0, Math.min(1, this.waveKillsProgress / Math.max(1, this.waveKillsTarget)));
     if (frac > 0) {
