@@ -93,6 +93,7 @@ function refreshTitle() {
   }
   if (State.dragonslayer) lines.push(`⚔ Dragonslayer  ·  permanent +10% damage`);
   if (State.curses_cleared > 0) lines.push(`Curses cleared: ${State.curses_cleared}`);
+  if ((State.speedrun_best_ms || 0) > 0) lines.push(`Speedrun → W20 best: ${(State.speedrun_best_ms / 1000).toFixed(2)}s`);
   // Next-class milestone progress
   const nm = nextKillMilestone();
   if (nm) {
@@ -152,7 +153,7 @@ function refreshRebirthButton() {
   document.getElementById('title-actions').appendChild(b);
 }
 
-function startGame(klass, startWave = 1) {
+function startGame(klass, startWave = 1, opts = {}) {
   titleScreen.hidden = true;
   canvas.hidden = false;
   hud.hidden = false;
@@ -162,12 +163,22 @@ function startGame(klass, startWave = 1) {
     game.wave = startWave;
     game.waveKillsTarget = Math.floor(8 + startWave * 1.5);
   }
+  if (opts.speedrun) game.speedrun = true;
   game.onPerkRequest = showPerkPicker;
   game.onBossBoon = showBossBoon;
   game.onMerchant = showMerchant;
   game.onLevelPick = showLevelPerkPick;
   game.onSlotUnlock = showSlotPicker;
   game.onDeath = onDeath;
+  game.onSpeedrunFinish = onSpeedrunFinish;
+}
+
+function onSpeedrunFinish(ms) {
+  const s = (ms / 1000).toFixed(2);
+  const best = State.speedrun_best_ms ? (State.speedrun_best_ms / 1000).toFixed(2) : s;
+  showOverlay('SPEEDRUN — wave 20 cleared', `Time: ${s}s\nBest: ${best}s`, [
+    { label: 'Back to Title', cls: '', cb: () => { hideOverlay(); refreshTitle(); } },
+  ]);
 }
 
 function showSlotPicker(slot) {
@@ -469,6 +480,10 @@ document.getElementById('btn-pause').addEventListener('click', () => {
 btnNewRun.addEventListener('click', () => {
   showClassPicker(startGame);
 });
+
+function speedrunStart() {
+  showClassPicker((cls) => startGame(cls, 1, { speedrun: true }));
+}
 btnShop.addEventListener('click', () => showUpgradeShop(true));
 
 // Expose Achievements + Bestiary as title-screen extras.
@@ -490,6 +505,7 @@ function ensureExtraTitleButtons() {
   addBtn('btn-bestiary', 'BESTIARY',     showBestiary);
   addBtn('btn-history',  'RUN HISTORY',  showRunHistory);
   addBtn('btn-trinkets', 'TRINKETS',     showTrinkets);
+  addBtn('btn-speedrun', 'SPEEDRUN',     speedrunStart);
   addBtn('btn-stats',    'STATS',        showStats);
   addBtn('btn-glory',    'GLORY',        showGlory);
   addBtn('btn-curse',    'DAILY CURSE',  toggleCurse);

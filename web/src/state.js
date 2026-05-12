@@ -29,6 +29,7 @@ const DEFAULTS = {
   weekly: null,          // {week, target, kind, progress, reward, claimed}
   trinkets: {},          // id -> true (owned)
   equipped_trinket: '',
+  speedrun_best_ms: 0,   // best time to reach wave 20 (0 = unset)
 };
 
 const WEEKLY_MISSIONS = [

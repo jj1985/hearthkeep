@@ -102,6 +102,8 @@ export class Game {
     this.dpsSamples = [];           // recent dmg events: {t, amount}
     this.runStartT = performance.now();
     this.revivesUsed = 0;
+    this.speedrun = false;
+    this.speedrunDone = false;
     // Companion (unlocks at first boss kill)
     this.companionOrbitT = 0;
     this.companionAtkT = 1;
@@ -127,6 +129,7 @@ export class Game {
     this.onMerchant = null;       // fn() → modal opens
     this.onLevelPick = null;      // fn(level)
     this.onSlotUnlock = null;     // fn('secondary'|'tertiary')
+    this.onSpeedrunFinish = null; // fn(ms)
     this.lastSeenLevel = State.hero_level;
     this.size = { w: 0, h: 0 };
     this.heroPos = { x: 0, y: 0 };
@@ -768,6 +771,17 @@ export class Game {
     }
     this.untouchedSinceWave = true;
     this.wave++;
+    // Speedrun: wave 20 reached → record time, end run.
+    if (this.speedrun && !this.speedrunDone && this.wave >= 20) {
+      this.speedrunDone = true;
+      const ms = performance.now() - this.runStartT;
+      if (State.speedrun_best_ms === 0 || ms < State.speedrun_best_ms) {
+        State.speedrun_best_ms = Math.round(ms);
+        this.floater('NEW BEST!', this.size.w / 2 - 40, 80, '#d4a24c');
+      }
+      persist();
+      if (this.onSpeedrunFinish) this.onSpeedrunFinish(Math.round(ms));
+    }
     this.warriorRage = 0;
     this.waveKillsProgress = 0;
     this.waveKillsTarget = Math.floor(8 + this.wave * 1.5);
