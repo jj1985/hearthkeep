@@ -24,6 +24,12 @@ mkdir -p dist/src
 cp index.html manifest.webmanifest icon-192.png icon-512.png sw.js dist/ 2>/dev/null || true
 cp -R src/* dist/src/
 
+# Defensive: Godot's --import step sometimes drops .import sidecar
+# files inside web/android — gradle treats them as resource errors.
+if [ -d android ]; then
+  find android -name "*.import" -delete 2>/dev/null || true
+fi
+
 if [ ! -d android ]; then
   echo "[apk] cap add android"
   npx --yes cap add android
