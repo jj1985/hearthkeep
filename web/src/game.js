@@ -115,6 +115,8 @@ export class Game {
     this.bossWarn = null; // { t, label }
     this.weather = []; // [{x, y, vy, color, size}]
     this.flash = 0;    // 0..1 white-screen flash on big events
+    this.timeScale = 1;
+    this.timeScaleEndAt = 0;
     // Perk accumulators (per-run)
     this.takenPerks = new Set();
     this.onBossBoon = null;     // fn(picks, applyCb)
@@ -209,11 +211,22 @@ export class Game {
     const now = performance.now();
     let dt = Math.min(0.05, (now - this.last) / 1000);
     this.last = now;
+    // Apply kill-cam time scale (real-time UI keeps ticking, only the
+    // simulation slows).
+    if (this.timeScaleEndAt && now >= this.timeScaleEndAt) {
+      this.timeScale = 1;
+      this.timeScaleEndAt = 0;
+    }
     if (!this.paused && !this.deadScreenOpen) {
-      this._update(dt);
+      this._update(dt * this.timeScale);
     }
     this._render();
     requestAnimationFrame(() => this._loop());
+  }
+
+  setTimeScale(scale, durationMs) {
+    this.timeScale = scale;
+    this.timeScaleEndAt = performance.now() + durationMs;
   }
 
   _update(dt) {
@@ -715,6 +728,7 @@ export class Game {
       Sfx.boss();
       Music.setIntensity(0);
       this.flash = 0.7;
+      this.setTimeScale(0.3, 400);
       const ember = Math.round((1 + Math.floor(this.wave / 10)) * this.challengeBonus());
       grantEmbers(ember);
       this.runEmbersEarned += ember;
