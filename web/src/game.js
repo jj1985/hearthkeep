@@ -92,6 +92,8 @@ export class Game {
     this.comboDecay = 0;
     this.comboPeak = 0;
     this.rebirthBonus = 1.0 + (State.rebirths || 0) * 0.25;
+    // Hardcore mode disables this multiplier; constructor runs before
+    // game.hardcore is set by main, so we expose a setter that recomputes.
     // Class-signature passive state (per-run)
     this.warriorRage = 0;
     this.wizardHitCount = 0;
@@ -106,6 +108,7 @@ export class Game {
     this.revivesUsed = 0;
     this.speedrun = false;
     this.speedrunDone = false;
+    this.hardcore = false;
     // Companion (unlocks at first boss kill)
     this.companionOrbitT = 0;
     this.companionAtkT = 1;
@@ -202,7 +205,10 @@ export class Game {
   }
 
   challengeBonus() {
-    return State.challenge_active ? 2 : 1;
+    let m = 1;
+    if (State.challenge_active) m *= 2;
+    if (this.hardcore) m *= 2;
+    return m;
   }
   curseDisables(c) {
     return State.challenge_active && State.daily_curse === c;
@@ -229,6 +235,11 @@ export class Game {
   setTimeScale(scale, durationMs) {
     this.timeScale = scale;
     this.timeScaleEndAt = performance.now() + durationMs;
+  }
+
+  setHardcore(on) {
+    this.hardcore = !!on;
+    if (this.hardcore) this.rebirthBonus = 1.0;  // strip rebirth boost
   }
 
   _update(dt) {
@@ -777,7 +788,7 @@ export class Game {
 
   isTempest() { return this.wave > 0 && this.wave % 13 === 0; }
 
-  hasCompanion() { return (State.bosses_felled || 0) >= 1; }
+  hasCompanion() { return !this.hardcore && (State.bosses_felled || 0) >= 1; }
 
   _companionPos() {
     const r = 60;
@@ -836,6 +847,7 @@ export class Game {
     this.waveKillsProgress = 0;
     this.waveKillsTarget = Math.floor(8 + this.wave * 1.5);
     if (this.wave > State.best_wave) State.best_wave = this.wave;
+    if (this.hardcore && this.wave > (State.hardcore_best_wave || 0)) State.hardcore_best_wave = this.wave;
     tickWeekly('wave', this.wave);
     tickWeekly('kills', this.killsThisRun);
     this.heroHp = Math.min(this.heroMaxHp, this.heroHp + Math.floor(this.heroMaxHp / 4));
@@ -860,9 +872,9 @@ export class Game {
       this.floater('CURSE BROKEN — +5 Ember', this.size.w / 2 - 100, 60, '#d4582c');
       persist();
     }
-    if (this.wave % 5 === 0 && this.onPerkRequest) {
+    if (!this.hardcore && this.wave % 5 === 0 && this.onPerkRequest) {
       this.onPerkRequest();
-    } else if (this.wave % 7 === 0 && this.onMerchant && !this.curseDisables('spendthrift')) {
+    } else if (!this.hardcore && this.wave % 7 === 0 && this.onMerchant && !this.curseDisables('spendthrift')) {
       this.onMerchant();
     }
     persist();

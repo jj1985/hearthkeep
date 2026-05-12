@@ -95,6 +95,7 @@ function refreshTitle() {
   if (State.dragonslayer) lines.push(`⚔ Dragonslayer  ·  permanent +10% damage`);
   if (State.curses_cleared > 0) lines.push(`Curses cleared: ${State.curses_cleared}`);
   if ((State.speedrun_best_ms || 0) > 0) lines.push(`Speedrun → W20 best: ${(State.speedrun_best_ms / 1000).toFixed(2)}s`);
+  if ((State.hardcore_best_wave || 0) > 0) lines.push(`Hardcore best wave: ${State.hardcore_best_wave}`);
   // Next-class milestone progress
   const nm = nextKillMilestone();
   if (nm) {
@@ -165,6 +166,7 @@ function startGame(klass, startWave = 1, opts = {}) {
     game.waveKillsTarget = Math.floor(8 + startWave * 1.5);
   }
   if (opts.speedrun) game.speedrun = true;
+  if (opts.hardcore) game.setHardcore(true);
   game.onPerkRequest = showPerkPicker;
   game.onBossBoon = showBossBoon;
   game.onMerchant = showMerchant;
@@ -493,6 +495,10 @@ btnNewRun.addEventListener('click', () => {
 function speedrunStart() {
   showClassPicker((cls) => startGame(cls, 1, { speedrun: true }));
 }
+
+function hardcoreStart() {
+  showClassPicker((cls) => startGame(cls, 1, { hardcore: true }));
+}
 btnShop.addEventListener('click', () => showUpgradeShop(true));
 
 // Expose Achievements + Bestiary as title-screen extras.
@@ -515,6 +521,7 @@ function ensureExtraTitleButtons() {
   addBtn('btn-history',  'RUN HISTORY',  showRunHistory);
   addBtn('btn-trinkets', 'TRINKETS',     showTrinkets);
   addBtn('btn-speedrun', 'SPEEDRUN',     speedrunStart);
+  addBtn('btn-hardcore', 'HARDCORE',     hardcoreStart);
   addBtn('btn-stats',    'STATS',        showStats);
   addBtn('btn-glory',    'GLORY',        showGlory);
   addBtn('btn-skills',   'SKILL RANKS',  showSkillRanks);

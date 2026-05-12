@@ -31,6 +31,7 @@ const DEFAULTS = {
   equipped_trinket: '',
   speedrun_best_ms: 0,   // best time to reach wave 20 (0 = unset)
   skill_ranks: {},       // class -> rank (0..3)
+  hardcore_best_wave: 0,
 };
 
 export const SKILL_RANK_COSTS = [5, 12, 25]; // embers to go 0→1→2→3
