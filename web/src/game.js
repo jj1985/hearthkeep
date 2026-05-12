@@ -118,6 +118,7 @@ export class Game {
     this.timeScale = 1;
     this.timeScaleEndAt = 0;
     this.banner = null;     // { text, color, t, t0 }
+    this.lastCritted = false;
     // Perk accumulators (per-run)
     this.takenPerks = new Set();
     this.onBossBoon = null;     // fn(picks, applyCb)
@@ -298,6 +299,7 @@ export class Game {
     // Move enemies + contact
     for (const e of this.enemies) {
       if (e.dead) continue;
+      if (e.hitFlash > 0) e.hitFlash -= dt;
       if (e.boss) this._bossPhaseTick(e, dt);
       const dx = this.heroPos.x - e.x;
       const dy = this.heroPos.y - e.y;
@@ -556,6 +558,7 @@ export class Game {
     let critted = Math.random() < (this.critBonus + bonusCrit() + permCrit + Trinkets.critBonus());
     if (this.frenzy >= this.FRENZY_CAP) { critted = true; this.frenzy = 0; }
     if (critted) v *= 2;
+    this.lastCritted = critted;
     return v;
   }
 
@@ -657,6 +660,7 @@ export class Game {
       return;
     }
     e.hp -= amount;
+    e.hitFlash = 0.12;
     // Vampiric lifesteal — heal a fraction of damage dealt.
     if (this.lifesteal) {
       const heal = Math.max(1, Math.round(amount * this.lifesteal));
@@ -668,7 +672,10 @@ export class Game {
     while (this.dpsSamples.length && this.dpsSamples[0].t < tnow - 2000) this.dpsSamples.shift();
     const dps = this.dpsSamples.reduce((s, x) => s + x.a, 0) / 2;
     if (dps > this.peakDps) this.peakDps = dps;
-    this.floater(`-${Math.round(amount)}`, e.x, e.y, amount < 10 ? '#c8a030' : '#d4582c');
+    const crit = this.lastCritted; this.lastCritted = false;
+    const txt = crit ? `-${Math.round(amount)}!` : `-${Math.round(amount)}`;
+    const clr = crit ? '#e8d2a0' : (amount < 10 ? '#c8a030' : '#d4582c');
+    this.floater(txt, e.x, e.y, clr);
     if (e.hp <= 0) this._killEnemy(e, true);
   }
 
@@ -1114,7 +1121,19 @@ export class Game {
       ctx.beginPath();
       ctx.arc(e.x, e.y, r, 0, Math.PI * 2);
       ctx.fill();
-      if (e.mythic || e.boss) {
+      if (e.hitFlash > 0) {
+        ctx.fillStyle = `rgba(255,255,255,${(e.hitFlash * 6).toFixed(2)})`;
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      if (e.mythic) {
+        const t = (performance.now() / 200) % (Math.PI * 2);
+        const a = 0.6 + 0.3 * Math.sin(t);
+        ctx.strokeStyle = `rgba(232,210,160,${a.toFixed(2)})`;
+        ctx.lineWidth = 3.5;
+        ctx.stroke();
+      } else if (e.boss) {
         ctx.strokeStyle = '#d4a24c';
         ctx.lineWidth = 3;
         ctx.stroke();
