@@ -110,6 +110,7 @@ export class Game {
     // Boss telegraph countdown
     this.bossWarn = null; // { t, label }
     this.weather = []; // [{x, y, vy, color, size}]
+    this.flash = 0;    // 0..1 white-screen flash on big events
     // Perk accumulators (per-run)
     this.takenPerks = new Set();
     this.onBossBoon = null;     // fn(picks, applyCb)
@@ -363,6 +364,7 @@ export class Game {
     this.floaters = this.floaters.filter(fl => fl.life > 0);
 
     if (this.shakeMag > 0) this.shakeMag = Math.max(0, this.shakeMag - 80 * dt);
+    if (this.flash > 0) this.flash = Math.max(0, this.flash - 4 * dt);
 
     this._tickWeather(dt);
     this._tickChest(dt);
@@ -680,6 +682,7 @@ export class Game {
     if (e.boss) {
       Sfx.boss();
       Music.setIntensity(0);
+      this.flash = 0.7;
       const ember = Math.round((1 + Math.floor(this.wave / 10)) * this.challengeBonus());
       grantEmbers(ember);
       this.runEmbersEarned += ember;
@@ -1113,6 +1116,18 @@ export class Game {
     const lvlGrow = 1 + Math.min(0.4, (State.hero_level - 1) * 0.012);
     const hr = 22 * pulse * lvlGrow;
     const hy = this.heroPos.y + bob;
+    // Combo halo — radial gradient that grows with stack count.
+    if (this.combo > 1) {
+      const haloR = hr + 8 + Math.min(this.combo, 30) * 1.5;
+      const cclr = CLASS_COLOR[this.primaryClass] || '#d4a24c';
+      const grad = ctx.createRadialGradient(this.heroPos.x, hy, hr, this.heroPos.x, hy, haloR);
+      grad.addColorStop(0, cclr + '88');
+      grad.addColorStop(1, cclr + '00');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(this.heroPos.x, hy, haloR, 0, Math.PI * 2);
+      ctx.fill();
+    }
     ctx.fillStyle = CLASS_COLOR[this.primaryClass] || '#d4a24c';
     ctx.beginPath();
     ctx.arc(this.heroPos.x, hy, hr, 0, Math.PI * 2);
@@ -1148,6 +1163,12 @@ export class Game {
       ctx.textAlign = 'center';
       ctx.fillText(`INCOMING: ${this.bossWarn.label}  ${this.bossWarn.t.toFixed(1)}s`,
         this.size.w / 2, 110);
+    }
+
+    // White flash overlay (boss kill, big moments)
+    if (this.flash > 0) {
+      ctx.fillStyle = `rgba(255,255,255,${this.flash.toFixed(3)})`;
+      ctx.fillRect(0, 0, w, h);
     }
 
     // floaters
