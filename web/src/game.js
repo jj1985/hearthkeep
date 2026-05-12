@@ -5,6 +5,7 @@ import { synergyFor } from './synergies.js';
 import { Sfx } from './sfx.js';
 import { Music } from './music.js';
 import * as Trinkets from './trinkets.js';
+import { scanAndClaimVerbose } from './achievements.js';
 
 const CLASS_COLOR = {
   warrior: '#d9892e',
@@ -767,6 +768,13 @@ export class Game {
       this.floater(`+${ember} Ember`, e.x, e.y, '#d4582c');
       this.shakeMag = 30;
       this._burst(e.x, e.y);
+      // Live achievement scan on boss kill.
+      const firedB = scanAndClaimVerbose();
+      for (const r of firedB) {
+        this.banner = { text: `✦ ${r.label}  +${r.reward}🜂`, color: '#d4a24c', t: 2.8, t0: 2.8 };
+        this.runEmbersEarned += r.reward;
+        this.log(`Achievement: ${r.label}`);
+      }
       // Trinket drop?
       const drop = Trinkets.tryDrop(e.id);
       if (drop) {
@@ -858,6 +866,13 @@ export class Game {
     this.waveKillsTarget = Math.floor(8 + this.wave * 1.5);
     if (this.wave > State.best_wave) State.best_wave = this.wave;
     if (this.hardcore && this.wave > (State.hardcore_best_wave || 0)) State.hardcore_best_wave = this.wave;
+    // Live achievement scan — banner each one as it fires.
+    const fired = scanAndClaimVerbose();
+    for (const r of fired) {
+      this.banner = { text: `✦ ${r.label}  +${r.reward}🜂`, color: '#d4a24c', t: 2.8, t0: 2.8 };
+      this.runEmbersEarned += r.reward;
+      this.log(`Achievement: ${r.label}`);
+    }
     tickWeekly('wave', this.wave);
     tickWeekly('kills', this.killsThisRun);
     this.heroHp = Math.min(this.heroMaxHp, this.heroHp + Math.floor(this.heroMaxHp / 4));

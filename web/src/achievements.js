@@ -55,3 +55,20 @@ export function scanAndClaim() {
   }
   return total;
 }
+
+// Returns the array of newly-claimed rows since last scan. Each entry
+// is the registry row (with label / reward fields) for banner rendering.
+export function scanAndClaimVerbose() {
+  const c = claimed();
+  const fired = [];
+  for (const r of ROWS) {
+    if (c[r.id]) continue;
+    if (isDone(r)) {
+      c[r.id] = true;
+      fired.push(r);
+      grantEmbers(r.reward);
+    }
+  }
+  if (fired.length) persist();
+  return fired;
+}
