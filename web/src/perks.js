@@ -14,6 +14,7 @@ export const PERKS = [
   { id: 'chime',       label: 'Resonant Chime',desc: '+30% wave + +20% gold.',tags: ['bard','support'],      kind: 'chime', value: 0.20 },
   { id: 'fortunate',   label: 'Fortunate',     desc: '+3% Mythic chance.',    tags: ['any'],                 kind: 'mythic', value: 0.03 },
   { id: 'aegis',       label: 'Aegis',         desc: '-40% contact damage.',  tags: ['warrior','melee'],     kind: 'aegis', value: 0.40 },
+  { id: 'vampiric',    label: 'Vampiric',      desc: 'Heal 3% of damage dealt.', tags: ['necromancer','death'], kind: 'lifesteal', value: 0.03 },
 ];
 
 export function rollPerks(klass, taken, count = 3) {
@@ -53,5 +54,6 @@ export function applyPerk(game, perk) {
     case 'chime': game.waveBonusMult *= 1.30; game.goldMult *= 1.20; break;
     case 'mythic': game.mythicBonus += v; break;
     case 'aegis': game.contactReduction = Math.min(0.9, game.contactReduction + v); break;
+    case 'lifesteal': game.lifesteal = (game.lifesteal || 0) + v; break;
   }
 }

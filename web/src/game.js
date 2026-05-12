@@ -605,6 +605,11 @@ export class Game {
       return;
     }
     e.hp -= amount;
+    // Vampiric lifesteal — heal a fraction of damage dealt.
+    if (this.lifesteal) {
+      const heal = Math.max(1, Math.round(amount * this.lifesteal));
+      this.heroHp = Math.min(this.heroMaxHp, this.heroHp + heal);
+    }
     // DPS sampling: keep the last 2s of damage events.
     const tnow = performance.now();
     this.dpsSamples.push({ t: tnow, a: amount });
@@ -618,6 +623,19 @@ export class Game {
   _killEnemy(e, byPlayer) {
     if (e.dead) return;
     e.dead = true;
+    // Death particles: 6-12 colored shards explode out from the enemy.
+    const n = e.boss ? 24 : (e.mythic ? 16 : 8);
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const s = 90 + Math.random() * 140;
+      this.fx.push({
+        x: e.x, y: e.y,
+        vx: Math.cos(a) * s, vy: Math.sin(a) * s,
+        life: 0.4 + Math.random() * 0.3,
+        color: e.color, size: 2 + Math.random() * 3,
+        fade: true,
+      });
+    }
     if (e.explodes) this._detonate(e.x, e.y, 60, Math.max(2, Math.round(this.heroDmg() * 0.5)));
     if (byPlayer) {
       const permGold = 1 + (State.level_perks?.perm_gold || 0) * 0.05;
