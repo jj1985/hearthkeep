@@ -38,6 +38,9 @@ fi
 echo "[apk] cap sync"
 npx --yes cap sync android
 
+# Re-scrub: cap sync may copy fresh .import sidecars in.
+find android -name "*.import" -delete 2>/dev/null || true
+
 cd android
 echo "[apk] gradle assembleDebug"
 ./gradlew assembleDebug --no-daemon -q
