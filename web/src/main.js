@@ -1,7 +1,7 @@
 import { Game, zoneForWave } from './game.js';
 import { State, persist, processDailyLogin, rebirth, canRebirth, grantEmbers, processWeekly, exportSave, importSave } from './state.js';
 import { rollPerks, applyPerk } from './perks.js';
-import { UPGRADES, rank, cost, canBuy, buy } from './upgrades.js';
+import { UPGRADES, rank, cost, canBuy, buy, currencyOf } from './upgrades.js';
 import * as Ach from './achievements.js';
 import { TRINKETS, equipped, equip } from './trinkets.js';
 import { CURSES } from './state.js';
@@ -392,9 +392,11 @@ function showUpgradeShop(reloadOnBack) {
       const c = cost(u.id);
       const r = rank(u.id);
       const buyable = canBuy(u.id);
+      const cur = currencyOf(u.id);
+      const sfx = cur === 'embers' ? '🜂' : 'g';
       const text = c < 0
         ? `${u.label} (MAXED)`
-        : `${u.label} — ${u.desc}  ·  Rank ${r}/30  ·  ${c}g`;
+        : `${u.label} — ${u.desc}  ·  Rank ${r}/30  ·  ${c}${sfx}`;
       return {
         label: text,
         cls: buyable ? '' : 'secondary',
@@ -411,7 +413,7 @@ function showUpgradeShop(reloadOnBack) {
         } else hideOverlay();
       },
     });
-    showOverlay('UPGRADES', `Spend gold. Survives death.\n${State.gold} gold`, choices);
+    showOverlay('UPGRADES', `Gold = combat. Embers = prestige.\n${State.gold} gold  ·  ${State.embers} 🜂`, choices);
   }
   rebuild();
 }
@@ -460,8 +462,24 @@ function ensureExtraTitleButtons() {
   addBtn('btn-bestiary', 'BESTIARY',     showBestiary);
   addBtn('btn-history',  'RUN HISTORY',  showRunHistory);
   addBtn('btn-trinkets', 'TRINKETS',     showTrinkets);
+  addBtn('btn-stats',    'STATS',        showStats);
   addBtn('btn-curse',    'DAILY CURSE',  toggleCurse);
   addBtn('btn-settings', 'SETTINGS',     showSettings);
+}
+
+function showStats() {
+  const top = State.top_runs?.[0];
+  const lines = [
+    `Mark: ${State.rebirths}   ·   Hero level: ${State.hero_level}`,
+    `Best wave: ${State.best_wave}   ·   Bosses felled: ${State.bosses_felled}`,
+    `Lifetime kills: ${State.lifetime_kills}   ·   Curses cleared: ${State.curses_cleared}`,
+    `Glory (lifetime 🜂): ${State.lifetime_embers || 0}`,
+    `Login streak: ${State.login_streak}`,
+    top ? `#1 run: W${top.wave}, ${top.kills} kills (${top.class})` : '',
+    `Trinkets owned: ${Object.keys(State.trinkets || {}).length} / 8`,
+    `Dragonslayer: ${State.dragonslayer ? '⚔ yes' : 'no'}`,
+  ].filter(Boolean).join('\n');
+  showOverlay('STATS', lines, [{ label: 'Back', cls: 'secondary', cb: () => hideOverlay() }]);
 }
 
 function showTrinkets() {

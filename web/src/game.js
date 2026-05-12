@@ -1,6 +1,6 @@
 // HTML5 horde arena — canvas renderer, ECS-lite update loop.
 import { State, persist, grantXp, checkKillMilestones, recordRun, grantEmbers, tickWeekly } from './state.js';
-import { bonusDamage, bonusAtk, bonusRange, bonusHp, bonusCrit } from './upgrades.js';
+import { bonusDamage, bonusAtk, bonusRange, bonusHp, bonusCrit, emberDmgMult, emberGoldMult, maxRevives } from './upgrades.js';
 import { synergyFor } from './synergies.js';
 import { Sfx } from './sfx.js';
 import { Music } from './music.js';
@@ -92,6 +92,7 @@ export class Game {
     this.peakDps = 0;
     this.dpsSamples = [];           // recent dmg events: {t, amount}
     this.runStartT = performance.now();
+    this.revivesUsed = 0;
     // Companion (unlocks at first boss kill)
     this.companionOrbitT = 0;
     this.companionAtkT = 1;
@@ -480,6 +481,7 @@ export class Game {
     if (State.dragonslayer) d *= 1.10;
     if (this.primaryClass === 'bard') d *= 1.05;
     d *= 1 + Trinkets.dmgBonus();
+    d *= emberDmgMult();
     const s = this.synergy();
     if (s?.dmg) d *= 1 + s.dmg;
     if (this.primaryClass === 'warrior') d += this.warriorRage * 0.5;
@@ -606,7 +608,7 @@ export class Game {
       const synGold = s?.gold ? 1 + s.gold : 1;
       const chal = this.challengeBonus();
       const trkGold = 1 + Trinkets.goldBonus();
-      const gold = Math.max(1, Math.round(e.gold * this.rebirthBonus * this.goldMult * this.comboMult() * permGold * synGold * chal * trkGold));
+      const gold = Math.max(1, Math.round(e.gold * this.rebirthBonus * this.goldMult * this.comboMult() * permGold * synGold * chal * trkGold * emberGoldMult()));
       State.gold += gold;
       this.combo++;
       this.comboDecay = 1.5;
@@ -778,6 +780,17 @@ export class Game {
   }
 
   _onDie() {
+    // Second Wind: spend a revive if any left.
+    if (this.revivesUsed < maxRevives()) {
+      this.revivesUsed++;
+      this.heroHp = Math.floor(this.heroMaxHp / 2);
+      this.enemies.length = 0;
+      this.iframeT = 2.0;
+      this.shakeMag = 20;
+      this.floater('SECOND WIND', this.heroPos.x - 60, this.heroPos.y, '#d4a24c');
+      this.log('Revived');
+      return;
+    }
     this.deadScreenOpen = true;
     this.paused = true;
     const lost = Math.floor(State.gold / 2);
