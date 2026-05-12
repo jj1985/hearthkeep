@@ -117,6 +117,7 @@ export class Game {
     this.flash = 0;    // 0..1 white-screen flash on big events
     this.timeScale = 1;
     this.timeScaleEndAt = 0;
+    this.banner = null;     // { text, color, t, t0 }
     // Perk accumulators (per-run)
     this.takenPerks = new Set();
     this.onBossBoon = null;     // fn(picks, applyCb)
@@ -410,6 +411,7 @@ export class Game {
 
     if (this.shakeMag > 0) this.shakeMag = Math.max(0, this.shakeMag - 80 * dt);
     if (this.flash > 0) this.flash = Math.max(0, this.flash - 4 * dt);
+    if (this.banner) { this.banner.t -= dt; if (this.banner.t <= 0) this.banner = null; }
 
     this._tickWeather(dt);
     this._tickChest(dt);
@@ -834,8 +836,9 @@ export class Game {
     this.heroHp = Math.min(this.heroMaxHp, this.heroHp + Math.floor(this.heroMaxHp / 4));
     const bonus = Math.round((5 + this.wave * this.wave) * this.waveBonusMult * (1 + Trinkets.waveBonus()));
     State.gold += bonus;
-    this.floater(`WAVE ${this.wave}  +${bonus}g`, this.heroPos.x, this.heroPos.y, '#d4a24c');
+    this.floater(`+${bonus}g`, this.heroPos.x, this.heroPos.y, '#d4a24c');
     this.log(`Wave ${this.wave} cleared (+${bonus}g)`);
+    this.banner = { text: `WAVE ${this.wave}  ·  +${bonus}g`, color: '#d4a24c', t: 1.4, t0: 1.4 };
     if (this.isTempest()) {
       this.floater('TEMPEST — 2× spawns, ½ HP', this.size.w / 2 - 100, 60, '#d4582c');
       this.log('TEMPEST wave incoming');
@@ -1236,6 +1239,23 @@ export class Game {
       ctx.textAlign = 'center';
       ctx.fillText(`INCOMING: ${this.bossWarn.label}  ${this.bossWarn.t.toFixed(1)}s`,
         this.size.w / 2, 110);
+    }
+
+    // Wave-clear banner — slides in from top, holds, fades.
+    if (this.banner) {
+      const t = this.banner.t;
+      const t0 = this.banner.t0;
+      const elapsed = t0 - t;
+      const slide = Math.min(1, elapsed / 0.25);   // 0..1 over first 250ms
+      const fade = Math.max(0, Math.min(1, t / 0.35));
+      const y = 60 + (1 - slide) * -40;
+      ctx.fillStyle = `rgba(11, 10, 15, ${0.7 * fade})`;
+      ctx.fillRect(0, y - 28, w, 56);
+      ctx.fillStyle = this.banner.color + Math.round(255 * fade).toString(16).padStart(2, '0');
+      ctx.font = 'bold 24px system-ui';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(this.banner.text, w / 2, y);
     }
 
     // White flash overlay (boss kill, big moments)

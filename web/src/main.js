@@ -357,9 +357,17 @@ function refreshHud() {
   if (!game || canvas.hidden) return;
   const c = game.combo;
   const z = zoneForWave(game.wave).name;
-  wave.textContent = c > 1
-    ? `WAVE ${game.wave} · ${z} · x${c} (${game.comboMult().toFixed(2)}×)`
-    : `WAVE ${game.wave} · ${z}`;
+  if (c > 1) {
+    let tier = '';
+    if (c >= 30) tier = ' ✦';
+    else if (c >= 15) tier = ' ★';
+    else if (c >= 5)  tier = ' ·';
+    wave.textContent = `WAVE ${game.wave} · ${z} · x${c}${tier} (${game.comboMult().toFixed(2)}×)`;
+    wave.style.color = c >= 30 ? '#e8d2a0' : c >= 15 ? '#d4a24c' : c >= 5 ? '#c8a030' : '';
+  } else {
+    wave.textContent = `WAVE ${game.wave} · ${z}`;
+    wave.style.color = '';
+  }
   kills.textContent = `${State.lifetime_kills} kills`;
   gold.textContent = `${State.gold} g`;
   embers.textContent = `${State.embers} 🜂`;
