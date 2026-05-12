@@ -289,8 +289,14 @@ function onDeath(info) {
     .map(([k, v]) => `${k.replace('boss_', '')} x${v}`).join(', ');
   const loadout = [info.primary, info.secondary, info.tertiary].filter(Boolean)
     .map(c => c[0].toUpperCase() + c.slice(1)).join(' / ');
+  const best = info.pre_best || 0;
+  const cmp = best === 0
+    ? `first run on this slot`
+    : (info.wave > best ? `★ NEW BEST! (was ${best})`
+      : (info.wave === best ? `tied best (${best})` : `your best is wave ${best}`));
   const body = [
     `Loadout: ${loadout}`,
+    cmp,
     `Run length: ${mm}:${ss.toString().padStart(2, '0')}`,
     `Kills: ${info.kills}  ·  Peak DPS: ${info.peak_dps}`,
     top ? `Top kills: ${top}` : '',

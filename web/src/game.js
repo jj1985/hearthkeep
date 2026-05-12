@@ -56,9 +56,12 @@ export function zoneForWave(w) {
 }
 
 const BOSS_TYPES = {
-  warchief:  { label: 'Krrik III',   color: '#d4a24c', hp: 240,  speed: 50,  gold: 60,  size: 38 },
-  vyxhasis:  { label: 'Vyxhasis',    color: '#d44089', hp: 600,  speed: 45,  gold: 200, size: 48 },
-  aethyrnax: { label: 'Aethyrnax',   color: '#66d9f2', hp: 1400, speed: 55,  gold: 500, size: 56 },
+  warchief:  { label: 'Krrik III',   color: '#d4a24c', hp: 240,  speed: 50,  gold: 60,  size: 38,
+               hint: 'Krrik charges every 4s — back off when he tints red.' },
+  vyxhasis:  { label: 'Vyxhasis',    color: '#d44089', hp: 600,  speed: 45,  gold: 200, size: 48,
+               hint: 'Vyxhasis goes airborne — wait for her to land before swinging.' },
+  aethyrnax: { label: 'Aethyrnax',   color: '#66d9f2', hp: 1400, speed: 55,  gold: 500, size: 56,
+               hint: 'Aethyrnax alternates charge + fly. Position carefully.' },
 };
 
 export class Game {
@@ -106,6 +109,7 @@ export class Game {
     this.dpsSamples = [];           // recent dmg events: {t, amount}
     this.runStartT = performance.now();
     this.revivesUsed = 0;
+    this.preRunBestWave = State.best_wave || 0;
     this.speedrun = false;
     this.speedrunDone = false;
     this.hardcore = false;
@@ -488,6 +492,12 @@ export class Game {
       phase: '', phaseT: 0, phaseCd: 4.0, phaseCount: 0, alpha: 1,
     });
     this.floater(`${def.label} appears!`, this.size.w / 2 - 80, 80, '#d4582c');
+    if (!State.seen_boss_hints) State.seen_boss_hints = {};
+    if (!State.seen_boss_hints[id] && def.hint) {
+      State.seen_boss_hints[id] = true;
+      this.banner = { text: def.hint, color: '#d4582c', t: 4.5, t0: 4.5 };
+      persist();
+    }
     Music.setIntensity(1);
   }
 
@@ -928,6 +938,7 @@ export class Game {
       peak_dps: Math.round(this.peakDps),
       duration_s: Math.round((performance.now() - this.runStartT) / 1000),
       primary: this.primaryClass, secondary: this.secondaryClass, tertiary: this.tertiaryClass,
+      pre_best: this.preRunBestWave,
     });
   }
 
