@@ -1,5 +1,5 @@
 import { Game, zoneForWave } from './game.js';
-import { State, persist, processDailyLogin, rebirth, canRebirth, grantEmbers, processWeekly, exportSave, importSave, nextKillMilestone, gloryTier, nextGlory, GLORY_TIERS } from './state.js';
+import { State, persist, processDailyLogin, rebirth, canRebirth, grantEmbers, processWeekly, exportSave, importSave, nextKillMilestone, gloryTier, nextGlory, GLORY_TIERS, skillRank, skillNextCost, skillBuy } from './state.js';
 import { rollPerks, applyPerk } from './perks.js';
 import { UPGRADES, rank, cost, canBuy, buy, currencyOf } from './upgrades.js';
 import * as Ach from './achievements.js';
@@ -517,6 +517,7 @@ function ensureExtraTitleButtons() {
   addBtn('btn-speedrun', 'SPEEDRUN',     speedrunStart);
   addBtn('btn-stats',    'STATS',        showStats);
   addBtn('btn-glory',    'GLORY',        showGlory);
+  addBtn('btn-skills',   'SKILL RANKS',  showSkillRanks);
   addBtn('btn-curse',    'DAILY CURSE',  toggleCurse);
   addBtn('btn-settings', 'SETTINGS',     showSettings);
 }
@@ -543,6 +544,29 @@ function showProfiles() {
   showOverlay('PROFILES',
     'Three independent save slots.\nSwitching slots reloads with that slot\'s state.',
     choices);
+}
+
+function showSkillRanks() {
+  const classes = ['warrior', 'rogue', 'wizard', 'necromancer', 'bard'];
+  function rebuild() {
+    const choices = classes.map(c => {
+      const r = skillRank(c);
+      const next = skillNextCost(c);
+      const label = next < 0
+        ? `${c[0].toUpperCase()}${c.slice(1)} — R${r}/3 (MAX)`
+        : `${c[0].toUpperCase()}${c.slice(1)} — R${r}/3  ·  ${next}🜂`;
+      return {
+        label,
+        cls: (next > 0 && State.embers >= next) ? '' : 'secondary',
+        cb: () => { if (skillBuy(c)) rebuild(); },
+      };
+    });
+    choices.push({ label: 'Back', cls: 'secondary', cb: () => hideOverlay() });
+    showOverlay('SKILL RANKS',
+      `Spend embers to strengthen each class's SKILL.\nYou have ${State.embers} 🜂.`,
+      choices);
+  }
+  rebuild();
 }
 
 function showGlory() {

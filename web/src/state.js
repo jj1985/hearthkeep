@@ -30,7 +30,26 @@ const DEFAULTS = {
   trinkets: {},          // id -> true (owned)
   equipped_trinket: '',
   speedrun_best_ms: 0,   // best time to reach wave 20 (0 = unset)
+  skill_ranks: {},       // class -> rank (0..3)
 };
+
+export const SKILL_RANK_COSTS = [5, 12, 25]; // embers to go 0→1→2→3
+export function skillRank(klass) { return (State.skill_ranks || {})[klass] || 0; }
+export function skillNextCost(klass) {
+  const r = skillRank(klass);
+  return r >= SKILL_RANK_COSTS.length ? -1 : SKILL_RANK_COSTS[r];
+}
+export function skillBuy(klass) {
+  const r = skillRank(klass);
+  if (r >= SKILL_RANK_COSTS.length) return false;
+  const c = SKILL_RANK_COSTS[r];
+  if (State.embers < c) return false;
+  State.embers -= c;
+  if (!State.skill_ranks) State.skill_ranks = {};
+  State.skill_ranks[klass] = r + 1;
+  persist();
+  return true;
+}
 
 const WEEKLY_MISSIONS = [
   { kind: 'wave',     target: 30, reward: 30, label: 'Reach wave 30 in one run' },

@@ -1,5 +1,5 @@
 // HTML5 horde arena — canvas renderer, ECS-lite update loop.
-import { State, persist, grantXp, checkKillMilestones, recordRun, grantEmbers, tickWeekly, hasGlory } from './state.js';
+import { State, persist, grantXp, checkKillMilestones, recordRun, grantEmbers, tickWeekly, hasGlory, skillRank } from './state.js';
 import { bonusDamage, bonusAtk, bonusRange, bonusHp, bonusCrit, emberDmgMult, emberGoldMult, maxRevives } from './upgrades.js';
 import { synergyFor } from './synergies.js';
 import { Sfx } from './sfx.js';
@@ -620,34 +620,32 @@ export class Game {
     if (this.curseDisables('bare_hands')) return;
     const dmg = this.heroDmg();
     const k = this.primaryClass;
+    const r = skillRank(k);                  // 0..3
+    const skillMult = 1 + r * 0.4;           // +40% per rank
     if (k === 'wizard') {
-      // FIREBALL — 12× damage to highest-HP target
       let best = null, bestHp = 0;
       for (const e of this.enemies) if (e.hp > bestHp) { bestHp = e.hp; best = e; }
       if (best) {
-        this._damageEnemy(best, dmg * 12);
+        this._damageEnemy(best, dmg * 12 * skillMult);
         this._spawnStrike(best.x, best.y);
       }
-      this.floater('FIREBALL', this.heroPos.x - 30, this.heroPos.y - 30, '#5a8fb3');
+      this.floater(`FIREBALL${r ? ' R' + r : ''}`, this.heroPos.x - 30, this.heroPos.y - 30, '#5a8fb3');
     } else if (k === 'rogue') {
-      // BLINK — full heal + 1.5s i-frames (set a flag the take-damage check reads)
       this.heroHp = this.heroMaxHp;
-      this.iframeT = 1.5;
-      this.floater('BLINK — invulnerable', this.heroPos.x - 60, this.heroPos.y - 30, '#6fd07f');
+      this.iframeT = 1.5 + r * 0.5;
+      this.floater(`BLINK ${(1.5 + r * 0.5).toFixed(1)}s i-frames`, this.heroPos.x - 60, this.heroPos.y - 30, '#6fd07f');
     } else if (k === 'necromancer') {
-      // REAP — drain AoE: damages all enemies, heals hero per kill that lands
-      for (const e of this.enemies) this._damageEnemy(e, dmg);
-      this.floater('REAP', this.heroPos.x - 20, this.heroPos.y - 30, '#9966c8');
+      for (const e of this.enemies) this._damageEnemy(e, dmg * skillMult);
+      this.floater(`REAP${r ? ' R' + r : ''}`, this.heroPos.x - 20, this.heroPos.y - 30, '#9966c8');
       this.shakeMag = 14;
     } else if (k === 'bard') {
-      // ANTHEM — +0.5 atk/sec for 8 seconds (run-temp)
-      this.atkBonus += 0.5;
-      this.floater('ANTHEM — +0.5 atk/s 8s', this.heroPos.x - 80, this.heroPos.y - 30, '#d4a4cc');
-      setTimeout(() => { this.atkBonus = Math.max(0, this.atkBonus - 0.5); }, 8000);
+      const bonus = 0.5 + r * 0.3;
+      this.atkBonus += bonus;
+      this.floater(`ANTHEM +${bonus.toFixed(1)} 8s`, this.heroPos.x - 80, this.heroPos.y - 30, '#d4a4cc');
+      setTimeout(() => { this.atkBonus = Math.max(0, this.atkBonus - bonus); }, 8000);
     } else {
-      // WARRIOR CLEAVE — 2× damage to every enemy on screen
-      for (const e of this.enemies) this._damageEnemy(e, dmg * 2);
-      this.floater('CLEAVE', this.heroPos.x - 30, this.heroPos.y - 30, '#d9892e');
+      for (const e of this.enemies) this._damageEnemy(e, dmg * 2 * skillMult);
+      this.floater(`CLEAVE${r ? ' R' + r : ''}`, this.heroPos.x - 30, this.heroPos.y - 30, '#d9892e');
       this.shakeMag = 20;
     }
     this.skillCd = 6;
