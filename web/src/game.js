@@ -1,5 +1,5 @@
 // HTML5 horde arena — canvas renderer, ECS-lite update loop.
-import { State, persist, grantXp, checkKillMilestones, recordRun, grantEmbers, tickWeekly, hasGlory, skillRank } from './state.js';
+import { State, persist, grantXp, checkKillMilestones, recordRun, grantEmbers, tickWeekly, hasGlory, skillRank, colorForClass } from './state.js';
 import { bonusDamage, bonusAtk, bonusRange, bonusHp, bonusCrit, emberDmgMult, emberGoldMult, maxRevives } from './upgrades.js';
 import { synergyFor } from './synergies.js';
 import { Sfx } from './sfx.js';
@@ -1358,7 +1358,7 @@ export class Game {
     // Combo halo — radial gradient that grows with stack count.
     if (this.combo > 1) {
       const haloR = hr + 8 + Math.min(this.combo, 30) * 1.5;
-      const cclr = CLASS_COLOR[this.primaryClass] || '#d4a24c';
+      const cclr = colorForClass(this.primaryClass, CLASS_COLOR[this.primaryClass] || '#d4a24c');
       const grad = ctx.createRadialGradient(hx, hy, hr, hx, hy, haloR);
       grad.addColorStop(0, cclr + '88');
       grad.addColorStop(1, cclr + '00');
@@ -1367,7 +1367,7 @@ export class Game {
       ctx.arc(hx, hy, haloR, 0, Math.PI * 2);
       ctx.fill();
     }
-    ctx.fillStyle = CLASS_COLOR[this.primaryClass] || '#d4a24c';
+    ctx.fillStyle = colorForClass(this.primaryClass, CLASS_COLOR[this.primaryClass] || '#d4a24c');
     ctx.strokeStyle = '#fff';
     ctx.lineWidth = 2;
     this._drawHeroShape(hx, hy, hr);

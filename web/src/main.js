@@ -1,5 +1,5 @@
 import { Game, zoneForWave } from './game.js';
-import { State, persist, processDailyLogin, rebirth, canRebirth, grantEmbers, processWeekly, exportSave, importSave, nextKillMilestone, gloryTier, nextGlory, GLORY_TIERS, skillRank, skillNextCost, skillBuy } from './state.js';
+import { State, persist, processDailyLogin, rebirth, canRebirth, grantEmbers, processWeekly, exportSave, importSave, nextKillMilestone, gloryTier, nextGlory, GLORY_TIERS, skillRank, skillNextCost, skillBuy, SKINS, ownsSkin, activeSkinFor, buySkin, equipSkin } from './state.js';
 import { rollPerks, applyPerk } from './perks.js';
 import { UPGRADES, rank, cost, canBuy, buy, currencyOf } from './upgrades.js';
 import * as Ach from './achievements.js';
@@ -534,6 +534,7 @@ function ensureExtraTitleButtons() {
   addBtn('btn-stats',    'STATS',        showStats);
   addBtn('btn-glory',    'GLORY',        showGlory);
   addBtn('btn-skills',   'SKILL RANKS',  showSkillRanks);
+  addBtn('btn-skins',    'SKINS',        showSkins);
   addBtn('btn-curse',    'DAILY CURSE',  toggleCurse);
   addBtn('btn-settings', 'SETTINGS',     showSettings);
 }
@@ -560,6 +561,37 @@ function showProfiles() {
   showOverlay('PROFILES',
     'Three independent save slots.\nSwitching slots reloads with that slot\'s state.',
     choices);
+}
+
+function showSkins() {
+  function rebuild() {
+    const choices = SKINS.map(s => {
+      const owned = ownsSkin(s.id);
+      const active = activeSkinFor(s.klass) === s.id;
+      const mark = active ? '✦' : (owned ? '○' : '✗');
+      let label = `${mark} ${s.label} (${s.klass}) — ${s.color}`;
+      if (!owned) label += `  ·  ${s.cost}🜂`;
+      else if (active) label += `  · equipped`;
+      return {
+        label,
+        cls: owned && active ? '' : 'secondary',
+        cb: () => {
+          if (!owned) {
+            if (buySkin(s.id)) rebuild();
+          } else if (active) {
+            equipSkin(s.klass, '');
+            rebuild();
+          } else {
+            equipSkin(s.klass, s.id);
+            rebuild();
+          }
+        },
+      };
+    });
+    choices.push({ label: 'Back', cls: 'secondary', cb: () => hideOverlay() });
+    showOverlay('SKINS', `Cosmetic palette swaps per class.\nYou have ${State.embers} 🜂.`, choices);
+  }
+  rebuild();
 }
 
 function showSkillRanks() {

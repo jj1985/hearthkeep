@@ -33,7 +33,53 @@ const DEFAULTS = {
   skill_ranks: {},       // class -> rank (0..3)
   hardcore_best_wave: 0,
   seen_boss_hints: {},   // boss_id -> true once first hint shown
+  skins: {},             // class -> [{id}] owned skins
+  active_skin: {},       // class -> skin id (default falls back to base color)
 };
+
+export const SKINS = [
+  { id: 'warrior_crimson', klass: 'warrior',     color: '#c03828', label: 'Crimson Plate',  cost: 12 },
+  { id: 'warrior_ivory',   klass: 'warrior',     color: '#e8e0c0', label: 'Ivory Plate',    cost: 18 },
+  { id: 'rogue_shadow',    klass: 'rogue',       color: '#506060', label: 'Shadow Cowl',    cost: 12 },
+  { id: 'rogue_emerald',   klass: 'rogue',       color: '#2eb878', label: 'Emerald Garb',   cost: 18 },
+  { id: 'wizard_violet',   klass: 'wizard',      color: '#9966c8', label: 'Violet Sage',    cost: 12 },
+  { id: 'wizard_frost',    klass: 'wizard',      color: '#80c8e0', label: 'Frost Mage',     cost: 18 },
+  { id: 'necro_bone',      klass: 'necromancer', color: '#e0d8c0', label: 'Bonewright',     cost: 12 },
+  { id: 'necro_blood',     klass: 'necromancer', color: '#a02838', label: 'Blood Adept',    cost: 18 },
+  { id: 'bard_gold',       klass: 'bard',        color: '#e8b85e', label: 'Gilded Singer',  cost: 12 },
+  { id: 'bard_indigo',     klass: 'bard',        color: '#5566c8', label: 'Indigo Minstrel', cost: 18 },
+];
+
+export function ownsSkin(id) {
+  return !!(State.skins && State.skins[id]);
+}
+export function activeSkinFor(klass) {
+  return (State.active_skin || {})[klass] || '';
+}
+export function buySkin(id) {
+  const s = SKINS.find(x => x.id === id);
+  if (!s) return false;
+  if (ownsSkin(id)) return false;
+  if (State.embers < s.cost) return false;
+  State.embers -= s.cost;
+  if (!State.skins) State.skins = {};
+  State.skins[id] = true;
+  persist();
+  return true;
+}
+export function equipSkin(klass, id) {
+  if (!State.active_skin) State.active_skin = {};
+  if (id && !ownsSkin(id)) return false;
+  State.active_skin[klass] = id || '';
+  persist();
+  return true;
+}
+export function colorForClass(klass, baseColor) {
+  const id = activeSkinFor(klass);
+  if (!id) return baseColor;
+  const s = SKINS.find(x => x.id === id);
+  return s ? s.color : baseColor;
+}
 
 export const SKILL_RANK_COSTS = [5, 12, 25]; // embers to go 0→1→2→3
 export function skillRank(klass) { return (State.skill_ranks || {})[klass] || 0; }
