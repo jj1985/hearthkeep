@@ -155,6 +155,7 @@ export class Game {
     this.lastCritted = false;
     this.heroThrust = { x: 0, y: 0, t: 0 }; // animated push toward last target
     this.weaponAngle = -Math.PI / 4;        // pointing-at-last-target angle
+    this.weaponSwingT = 0;                  // 1 → 0 over short swing animation
     // Perk accumulators (per-run)
     this.takenPerks = new Set();
     this.onBossBoon = null;     // fn(picks, applyCb)
@@ -599,6 +600,7 @@ export class Game {
       this.heroThrust.t -= dt;
       if (this.heroThrust.t <= 0) { this.heroThrust.x = 0; this.heroThrust.y = 0; this.heroThrust.t = 0; }
     }
+    if (this.weaponSwingT > 0) this.weaponSwingT = Math.max(0, this.weaponSwingT - dt * 4);
     // Hero combo trail — class-colored embers drift up while combo ≥ 5.
     if (this.combo >= 5 && Math.random() < 0.5) {
       this.fx.push({
@@ -814,6 +816,7 @@ export class Game {
     const dn = Math.hypot(dxh, dyh) || 1;
     this.heroThrust = { x: (dxh / dn) * 8, y: (dyh / dn) * 8, t: 0.15 };
     this.weaponAngle = Math.atan2(dyh, dxh);
+    this.weaponSwingT = 1.0;
     this._damageEnemy(best, dmg);
     this._spawnStrike(best.x, best.y);
     Sfx.hit();
@@ -1656,6 +1659,17 @@ export class Game {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(this.primaryClass[0].toUpperCase(), hx, hy);
+    // Swing arc — a brief gradient slash sweeping across the weapon's direction.
+    if (this.weaponSwingT > 0) {
+      const swing = (1 - this.weaponSwingT) * Math.PI / 3;  // 0..60°
+      const arcA = this.weaponSwingT * 0.7;
+      ctx.strokeStyle = `rgba(245,232,168,${arcA.toFixed(2)})`;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(hx, hy, hr + 24,
+        this.weaponAngle - Math.PI / 6, this.weaponAngle - Math.PI / 6 + swing);
+      ctx.stroke();
+    }
     // Class weapon — short line / shape jutting out toward last target.
     this._drawWeapon(hx, hy, hr);
     // Wave-progress ring: fills clockwise as kills approach target.
