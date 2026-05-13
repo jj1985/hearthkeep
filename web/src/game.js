@@ -99,6 +99,7 @@ export class Game {
     this.arrows = [];    // { x, y, vx, vy, dmg, life }
     this.powerups = [];  // { x, y, tx, ty, kind, life }
     this.coins = [];     // visible gold pickups [{ x, y, vx, vy, life }]
+    this.decals = [];    // ground stains: { x, y, r, color, life, max }
     this.wave = 1;
     this.waveKillsTarget = 8;
     this.waveKillsProgress = 0;
@@ -589,6 +590,8 @@ export class Game {
       f.life -= dt;
     }
     this.fx = this.fx.filter(f => f.life > 0);
+    for (const d of this.decals) d.life -= dt;
+    this.decals = this.decals.filter(d => d.life > 0);
     for (const fl of this.floaters) {
       fl.life -= dt;
       fl.y -= 40 * dt;
@@ -928,6 +931,17 @@ export class Game {
   _killEnemy(e, byPlayer) {
     if (e.dead) return;
     e.dead = true;
+    // Ground splat: dark organic stain that fades over 6s.
+    const splatR = e.boss ? 26 : (e.mythic ? 18 : (e.size * 0.55));
+    const splatColor = e.color || '#5a1818';
+    this.decals.push({
+      x: e.x + (Math.random() - 0.5) * 6,
+      y: e.y + (Math.random() - 0.5) * 6,
+      r: splatR, color: splatColor,
+      life: 6.0, max: 6.0,
+    });
+    // Cap decals so old corpses fade out cheaply.
+    if (this.decals.length > 80) this.decals.splice(0, this.decals.length - 80);
     // Death particles: 6-12 colored shards explode out from the enemy.
     const n = e.boss ? 24 : (e.mythic ? 16 : 8);
     for (let i = 0; i < n; i++) {
@@ -1442,6 +1456,18 @@ export class Game {
     }
     // Per-zone floor decor — fixed-position glyphs sized by viewport.
     this._drawZoneDecor(ctx, w, h);
+    // Ground decals (corpse stains) — under enemies, above floor.
+    for (const d of this.decals) {
+      const a = Math.min(0.35, (d.life / d.max) * 0.35);
+      const g = ctx.createRadialGradient(d.x, d.y, 0, d.x, d.y, d.r);
+      g.addColorStop(0, `rgba(60,10,10,${a.toFixed(3)})`);
+      g.addColorStop(0.6, `rgba(40,8,8,${(a * 0.6).toFixed(3)})`);
+      g.addColorStop(1, 'rgba(20,4,4,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
     // weather
     if (this._weatherColor) {
       ctx.fillStyle = this._weatherColor;
