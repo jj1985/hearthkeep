@@ -2409,6 +2409,17 @@ export class Game {
       ctx.fillRect(0, 0, w, h);
     }
 
+    // Berserker red edge vignette while the buff is up.
+    if (this.berserkerT > 0) {
+      const t = Math.min(1, this.berserkerT / 12);
+      const pulse = 0.5 + 0.4 * Math.sin(performance.now() / 130);
+      const rg = ctx.createRadialGradient(w / 2, h / 2, Math.max(w, h) * 0.3,
+                                          w / 2, h / 2, Math.max(w, h) * 0.75);
+      rg.addColorStop(0, 'rgba(220, 60, 40, 0)');
+      rg.addColorStop(1, `rgba(220, 60, 40, ${(0.25 * t * pulse).toFixed(3)})`);
+      ctx.fillStyle = rg;
+      ctx.fillRect(0, 0, w, h);
+    }
     // White flash overlay (boss kill, big moments)
     if (this.flash > 0) {
       ctx.fillStyle = `rgba(255,255,255,${this.flash.toFixed(3)})`;
