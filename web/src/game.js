@@ -53,13 +53,13 @@ const ENEMY_TYPES = {
 };
 
 const ZONES = [
-  { min: 1,  name: 'Greenmarch', floor: '#101a10' },
-  { min: 11, name: 'Ashen Vale', floor: '#1c1610' },
-  { min: 21, name: 'Frostwatch', floor: '#101620' },
-  { min: 31, name: 'Emberlands', floor: '#1f0d09' },
-  { min: 41, name: 'The Void',   floor: '#0d0a18' },
-  { min: 51, name: 'Forgehold',  floor: '#291408' },
-  { min: 71, name: 'Sunfire',    floor: '#332108' },
+  { min: 1,  name: 'Greenmarch', floor: '#101a10', flavor: 'Rolling pasture, ringfort ruins.' },
+  { min: 11, name: 'Ashen Vale', floor: '#1c1610', flavor: 'A scoured plain. Wind tastes of cinder.' },
+  { min: 21, name: 'Frostwatch', floor: '#101620', flavor: 'Glacial tarns. Northern sky.' },
+  { min: 31, name: 'Emberlands', floor: '#1f0d09', flavor: 'Volcanic flats. The ground breathes heat.' },
+  { min: 41, name: 'The Void',   floor: '#0d0a18', flavor: 'Reality thins. Stars hum at your back.' },
+  { min: 51, name: 'Forgehold',  floor: '#291408', flavor: 'A dwarf-forge city, abandoned but glowing.' },
+  { min: 71, name: 'Sunfire',    floor: '#332108', flavor: 'The Sunfire Plateau. The sky is gold.' },
 ];
 
 function _lighten(hex, frac) {
@@ -1209,6 +1209,14 @@ export class Game {
       persist();
       if (this.onSpeedrunFinish) this.onSpeedrunFinish(Math.round(ms));
     }
+    // Zone change banner — show flavor line when crossing a zone boundary.
+    const z = zoneForWave(this.wave);
+    if (this._lastZoneName && this._lastZoneName !== z.name) {
+      this.banner = { text: `${z.name.toUpperCase()}  —  ${z.flavor || ''}`, color: '#d4a24c', t: 3.0, t0: 3.0 };
+      this.flash = Math.max(this.flash, 0.3);
+      this.log(`Entering ${z.name}`);
+    }
+    this._lastZoneName = z.name;
     this.warriorRage = 0;
     this.waveKillsProgress = 0;
     this.waveKillsTarget = Math.floor(8 + this.wave * 1.5);
