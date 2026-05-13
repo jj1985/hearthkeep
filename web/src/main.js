@@ -347,21 +347,54 @@ function showAchievements() {
   showOverlay('ACHIEVEMENTS', `Claim by reaching the target.`, choices);
 }
 
+const BESTIARY_LORE = {
+  skeleton:      'Rattling bones held together by old necromancy.',
+  rat:           'Plague-fat vermin. Fast, fragile, swarms in sewers.',
+  goblin:        'Forest scrappers. Cunning enough to mob, dumb enough to charge.',
+  goblin_a:      'Goblin Archer — kites at range, lobs crude bone-tipped arrows.',
+  brute:         'Slab-shouldered tribal champion. Slow but ruinous on impact.',
+  ghoul:         'Hungering corpse. Faster the longer it has gone unfed.',
+  drake:         'Juvenile cousin of dragons. Wing-batters at close range.',
+  wraith:        'Spirit of a slain priest. Phases through the living.',
+  ogre:          'Hill ogre. Treats trees like clubs and clubs like toothpicks.',
+  sapper:        'Goblin sapper. Lights a fuse, sprints in to detonate.',
+  archer:        'Hardened bandit marksman. Soft body, hard arrows.',
+  shaman:        'Goblin shaman. Heals nearby allies, kite him fast.',
+  summoner:      'Bone-conjurer. Raises a fresh skeleton every 5 seconds.',
+  spider:        'Cave widow. Weaves side-to-side to throw off targeting.',
+  witch:         'Coven witch. Hurls cursed bolts from a safe distance.',
+  zealot:        'Cult zealot. Will sprint to martyr itself on your blade.',
+  reaver:        'Bandit reaver. Berserk dual-wielding swordsman.',
+  lich:          'Risen archmage. Summons minions and snipes from range.',
+  hellhound:     'Soulforged hound. Leaves embers wherever it steps.',
+  warlock:       'Pact-bound caster. Drains life with each ranged hex.',
+  golem:         'Forgehold golem. Walking rune-stone. Hits like a wall.',
+  boss_warchief: 'Krrik III, Warchief — goblin king of the southern crags.',
+  boss_vyxhasis: 'Vyxhasis the Ember — dragon, scourge of the Emberlands.',
+  boss_aethyrnax:'Aethyrnax — ancient sky-wyrm of the void seas.',
+  boss_ourzhal:  'Ourzhal — bone-dragon raised by forbidden rite.',
+};
+
 function showBestiary() {
   const seen = State.bestiary || {};
   const choices = [];
-  // Show all enemies in order they unlock, mask name if not seen.
   const order = [
-    'skeleton', 'goblin', 'brute', 'ghoul', 'drake', 'wraith', 'ogre',
-    'sapper', 'archer', 'shaman', 'boss_warchief', 'boss_vyxhasis',
+    'skeleton', 'rat', 'goblin', 'goblin_a', 'brute', 'ghoul', 'drake', 'wraith',
+    'ogre', 'sapper', 'archer', 'shaman', 'summoner', 'spider', 'witch', 'zealot',
+    'reaver', 'lich', 'hellhound', 'warlock', 'golem',
+    'boss_warchief', 'boss_vyxhasis', 'boss_aethyrnax', 'boss_ourzhal',
   ];
   for (const id of order) {
     const e = seen[id];
-    const lbl = e ? `${id} — ${e.kills} kills` : '? ? ? ? ?';
-    choices.push({ label: lbl, cls: e ? '' : 'secondary', cb: () => {} });
+    if (e) {
+      const lore = BESTIARY_LORE[id] || '';
+      choices.push({ label: `${id} — ${e.kills} kills\n${lore}`, cls: '', cb: () => {} });
+    } else {
+      choices.push({ label: '? ? ? ? ?', cls: 'secondary', cb: () => {} });
+    }
   }
   choices.push({ label: 'Back', cls: 'secondary', cb: () => hideOverlay() });
-  showOverlay('BESTIARY', 'Discovered enemies and lifetime kill counts.', choices);
+  showOverlay('BESTIARY', 'Discovered enemies, kill counts, and lore.', choices);
 }
 
 const statusrow = document.getElementById('statusrow');
