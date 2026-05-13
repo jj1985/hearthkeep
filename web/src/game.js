@@ -992,6 +992,18 @@ export class Game {
       const bonus = 0.5 + r * 0.3;
       this.atkBonus += bonus;
       this.floater(`ANTHEM +${bonus.toFixed(1)} 8s`, this.heroPos.x - 80, this.heroPos.y - 30, '#d4a4cc');
+      // Rose-colored musical-note sparks rising from hero.
+      for (let i = 0; i < 10; i++) {
+        const ang = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI;
+        const sp = 50 + Math.random() * 80;
+        this.fx.push({
+          x: this.heroPos.x + (Math.random() - 0.5) * 16,
+          y: this.heroPos.y,
+          vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp,
+          life: 0.7 + Math.random() * 0.3,
+          color: '#d4a4cc', size: 3 + Math.random() * 2, fade: true,
+        });
+      }
       setTimeout(() => { this.atkBonus = Math.max(0, this.atkBonus - bonus); }, 8000);
     } else {
       for (const e of this.enemies) this._damageEnemy(e, dmg * 2 * skillMult);
