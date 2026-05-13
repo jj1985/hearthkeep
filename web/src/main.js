@@ -100,7 +100,8 @@ function refreshTitle() {
   const subEl = document.getElementById('title-subtitle');
   if (subEl) {
     let sub = 'of the Sundered Realms';
-    if (State.best_wave >= 150) sub = 'walker beyond the Plateau';
+    if (State.worldbreaker) sub = 'Worldbreaker · all four named';
+    else if (State.best_wave >= 150) sub = 'walker beyond the Plateau';
     else if (State.best_wave >= 100) sub = 'no longer mortal in any old sense';
     else if (State.best_wave >= 75) sub = 'voidsworn';
     else if (State.dragonslayer) sub = 'Dragonslayer of the Sundered Realms';

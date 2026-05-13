@@ -1226,6 +1226,18 @@ export class Game {
         this.floater('DRAGONSLAYER — +10% perm dmg', this.size.w / 2 - 110, 80, '#e8d2a0');
         this.log('DRAGONSLAYER honor earned');
       }
+      // Worldbreaker: all four named bosses, including Ourzhal.
+      if (!State.worldbreaker
+          && have.has('warchief') && have.has('vyxhasis')
+          && have.has('aethyrnax') && have.has('ourzhal')) {
+        State.worldbreaker = true;
+        grantEmbers(30);
+        this.runEmbersEarned += 30;
+        this.flash = 0.7;
+        this.banner = { text: '✦ WORLDBREAKER ✦', color: '#f5e8a8', t: 3.5, t0: 3.5 };
+        this.floater('WORLDBREAKER — +30 Ember', this.size.w / 2 - 110, 110, '#f5e8a8', true);
+        this.log('WORLDBREAKER honor earned');
+      }
       persist();
       if (this.onBossBoon) this.onBossBoon();
     } else {
