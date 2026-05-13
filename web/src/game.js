@@ -890,6 +890,10 @@ export class Game {
           fade: true,
         });
       }
+      // For big drops (≥10 gold), float a "+Ng" with upward drift.
+      if (gold >= 10) {
+        this.floater(`+${gold}g`, e.x, e.y - 8, '#f5d96e');
+      }
       State.gold += gold;
       this.combo++;
       this.comboDecay = 1.5;
