@@ -1011,6 +1011,13 @@ export class Game {
     if (this.decals.length > 80) this.decals.splice(0, this.decals.length - 80);
     // Death particles: 6-12 colored shards explode out from the enemy.
     const n = e.boss ? 24 : (e.mythic ? 16 : 8);
+    // Per-type death tint: drakes burn, wisps/wraiths fade pale,
+    // skeletons throw bone-white shards, hellhounds spew embers.
+    let deathColor = e.color;
+    if (e.id === 'skeleton' || e.id === 'lich' || e.id === 'knight') deathColor = '#ddd5b5';
+    else if (e.id === 'drake' || e.id === 'cinder_imp' || e.id === 'hellhound') deathColor = '#ff8a3a';
+    else if (e.id === 'wisp' || e.id === 'wraith' || e.id === 'ghoul') deathColor = '#cfd8e8';
+    else if (e.id === 'sapper') deathColor = '#f0a444';
     for (let i = 0; i < n; i++) {
       const a = Math.random() * Math.PI * 2;
       const s = 90 + Math.random() * 140;
@@ -1018,7 +1025,7 @@ export class Game {
         x: e.x, y: e.y,
         vx: Math.cos(a) * s, vy: Math.sin(a) * s,
         life: 0.4 + Math.random() * 0.3,
-        color: e.color, size: 2 + Math.random() * 3,
+        color: deathColor, size: 2 + Math.random() * 3,
         fade: true,
       });
     }
