@@ -191,6 +191,34 @@ export class Game {
     this.heroPos = { x: w / 2, y: h / 2 + 30 };
   }
 
+  _drawZoneDecor(ctx, w, h) {
+    // Cheap noise-free decor: hash a few fixed points off the zone name.
+    const zone = zoneForWave(this.wave).name;
+    const seed = (() => { let s = 0; for (const c of zone) s = ((s * 31) + c.charCodeAt(0)) >>> 0; return s; })();
+    const rng = mulberry32(seed);
+    ctx.save();
+    ctx.globalAlpha = 0.12;
+    const palette = {
+      'Greenmarch':  '#6fa060',
+      'Ashen Vale':  '#6c5848',
+      'Frostwatch':  '#80c8e0',
+      'Emberlands':  '#d4582c',
+      'The Void':    '#9966c8',
+      'Forgehold':   '#e8b85e',
+      'Sunfire':     '#f5d96e',
+    };
+    ctx.fillStyle = palette[zone] || 'rgba(255,255,255,0.1)';
+    for (let i = 0; i < 40; i++) {
+      const x = rng() * w;
+      const y = 96 + rng() * (h - 200);
+      const s = 2 + rng() * 4;
+      ctx.beginPath();
+      ctx.arc(x, y, s, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
   _drawWeapon(x, y, r) {
     const ctx = this.ctx;
     const a = this.weaponAngle;
@@ -1325,6 +1353,8 @@ export class Game {
       ctx.lineTo(w, y);
       ctx.stroke();
     }
+    // Per-zone floor decor — fixed-position glyphs sized by viewport.
+    this._drawZoneDecor(ctx, w, h);
     // weather
     if (this._weatherColor) {
       ctx.fillStyle = this._weatherColor;
