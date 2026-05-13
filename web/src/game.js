@@ -1669,18 +1669,44 @@ export class Game {
       ctx.stroke();
     }
 
-    // chest
+    // chest — bobs, glows, emits gold sparkles
     if (this.chest) {
       const bob = Math.sin(performance.now() / 200) * 3;
+      const ch = this.chest;
+      // Gradient glow under the chest
+      const glow = ctx.createRadialGradient(ch.x, ch.y + bob, 6, ch.x, ch.y + bob, 38);
+      glow.addColorStop(0, 'rgba(245, 217, 110, 0.4)');
+      glow.addColorStop(1, 'rgba(245, 217, 110, 0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(ch.x, ch.y + bob, 38, 0, Math.PI * 2);
+      ctx.fill();
+      // Random sparkle
+      if (Math.random() < 0.6) {
+        this.fx.push({
+          x: ch.x + (Math.random() - 0.5) * 22,
+          y: ch.y + bob - 8,
+          vx: (Math.random() - 0.5) * 16,
+          vy: -20 - Math.random() * 20,
+          life: 0.5, color: '#f5d96e', size: 2,
+          fade: true,
+        });
+      }
+      // Chest body
       ctx.fillStyle = '#8c6433';
-      ctx.fillRect(this.chest.x - 16, this.chest.y - 14 + bob, 32, 22);
+      ctx.fillRect(ch.x - 16, ch.y - 14 + bob, 32, 22);
+      ctx.fillStyle = '#5a4220';
+      ctx.fillRect(ch.x - 16, ch.y - 14 + bob, 32, 6); // lid hint
       ctx.strokeStyle = '#d4a24c';
       ctx.lineWidth = 2;
-      ctx.strokeRect(this.chest.x - 16, this.chest.y - 14 + bob, 32, 22);
+      ctx.strokeRect(ch.x - 16, ch.y - 14 + bob, 32, 22);
+      // Lock
+      ctx.fillStyle = '#d4a24c';
+      ctx.fillRect(ch.x - 2, ch.y - 6 + bob, 4, 4);
       ctx.fillStyle = '#d4a24c';
       ctx.font = 'bold 12px system-ui';
       ctx.textAlign = 'center';
-      ctx.fillText(this.chest.t.toFixed(1), this.chest.x, this.chest.y - 22 + bob);
+      ctx.fillText(ch.t.toFixed(1), ch.x, ch.y - 22 + bob);
     }
 
     // boss telegraph + spawn reticle at the centre
