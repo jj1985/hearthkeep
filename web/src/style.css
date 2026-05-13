@@ -20,7 +20,8 @@ html, body { width: 100%; height: 100%; background: var(--bg); color: var(--on-s
 #hud[hidden] { display: none; }
 #title-screen { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: calc(24px + var(--safe-top)) 24px calc(24px + var(--safe-bot)); background: linear-gradient(180deg, #0b0a0f 0%, #15131c 100%); z-index: 5; gap: 18px; text-align: center; }
 #title-screen[hidden] { display: none; }
-#title-heading { font-size: 48px; color: var(--primary); letter-spacing: 4px; }
+#title-heading { font-size: 48px; letter-spacing: 4px; background: linear-gradient(90deg, #d4a24c 0%, #f5e8a8 50%, #d4a24c 100%); -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow: 0 0 12px rgba(212,162,76,0.25); animation: titleShimmer 4s ease-in-out infinite; }
+@keyframes titleShimmer { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.25); } }
 #title-subtitle { color: var(--muted); font-size: 14px; }
 #title-stats { display: flex; flex-direction: column; gap: 6px; color: var(--on-surface); font-size: 13px; }
 #title-actions { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 320px; }
