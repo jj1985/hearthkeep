@@ -566,11 +566,18 @@ document.getElementById('btn-pause').addEventListener('click', () => {
   if (!game) return;
   game.paused = !game.paused;
   if (game.paused) {
+    const trkId = equipped();
+    const trkLbl = trkId ? (TRINKETS.find(t => t.id === trkId)?.label || trkId) : '— none —';
+    const perks = Array.from(game.takenPerks || []);
+    const perkLine = perks.length ? perks.join(', ') : '(none yet)';
     const stats = [
+      `Loadout: ${[game.primaryClass, game.secondaryClass, game.tertiaryClass].filter(Boolean).join(' / ')}`,
       `Damage: ${game.heroDmg()}   ·   Atk/sec: ${game.atkRate().toFixed(2)}`,
       `Range: ${Math.round(game.heroRange())}   ·   Crit: ${Math.round((game.critBonus + 0) * 100)}%`,
       `Gold mult: ${(game.goldMult * game.rebirthBonus * (1 + (State.level_perks?.perm_gold || 0) * 0.05) * game.challengeBonus()).toFixed(2)}×`,
       game.synergy ? (game.synergy()?.label ? `Synergy: ${game.synergy().label}` : '') : '',
+      `Trinket: ${trkLbl}`,
+      `Perks: ${perkLine}`,
       '',
       'QUESTS',
       game.quests ? game.quests.summary() : '',
