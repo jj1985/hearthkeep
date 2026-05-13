@@ -1277,26 +1277,44 @@ export class Game {
     ctx.stroke();
 
     // enemies
+    const now = performance.now();
     for (const e of this.enemies) {
       ctx.globalAlpha = (e.alpha ?? 1);
-      // Shadow ellipse
+      // Per-enemy idle bob (cheap deterministic phase off id+x+y)
+      const phase = (e.x + e.y) * 0.01;
+      const bobE = Math.sin(now / 280 + phase) * 1.5;
       const r = e.size / 2;
+      // Shadow ellipse
       ctx.fillStyle = 'rgba(0,0,0,0.25)';
       ctx.beginPath();
       ctx.ellipse(e.x, e.y + r + 2, r * 0.9, r * 0.4, 0, 0, Math.PI * 2);
       ctx.fill();
+      // Apply bob to draw-position only.
+      e._drawY = e.y + bobE;
+      const ey = e._drawY ?? e.y;
       // Radial gradient body for depth.
-      const grad = ctx.createRadialGradient(e.x - r * 0.3, e.y - r * 0.3, 1, e.x, e.y, r);
+      const grad = ctx.createRadialGradient(e.x - r * 0.3, ey - r * 0.3, 1, e.x, ey, r);
       grad.addColorStop(0, _lighten(e.color, 0.4));
       grad.addColorStop(1, e.color);
       ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.arc(e.x, e.y, r, 0, Math.PI * 2);
+      ctx.arc(e.x, ey, r, 0, Math.PI * 2);
       ctx.fill();
       if (e.hitFlash > 0) {
         ctx.fillStyle = `rgba(255,255,255,${(e.hitFlash * 6).toFixed(2)})`;
         ctx.beginPath();
-        ctx.arc(e.x, e.y, r, 0, Math.PI * 2);
+        ctx.arc(e.x, ey, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      // Boss outer glow rim.
+      if (e.boss) {
+        const ringR = r + 6 + 2 * Math.sin(now / 200);
+        const rg = ctx.createRadialGradient(e.x, ey, r, e.x, ey, ringR + 4);
+        rg.addColorStop(0, 'rgba(212,162,76,0.6)');
+        rg.addColorStop(1, 'rgba(212,162,76,0.0)');
+        ctx.fillStyle = rg;
+        ctx.beginPath();
+        ctx.arc(e.x, ey, ringR + 4, 0, Math.PI * 2);
         ctx.fill();
       }
       if (e.mythic) {
@@ -1304,19 +1322,23 @@ export class Game {
         const a = 0.6 + 0.3 * Math.sin(t);
         ctx.strokeStyle = `rgba(232,210,160,${a.toFixed(2)})`;
         ctx.lineWidth = 3.5;
+        ctx.beginPath();
+        ctx.arc(e.x, ey, r, 0, Math.PI * 2);
         ctx.stroke();
       } else if (e.boss) {
         ctx.strokeStyle = '#d4a24c';
         ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(e.x, ey, r, 0, Math.PI * 2);
         ctx.stroke();
       }
       // hp bar
       const barW = e.size;
       const frac = Math.max(0, e.hp / e.maxHp);
       ctx.fillStyle = 'rgba(0,0,0,0.5)';
-      ctx.fillRect(e.x - barW / 2, e.y - r - 8, barW, 3);
+      ctx.fillRect(e.x - barW / 2, ey - r - 8, barW, 3);
       ctx.fillStyle = '#d95940';
-      ctx.fillRect(e.x - barW / 2, e.y - r - 8, barW * frac, 3);
+      ctx.fillRect(e.x - barW / 2, ey - r - 8, barW * frac, 3);
       ctx.globalAlpha = 1;
     }
 
