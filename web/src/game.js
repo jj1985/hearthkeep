@@ -155,6 +155,7 @@ export class Game {
     this.weather = []; // [{x, y, vy, color, size}]
     this.bgDots = [];  // long-lived parallax dots
     this.fogBlobs = []; // soft drifting fog gradients: { x, y, r, vx, alpha }
+    this.dragonFlyover = null; // { x, y, vx, life }
     this.flash = 0;    // 0..1 white-screen flash on big events
     this.timeScale = 1;
     this.timeScaleEndAt = 0;
@@ -396,6 +397,25 @@ export class Game {
     this.attackTimer -= dt;
     if (this.berserkerT > 0) this.berserkerT = Math.max(0, this.berserkerT - dt);
     if (this.quicksilverT > 0) this.quicksilverT = Math.max(0, this.quicksilverT - dt);
+    // Periodic dragon flyover — pure ambient flavor.
+    if (!this.dragonFlyover && this.wave >= 3 && Math.random() < 0.0012) {
+      const speed = 90 + Math.random() * 60;
+      const dir = Math.random() < 0.5 ? 1 : -1;
+      this.dragonFlyover = {
+        x: dir > 0 ? -120 : this.size.w + 120,
+        y: 40 + Math.random() * 80,
+        vx: speed * dir, life: 12,
+      };
+    }
+    if (this.dragonFlyover) {
+      this.dragonFlyover.x += this.dragonFlyover.vx * dt;
+      this.dragonFlyover.life -= dt;
+      if (this.dragonFlyover.life <= 0
+          || this.dragonFlyover.x < -160
+          || this.dragonFlyover.x > this.size.w + 160) {
+        this.dragonFlyover = null;
+      }
+    }
     this.idleTimer -= dt;
     if (this.skillCd > 0) this.skillCd -= dt;
     if (this.iframeT > 0) this.iframeT -= dt;
@@ -1528,6 +1548,27 @@ export class Game {
     }
     // Per-zone floor decor — fixed-position glyphs sized by viewport.
     this._drawZoneDecor(ctx, w, h);
+    // Dragon silhouette flyover — distant ambient.
+    if (this.dragonFlyover) {
+      const dr = this.dragonFlyover;
+      const flap = Math.sin(performance.now() / 90) * 12;
+      const facing = dr.vx >= 0 ? 1 : -1;
+      ctx.save();
+      ctx.translate(dr.x, dr.y);
+      ctx.scale(facing, 1);
+      ctx.fillStyle = 'rgba(20,15,25,0.55)';
+      ctx.beginPath();
+      // body
+      ctx.moveTo(-32, 0); ctx.lineTo(28, -2); ctx.lineTo(36, 0); ctx.lineTo(28, 4); ctx.closePath();
+      // tail
+      ctx.moveTo(-32, 0); ctx.lineTo(-56, -3); ctx.lineTo(-32, 3); ctx.closePath();
+      // far wing
+      ctx.moveTo(-8, 0); ctx.lineTo(-22, -28 + flap); ctx.lineTo(10, -6); ctx.closePath();
+      // near wing
+      ctx.moveTo(-8, 0); ctx.lineTo(-26, 24 - flap); ctx.lineTo(10, 4); ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
     // Ground decals (corpse stains) — under enemies, above floor.
     for (const d of this.decals) {
       const a = Math.min(0.35, (d.life / d.max) * 0.35);
