@@ -20,6 +20,7 @@ export const PERKS = [
   { id: 'tempest_rune',label: 'Tempest Rune',  desc: '+0.6 atk/sec.',         tags: ['wizard','arcane'],     kind: 'atk', value: 0.6 },
   { id: 'tigerblood',  label: 'Tiger Blood',   desc: 'Heal 5% of dmg dealt.', tags: ['necromancer','any'],   kind: 'lifesteal', value: 0.05 },
   { id: 'savage',      label: 'Savage',        desc: '+30% dmg + +5% crit.',  tags: ['warrior','rogue'],     kind: 'savage', value: 0.30 },
+  { id: 'phoenix',     label: 'Phoenix',       desc: '1 free revive this run.', tags: ['wizard','any'],       kind: 'revive', value: 1 },
 ];
 
 export function rollPerks(klass, taken, count = 3) {
@@ -68,5 +69,6 @@ export function applyPerk(game, perk) {
       game.heroHp = Math.min(game.heroMaxHp, game.heroHp + Math.max(0, game.heroMaxHp - prev));
       break;
     case 'savage': game.dmgMult *= (1 + v); game.critBonus += 0.05; break;
+    case 'revive': game.bonusRevives = (game.bonusRevives || 0) + v; break;
   }
 }

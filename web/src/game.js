@@ -1396,8 +1396,8 @@ export class Game {
   }
 
   _onDie() {
-    // Second Wind: spend a revive if any left.
-    if (this.revivesUsed < maxRevives()) {
+    // Second Wind: spend a revive if any left (perk + persistent stack).
+    if (this.revivesUsed < maxRevives() + (this.bonusRevives || 0)) {
       this.revivesUsed++;
       this.heroHp = Math.floor(this.heroMaxHp / 2);
       this.enemies.length = 0;
