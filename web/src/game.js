@@ -2182,6 +2182,15 @@ export class Game {
       ctx.arc(hx, hy, haloR, 0, Math.PI * 2);
       ctx.fill();
     }
+    // i-frame shimmer — soft cyan ring while invulnerable (blink/revive).
+    if (this.iframeT > 0) {
+      const a = 0.4 + 0.4 * Math.sin(performance.now() / 60);
+      ctx.strokeStyle = `rgba(155,230,200,${a.toFixed(2)})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(hx, hy, hr + 16, 0, Math.PI * 2);
+      ctx.stroke();
+    }
     // Berserker / Quicksilver buff rings — red and cyan pulses.
     if (this.berserkerT > 0) {
       const a = 0.4 + 0.3 * Math.sin(performance.now() / 100);
