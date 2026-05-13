@@ -1496,6 +1496,11 @@ export class Game {
       // Apply bob to draw-position only.
       e._drawY = e.y + bobE;
       const ey = e._drawY ?? e.y;
+      // Soft drop shadow grounds the enemy on the floor.
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
+      ctx.beginPath();
+      ctx.ellipse(e.x, ey + r * 0.85, r * 0.85, r * 0.32, 0, 0, Math.PI * 2);
+      ctx.fill();
       // Radial gradient body for depth.
       const grad = ctx.createRadialGradient(e.x - r * 0.3, ey - r * 0.3, 1, e.x, ey, r);
       grad.addColorStop(0, _lighten(e.color, 0.4));
@@ -1581,6 +1586,21 @@ export class Game {
         ctx.beginPath();
         ctx.arc(e.x, ey, r, 0, Math.PI * 2);
         ctx.fill();
+      }
+      // Ranged aim tell: as the shot windup nears 0, a thin red line traces
+      // from the archer toward the hero so the player can dodge it.
+      if (e.ranged && e.shotCd !== undefined && e.shotCd > 0 && e.shotCd < 0.5) {
+        const aimDx = this.heroPos.x - e.x;
+        const aimDy = this.heroPos.y - e.y;
+        const aimD = Math.hypot(aimDx, aimDy) || 1;
+        const reach = 260;
+        const alpha = (0.5 - e.shotCd) * 1.6;
+        ctx.strokeStyle = `rgba(220,80,60,${alpha.toFixed(2)})`;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(e.x, ey);
+        ctx.lineTo(e.x + (aimDx / aimD) * reach, ey + (aimDy / aimD) * reach);
+        ctx.stroke();
       }
       // Boss outer glow rim.
       if (e.boss) {
