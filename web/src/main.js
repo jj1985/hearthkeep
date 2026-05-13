@@ -444,7 +444,9 @@ function refreshHud() {
   }
   gold.textContent = `${State.gold} g`;
   embers.textContent = `${State.embers} 🜂`;
-  level.textContent = `L${State.hero_level}`;
+  const need = 20 + (State.hero_level - 1) * 15;
+  const pctXp = Math.min(100, Math.round(((State.hero_xp || 0) / need) * 100));
+  level.textContent = `L${State.hero_level} ${pctXp}%`;
   // Run timer
   if (game.runStartT) {
     const sec = Math.floor((performance.now() - game.runStartT) / 1000);
