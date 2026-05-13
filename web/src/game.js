@@ -1682,6 +1682,70 @@ export class Game {
     }
     // Per-zone floor decor — fixed-position glyphs sized by viewport.
     this._drawZoneDecor(ctx, w, h);
+    // Zone-specific sky elements.
+    const _zname = zoneForWave(this.wave).name;
+    if (_zname === 'Sunfire') {
+      // A huge dim sun disc fixed in the upper-right.
+      const sx = w * 0.82, sy = h * 0.18, sr = 70;
+      const sg = ctx.createRadialGradient(sx, sy, 0, sx, sy, sr * 2.2);
+      sg.addColorStop(0, 'rgba(255,232,140,0.55)');
+      sg.addColorStop(0.5, 'rgba(255,180,80,0.18)');
+      sg.addColorStop(1, 'rgba(255,180,80,0)');
+      ctx.fillStyle = sg;
+      ctx.beginPath();
+      ctx.arc(sx, sy, sr * 2.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(255,240,180,0.85)';
+      ctx.beginPath();
+      ctx.arc(sx, sy, sr * 0.55, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (_zname === 'Frostwatch') {
+      // Frosty aurora ribbon along the top.
+      const t = performance.now() / 1400;
+      ctx.strokeStyle = 'rgba(140,210,235,0.18)';
+      ctx.lineWidth = 14;
+      ctx.beginPath();
+      for (let x = 0; x <= w; x += 12) {
+        const yy = 30 + Math.sin((x * 0.02) + t) * 14;
+        if (x === 0) ctx.moveTo(x, yy); else ctx.lineTo(x, yy);
+      }
+      ctx.stroke();
+    } else if (_zname === 'Forgehold') {
+      // Two glowing forge braziers in the bottom corners.
+      const t = performance.now() / 300;
+      for (const cx of [40, w - 40]) {
+        const cy = h - 40;
+        const flick = 1 + 0.15 * Math.sin(t + cx);
+        const fg = ctx.createRadialGradient(cx, cy, 0, cx, cy, 60 * flick);
+        fg.addColorStop(0, 'rgba(255,200,120,0.5)');
+        fg.addColorStop(1, 'rgba(255,140,80,0)');
+        ctx.fillStyle = fg;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 60 * flick, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else if (_zname === 'The Void') {
+      // Faint moving rune circle in middle-distance.
+      const cx = w * 0.5, cy = h * 0.25;
+      const t = performance.now() / 4000;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(t);
+      ctx.strokeStyle = 'rgba(160,120,220,0.18)';
+      ctx.lineWidth = 1.5;
+      const R = 80;
+      ctx.beginPath();
+      for (let i = 0; i < 12; i++) {
+        const a = (i / 12) * Math.PI * 2;
+        ctx.moveTo(Math.cos(a) * R * 0.85, Math.sin(a) * R * 0.85);
+        ctx.lineTo(Math.cos(a) * R, Math.sin(a) * R);
+      }
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(0, 0, R, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
     // Void lightning crackles — drawn over decor.
     if (this.voidBolts && this.voidBolts.length) {
       for (const b of this.voidBolts) {
