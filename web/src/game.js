@@ -1234,6 +1234,19 @@ export class Game {
       this.log(`Entering ${z.name}`);
     }
     this._lastZoneName = z.name;
+    // Story beats — fixed-wave narrative cards.
+    const story = ({
+      25:  'The dragons have noticed you, walker of the realms.',
+      50:  'Word of you crosses the Sundered Realms. Embers carry your name.',
+      75:  'The Void answers. Reality tastes of iron.',
+      100: 'You are no longer mortal in any old sense. Walk on.',
+      150: 'The Sunfire Plateau sings to you. The sky is yours.',
+    })[this.wave];
+    if (story) {
+      this.banner = { text: story, color: '#e8d2a0', t: 4.5, t0: 4.5 };
+      this.flash = Math.max(this.flash, 0.35);
+      this.log(`✦ ${story}`);
+    }
     this.warriorRage = 0;
     this.waveKillsProgress = 0;
     this.waveKillsTarget = Math.floor(8 + this.wave * 1.5);
