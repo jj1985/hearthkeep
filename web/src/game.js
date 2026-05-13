@@ -1,6 +1,6 @@
 // HTML5 horde arena — canvas renderer, ECS-lite update loop.
 import { State, persist, grantXp, checkKillMilestones, recordRun, grantEmbers, tickWeekly, hasGlory, skillRank, colorForClass, mulberry32, todaySeedInt, recordDailyRun } from './state.js';
-import { bonusDamage, bonusAtk, bonusRange, bonusHp, bonusCrit, emberDmgMult, emberGoldMult, maxRevives } from './upgrades.js';
+import { bonusDamage, bonusAtk, bonusRange, bonusHp, bonusCrit, emberDmgMult, emberGoldMult, maxRevives, emberSkillReduction, emberAuraDmgMult } from './upgrades.js';
 import { synergyFor } from './synergies.js';
 import { Sfx } from './sfx.js';
 import { Music } from './music.js';
@@ -839,6 +839,7 @@ export class Game {
     if (this.primaryClass === 'bard') d *= 1.05;
     d *= 1 + Trinkets.dmgBonus();
     d *= emberDmgMult();
+    d *= emberAuraDmgMult();
     if (hasGlory('novice')) d *= 1.05;
     const s = this.synergy();
     if (s?.dmg) d *= 1 + s.dmg;
@@ -949,7 +950,7 @@ export class Game {
       this.floater(`CLEAVE${r ? ' R' + r : ''}`, this.heroPos.x - 30, this.heroPos.y - 30, '#d9892e');
       this.shakeMag = 20;
     }
-    this.skillCd = 6;
+    this.skillCd = Math.max(1.5, 6 - emberSkillReduction());
     Sfx.crit();
   }
 

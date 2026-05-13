@@ -11,6 +11,8 @@ export const UPGRADES = [
   { id: 'ember_dmg',  label: 'Ember Edge', desc: '+10% global damage / rank', base: 1, growth: 1.6,  currency: 'embers' },
   { id: 'ember_gold', label: 'Hoard Pact', desc: '+25% gold drops / rank',    base: 2, growth: 1.55, currency: 'embers' },
   { id: 'ember_rev',  label: 'Second Wind',desc: '+1 free revive per run',    base: 4, growth: 2.0,  currency: 'embers' },
+  { id: 'ember_skill',label: 'Quickened',  desc: '-0.5s skill cooldown / rank', base: 3, growth: 1.7, currency: 'embers' },
+  { id: 'ember_aura', label: 'Ember Aura', desc: '+10% damage to enemies in range / rank', base: 5, growth: 1.8, currency: 'embers' },
 ];
 
 export const MAX_RANK = 30;
@@ -62,3 +64,5 @@ export function bonusCrit() { return Math.min(0.95, rank('crit') * 0.05); }
 export function emberDmgMult() { return 1 + rank('ember_dmg') * 0.10; }
 export function emberGoldMult() { return 1 + rank('ember_gold') * 0.25; }
 export function maxRevives() { return rank('ember_rev'); }
+export function emberSkillReduction() { return rank('ember_skill') * 0.5; }
+export function emberAuraDmgMult() { return 1 + rank('ember_aura') * 0.10; }
