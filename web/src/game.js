@@ -540,6 +540,19 @@ export class Game {
       this.heroThrust.t -= dt;
       if (this.heroThrust.t <= 0) { this.heroThrust.x = 0; this.heroThrust.y = 0; this.heroThrust.t = 0; }
     }
+    // Hero combo trail — class-colored embers drift up while combo ≥ 5.
+    if (this.combo >= 5 && Math.random() < 0.5) {
+      this.fx.push({
+        x: this.heroPos.x + (Math.random() - 0.5) * 30,
+        y: this.heroPos.y + 18,
+        vx: (Math.random() - 0.5) * 20,
+        vy: -30 - Math.random() * 40,
+        life: 0.6,
+        color: colorForClass(this.primaryClass, '#d4a24c'),
+        size: 2 + Math.random() * 2,
+        fade: true,
+      });
+    }
 
     this._tickWeather(dt);
     this._tickChest(dt);
