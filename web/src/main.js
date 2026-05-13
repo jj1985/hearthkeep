@@ -281,6 +281,10 @@ const BOSS_BOONS = [
   { id: 'sanctuary', label: 'Sanctuary', desc: '+50% max HP this run + full.',  apply: g => { g.heroMaxHp = Math.round(g.heroMaxHp * 1.5); g.heroHp = g.heroMaxHp; } },
   { id: 'hoard',     label: 'Hoard',     desc: '+50% gold drops this run.',     apply: g => g.goldMult *= 1.5 },
   { id: 'storm',     label: 'Storm',     desc: '+0.5 atk/sec this run.',        apply: g => g.atkBonus += 0.5 },
+  { id: 'mythbound', label: 'Mythbound', desc: '+8% Mythic spawn chance.',      apply: g => g.mythicBonus += 0.08 },
+  { id: 'sharpshot', label: 'Sharpshot', desc: '+10% crit chance.',             apply: g => g.critBonus += 0.10 },
+  { id: 'ironclad',  label: 'Ironclad',  desc: '-30% contact damage.',          apply: g => g.contactReduction = Math.min(0.9, g.contactReduction + 0.3) },
+  { id: 'kindling',  label: 'Kindling',  desc: '+25% wave-clear bonus.',        apply: g => g.waveBonusMult *= 1.25 },
 ];
 
 function showBossBoon() {
