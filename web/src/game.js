@@ -835,6 +835,17 @@ export class Game {
       const trkGold = 1 + Trinkets.goldBonus();
       const gloryGold = hasGlory('rising') ? 1.05 : 1;
       const gold = Math.max(1, Math.round(e.gold * this.rebirthBonus * this.goldMult * this.comboMult() * permGold * synGold * chal * trkGold * emberGoldMult() * gloryGold));
+      // Coin sparkle on the kill spot — a few gold flecks fanning out.
+      for (let i = 0; i < 4; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const s = 60 + Math.random() * 80;
+        this.fx.push({
+          x: e.x, y: e.y,
+          vx: Math.cos(a) * s, vy: Math.sin(a) * s,
+          life: 0.4, color: '#f5d96e', size: 2 + Math.random() * 2,
+          fade: true,
+        });
+      }
       State.gold += gold;
       this.combo++;
       this.comboDecay = 1.5;
@@ -1315,6 +1326,18 @@ export class Game {
         ctx.fillStyle = rg;
         ctx.beginPath();
         ctx.arc(e.x, ey, ringR + 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      // Sapper warning aura — bright orange that intensifies as HP drops.
+      if (e.explodes && e.hp < e.maxHp) {
+        const danger = 1 - (e.hp / e.maxHp);
+        const pulseA = 0.25 + 0.5 * danger * (0.7 + 0.3 * Math.sin(now / 120));
+        const rg = ctx.createRadialGradient(e.x, ey, r, e.x, ey, r + 30 * danger);
+        rg.addColorStop(0, `rgba(240,133,51,${pulseA.toFixed(2)})`);
+        rg.addColorStop(1, 'rgba(240,133,51,0)');
+        ctx.fillStyle = rg;
+        ctx.beginPath();
+        ctx.arc(e.x, ey, r + 30 * danger, 0, Math.PI * 2);
         ctx.fill();
       }
       if (e.mythic) {
