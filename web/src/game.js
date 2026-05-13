@@ -1038,6 +1038,19 @@ export class Game {
       this.comboDecay = 1.5;
       if (this.combo > this.comboPeak) this.comboPeak = this.combo;
       this._questTick('combo', this.combo);
+      // Combo milestone banners.
+      if (this.combo === 10) {
+        this.banner = { text: 'KILLSTREAK × 10', color: '#c8a030', t: 1.0, t0: 1.0 };
+      } else if (this.combo === 25) {
+        this.banner = { text: 'KILLSTREAK × 25  ·  CHAINING', color: '#d4a24c', t: 1.4, t0: 1.4 };
+      } else if (this.combo === 50) {
+        this.banner = { text: 'KILLSTREAK × 50  ·  RAMPAGE', color: '#e8d2a0', t: 1.8, t0: 1.8 };
+        this.flash = Math.max(this.flash, 0.3);
+      } else if (this.combo === 100) {
+        this.banner = { text: 'KILLSTREAK × 100  ·  GODLIKE', color: '#f5e8a8', t: 2.4, t0: 2.4 };
+        this.flash = Math.max(this.flash, 0.5);
+        this.rings.push({ x: this.heroPos.x, y: this.heroPos.y, r: 8, max: 280, life: 0.7, life0: 0.7, color: '245,232,168', width: 5 });
+      }
       if (this.primaryClass === 'warrior') this.warriorRage = Math.min(20, this.warriorRage + 1);
       if (this.primaryClass === 'necromancer') this.heroHp = Math.min(this.heroMaxHp, this.heroHp + 2);
     }
