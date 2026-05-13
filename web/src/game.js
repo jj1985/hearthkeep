@@ -1825,6 +1825,23 @@ export class Game {
       ctx.arc(hx, hy, haloR, 0, Math.PI * 2);
       ctx.fill();
     }
+    // Berserker / Quicksilver buff rings — red and cyan pulses.
+    if (this.berserkerT > 0) {
+      const a = 0.4 + 0.3 * Math.sin(performance.now() / 100);
+      ctx.strokeStyle = `rgba(220,80,60,${a.toFixed(2)})`;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(hx, hy, hr + 6, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    if (this.quicksilverT > 0) {
+      const a = 0.4 + 0.3 * Math.sin(performance.now() / 70);
+      ctx.strokeStyle = `rgba(128,200,224,${a.toFixed(2)})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(hx, hy, hr + 11, 0, Math.PI * 2);
+      ctx.stroke();
+    }
     ctx.fillStyle = colorForClass(this.primaryClass, CLASS_COLOR[this.primaryClass] || '#d4a24c');
     ctx.strokeStyle = '#fff';
     ctx.lineWidth = 2;
