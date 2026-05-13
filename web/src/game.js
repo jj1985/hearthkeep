@@ -27,7 +27,9 @@ const CLASS_STATS = {
 
 const ENEMY_TYPES = {
   skeleton:   { label: 'Skeleton',   color: '#ddd5b5', hp: 6,   speed: 70,  gold: 1, size: 18, minWave: 1 },
+  rat:        { label: 'Plague Rat', color: '#7c5740', hp: 4,   speed: 110, gold: 1, size: 14, minWave: 1 },
   goblin:     { label: 'Goblin',     color: '#73c059', hp: 10,  speed: 95,  gold: 2, size: 18, minWave: 3 },
+  goblin_a:   { label: 'Goblin Archer','color':'#a8c270', hp: 12, speed: 60,  gold: 3, size: 18, minWave: 5, ranged: true },
   brute:      { label: 'Bone Brute', color: '#bfb088', hp: 24,  speed: 55,  gold: 5, size: 22, minWave: 6 },
   ghoul:      { label: 'Ghoul',      color: '#8ab080', hp: 40,  speed: 110, gold: 9, size: 20, minWave: 9 },
   drake:      { label: 'Drake',      color: '#d95940', hp: 60,  speed: 75,  gold: 14, size: 24, minWave: 12 },
