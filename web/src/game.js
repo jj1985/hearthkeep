@@ -39,6 +39,9 @@ const ENEMY_TYPES = {
   summoner:   { label: 'Summoner',   color: '#b380d9', hp: 70,  speed: 45,  gold: 18, size: 22, minWave: 22, summons: true },
   spider:     { label: 'Spider',     color: '#73a039', hp: 18,  speed: 140, gold: 4,  size: 16, minWave: 7  },
   witch:      { label: 'Witch',      color: '#c266c2', hp: 80,  speed: 75,  gold: 22, size: 22, minWave: 24, ranged: true },
+  zealot:     { label: 'Zealot',     color: '#e8b85e', hp: 110, speed: 85,  gold: 26, size: 22, minWave: 28 },
+  reaver:     { label: 'Reaver',     color: '#a06044', hp: 180, speed: 65,  gold: 40, size: 26, minWave: 32 },
+  lich:       { label: 'Lich',       color: '#cbb0e8', hp: 260, speed: 55,  gold: 75, size: 28, minWave: 36, ranged: true, summons: true },
 };
 
 const ZONES = [
@@ -50,6 +53,18 @@ const ZONES = [
   { min: 51, name: 'Forgehold',  floor: '#291408' },
   { min: 71, name: 'Sunfire',    floor: '#332108' },
 ];
+
+function _lighten(hex, frac) {
+  const h = hex.replace('#', '');
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  const f = Math.max(0, Math.min(1, frac));
+  const nr = Math.round(r + (255 - r) * f);
+  const ng = Math.round(g + (255 - g) * f);
+  const nb = Math.round(b + (255 - b) * f);
+  return '#' + [nr, ng, nb].map(x => x.toString(16).padStart(2, '0')).join('');
+}
 
 export function zoneForWave(w) {
   let cur = ZONES[0];
@@ -1224,8 +1239,11 @@ export class Game {
     const sy = (Math.random() - 0.5) * this.shakeMag;
     ctx.translate(sx, sy);
 
-    // bg
-    ctx.fillStyle = '#0b0a0f';
+    // bg + radial vignette for depth
+    const bgGrad = ctx.createRadialGradient(w / 2, h / 2, 60, w / 2, h / 2, Math.max(w, h));
+    bgGrad.addColorStop(0, '#15131c');
+    bgGrad.addColorStop(1, '#06060a');
+    ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, w, h);
     // floor — tinted by zone
     ctx.fillStyle = zoneForWave(this.wave).floor;
@@ -1267,7 +1285,11 @@ export class Game {
       ctx.beginPath();
       ctx.ellipse(e.x, e.y + r + 2, r * 0.9, r * 0.4, 0, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = e.color;
+      // Radial gradient body for depth.
+      const grad = ctx.createRadialGradient(e.x - r * 0.3, e.y - r * 0.3, 1, e.x, e.y, r);
+      grad.addColorStop(0, _lighten(e.color, 0.4));
+      grad.addColorStop(1, e.color);
+      ctx.fillStyle = grad;
       ctx.beginPath();
       ctx.arc(e.x, e.y, r, 0, Math.PI * 2);
       ctx.fill();

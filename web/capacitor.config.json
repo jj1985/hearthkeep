@@ -2,6 +2,11 @@
   "appId": "com.hearthkeep.demo",
   "appName": "Hearthkeep",
   "webDir": "dist",
+  "server": {
+    "url": "https://jj1985.github.io/hearthkeep/web/",
+    "androidScheme": "https",
+    "allowNavigation": ["jj1985.github.io"]
+  },
   "android": {
     "allowMixedContent": false
   }
