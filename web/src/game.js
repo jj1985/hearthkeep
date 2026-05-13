@@ -479,6 +479,17 @@ export class Game {
             vx: (dx / d) * 220, vy: (dy / d) * 220,
             dmg: 3 + Math.floor(this.wave / 3), life: 2.5,
           });
+          // Muzzle puff: 3 short-lived light flecks fanning along the shot dir.
+          for (let k = 0; k < 3; k++) {
+            const spread = (Math.random() - 0.5) * 0.4;
+            const cs = Math.cos(Math.atan2(dy, dx) + spread);
+            const sn = Math.sin(Math.atan2(dy, dx) + spread);
+            this.fx.push({
+              x: e.x + cs * 8, y: e.y + sn * 8,
+              vx: cs * 60, vy: sn * 60,
+              life: 0.2, color: '#f5e8a8', size: 2 + Math.random() * 2, fade: true,
+            });
+          }
           e.shotCd = 2.0;
         }
         continue;
