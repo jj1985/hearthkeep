@@ -910,7 +910,7 @@ export class Game {
     const crit = this.lastCritted; this.lastCritted = false;
     const txt = crit ? `-${Math.round(amount)}!` : `-${Math.round(amount)}`;
     const clr = crit ? '#e8d2a0' : (amount < 10 ? '#c8a030' : '#d4582c');
-    this.floater(txt, e.x, e.y, clr);
+    this.floater(txt, e.x, e.y, clr, crit);
     if (e.hp <= 0) this._killEnemy(e, true);
   }
 
@@ -1358,8 +1358,8 @@ export class Game {
       });
     }
   }
-  floater(text, x, y, color = '#e8e2d2') {
-    this.floaters.push({ text, x, y, color, life: 0.6, life0: 0.6 });
+  floater(text, x, y, color = '#e8e2d2', big = false) {
+    this.floaters.push({ text, x, y, color, life: big ? 0.9 : 0.6, life0: big ? 0.9 : 0.6, big: !!big });
   }
   log(s) {
     this.combatLog.push(s);
@@ -1830,9 +1830,18 @@ export class Game {
       const alpha = fl.life / fl.life0;
       ctx.globalAlpha = Math.max(0, alpha);
       ctx.fillStyle = fl.color;
-      ctx.font = 'bold 14px system-ui';
+      if (fl.big) {
+        // Crit floaters are bigger, with a soft drop-shadow.
+        ctx.font = 'bold 20px system-ui';
+        ctx.shadowColor = 'rgba(0,0,0,0.5)';
+        ctx.shadowBlur = 4;
+      } else {
+        ctx.font = 'bold 14px system-ui';
+        ctx.shadowBlur = 0;
+      }
       ctx.textAlign = 'left';
       ctx.fillText(fl.text, fl.x, fl.y);
+      ctx.shadowBlur = 0;
     }
     ctx.globalAlpha = 1;
 
