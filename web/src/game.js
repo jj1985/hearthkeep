@@ -1392,13 +1392,26 @@ export class Game {
     // power-ups
     for (const p of this.powerups) {
       const c = p.kind === 'heal' ? '#6fa060' : p.kind === 'gold' ? '#d4a24c' : '#d4582c';
-      ctx.fillStyle = c;
+      // Pulsing radial gradient body
+      const pp = 1 + 0.15 * Math.sin(performance.now() / 150);
+      const radius = 10 * pp;
+      const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, radius);
+      g.addColorStop(0, _lighten(c, 0.5));
+      g.addColorStop(1, c);
+      ctx.fillStyle = g;
       ctx.beginPath();
-      ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
+      ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
       ctx.fill();
       ctx.strokeStyle = '#fff';
       ctx.lineWidth = 2;
       ctx.stroke();
+      // Glyph
+      ctx.fillStyle = '#1a1208';
+      ctx.font = 'bold 12px system-ui';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const glyph = p.kind === 'heal' ? '+' : p.kind === 'gold' ? '$' : '!';
+      ctx.fillText(glyph, p.x, p.y);
     }
 
     // fx
