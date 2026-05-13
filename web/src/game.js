@@ -452,6 +452,7 @@ export class Game {
     for (const e of this.enemies) {
       if (e.dead) continue;
       if (e.hitFlash > 0) e.hitFlash -= dt;
+      if (e.spawnFade > 0) e.spawnFade = Math.max(0, e.spawnFade - dt * 2.5);  // 0.4s fade
       if (e.boss) this._bossPhaseTick(e, dt);
       const dx = this.heroPos.x - e.x;
       const dy = this.heroPos.y - e.y;
@@ -648,6 +649,7 @@ export class Game {
       ranged: !!def.ranged, shotCd: 1.5,
       heals: !!def.heals, healCd: 3.0,
       summons: !!def.summons, summonCd: 4.0,
+      spawnFade: 1.0,    // 1 → 0 over 0.4s after spawn
     });
     if (isMythic) {
       this.floater(`MYTHIC ${def.label.toUpperCase()}`, this.size.w / 2 - 60, 80, '#e8d2a0');
@@ -1475,6 +1477,16 @@ export class Game {
         ctx.beginPath();
         ctx.arc(e.x, ey, ringR + 4, 0, Math.PI * 2);
         ctx.fill();
+      }
+      // Spawn-in pulse — bright ring expanding outward as the spawn settles.
+      if (e.spawnFade > 0) {
+        const sR = r + (1 - e.spawnFade) * 30;
+        const sA = e.spawnFade * 0.7;
+        ctx.strokeStyle = `rgba(255,255,255,${sA.toFixed(2)})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(e.x, ey, sR, 0, Math.PI * 2);
+        ctx.stroke();
       }
       // Sapper warning aura — bright orange that intensifies as HP drops.
       if (e.explodes && e.hp < e.maxHp) {
