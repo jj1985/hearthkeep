@@ -676,9 +676,20 @@ export class Game {
 
   // --- Spawning ---
   _spawn() {
+    // Weighted pool: newly unlocked enemies are rare; older ones thin out as
+    // newer ones come online. Weight = 1 if just unlocked, scales up to ~6 as
+    // wave passes minWave.
     const pool = [];
     for (const [id, def] of Object.entries(ENEMY_TYPES)) {
-      if (this.wave >= def.minWave) pool.push(id);
+      if (this.wave < def.minWave) continue;
+      const gap = this.wave - def.minWave;
+      // Newest tier: weight 1. As gap grows, weight rises to a cap of 6.
+      // Very old tiers (gap > 30) start fading: weight back down to 2.
+      let w;
+      if (gap < 5) w = 1;
+      else if (gap < 30) w = 6;
+      else w = 3;
+      for (let k = 0; k < w; k++) pool.push(id);
     }
     if (pool.length === 0) pool.push('skeleton');
     const id = pool[Math.floor(this.rng() * pool.length)];
