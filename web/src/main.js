@@ -848,6 +848,26 @@ if (daily) {
 }
 
 
+// First-run tutorial — appears once per browser/save slot
+if (!State.tutorial_seen) {
+  showOverlay('HEARTHKEEP',
+    `Auto-attack runs by itself — you just survive.
+
+STRIKE: tap for a 4× burst hit
+SKILL: class active (6s cd)
+PAUSE: live build stats + quests
+
+Every 5 waves → perk pick
+Every 7 waves → merchant
+Every 10 waves → BOSS (telegraphed)
+Every 13 waves → TEMPEST
+Every 15 waves → treasure chest
+
+Gold buys upgrades. Embers buy prestige.
+Wave 50 unlocks REBIRTH (perm +25%).`,
+    [{ label: 'Begin', cls: '', cb: () => { State.tutorial_seen = true; persist(); hideOverlay(); } }]);
+}
+
 window.addEventListener('beforeunload', () => persist());
 
 // Register the service worker. Cache-first means after first load
