@@ -1179,6 +1179,8 @@ export class Game {
     this.frenzy = Math.min(this.FRENZY_CAP, this.frenzy + 1);
     Sfx.hurt();
     this.shakeMag = Math.min(20, 6 + amount * 0.5);
+    // Mobile haptic — short buzz scaled to bite size.
+    if (navigator.vibrate) navigator.vibrate(amount >= 8 ? 24 : 10);
     if (this.heroHp <= 0) this._onDie();
   }
 
