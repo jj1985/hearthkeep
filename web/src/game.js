@@ -1306,7 +1306,19 @@ export class Game {
 
   // --- FX helpers ---
   _spawnStrike(x, y) {
-    this.fx.push({ x, y, vx: 0, vy: 0, life: 0.18, color: '#f5e8a8', size: 14, fade: true });
+    const c = colorForClass(this.primaryClass, '#f5e8a8');
+    // Central flash
+    this.fx.push({ x, y, vx: 0, vy: 0, life: 0.18, color: c, size: 14, fade: true });
+    // 4 short radial sparks
+    for (let i = 0; i < 4; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const s = 80 + Math.random() * 60;
+      this.fx.push({
+        x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s,
+        life: 0.22, color: c, size: 2.5 + Math.random() * 2,
+        fade: true,
+      });
+    }
   }
   _burst(x, y) {
     for (let i = 0; i < 8; i++) {
