@@ -959,6 +959,19 @@ export class Game {
     const k = this.primaryClass;
     const r = skillRank(k);                  // 0..3
     const skillMult = 1 + r * 0.4;           // +40% per rank
+    // Class-colored skill-cast shockwave ring from hero.
+    const ringColor = ({
+      wizard:      '90,143,179',
+      rogue:       '111,208,127',
+      necromancer: '153,102,200',
+      bard:        '212,164,204',
+      warrior:     '217,137,46',
+    })[k] || '212,162,76';
+    this.rings.push({
+      x: this.heroPos.x, y: this.heroPos.y,
+      r: 12, max: 180, life: 0.5, life0: 0.5,
+      color: ringColor, width: 3,
+    });
     if (k === 'wizard') {
       let best = null, bestHp = 0;
       for (const e of this.enemies) if (e.hp > bestHp) { bestHp = e.hp; best = e; }
