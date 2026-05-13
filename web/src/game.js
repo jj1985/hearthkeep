@@ -1255,6 +1255,17 @@ export class Game {
     this.heroHp = Math.max(0, this.heroHp - amount);
     this.untouchedSinceWave = false;
     this.frenzy = Math.min(this.FRENZY_CAP, this.frenzy + 1);
+    this.floater(`-${Math.round(amount)}`, this.heroPos.x + 14, this.heroPos.y - 20, '#e8a8a8');
+    // Brief red bloom: 4 dark-red sparks burst out from hero.
+    for (let i = 0; i < 4; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const s = 40 + Math.random() * 60;
+      this.fx.push({
+        x: this.heroPos.x, y: this.heroPos.y,
+        vx: Math.cos(a) * s, vy: Math.sin(a) * s,
+        life: 0.25, color: '#c44848', size: 2 + Math.random() * 2, fade: true,
+      });
+    }
     Sfx.hurt();
     this.shakeMag = Math.min(20, 6 + amount * 0.5);
     // Mobile haptic — short buzz scaled to bite size.
