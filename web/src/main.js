@@ -75,6 +75,16 @@ const TIPS = [
   'Save export lets you back up your progress across devices.',
   'Wave 50+ unlocks Rebirth — permanent +25% per Mark.',
   'Ember Edge stacks +10% damage forever, per rank.',
+  'Berserker Vial (chest) → +60% damage for 12 seconds.',
+  'Quicksilver Draught (chest) → +50% attack speed for 10 seconds.',
+  'Combo decays after 1.5s without a kill — chain to multiply gold.',
+  'Boss kills now trigger a shockwave ring + 0.4s slow-mo.',
+  'Killstreak ×100 = GODLIKE banner + screen flash.',
+  'Dragon silhouettes occasionally fly over the upper sky.',
+  'Equipped trinket orbits you as a small colored orb.',
+  'Plague Rats (W1+) and Cinder Imps (W8+) are fast suicide rushers.',
+  'Bone Wisps drift slowly but their hits still hurt.',
+  'The Void zone (W41+) crackles with random purple lightning.',
 ];
 
 function tipOfDay() {
