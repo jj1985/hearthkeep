@@ -86,6 +86,18 @@ function refreshTitle() {
   titleScreen.hidden = false;
   hud.hidden = true;
   canvas.hidden = true;
+  // Dynamic subtitle by progression milestone.
+  const subEl = document.getElementById('title-subtitle');
+  if (subEl) {
+    let sub = 'of the Sundered Realms';
+    if (State.best_wave >= 150) sub = 'walker beyond the Plateau';
+    else if (State.best_wave >= 100) sub = 'no longer mortal in any old sense';
+    else if (State.best_wave >= 75) sub = 'voidsworn';
+    else if (State.dragonslayer) sub = 'Dragonslayer of the Sundered Realms';
+    else if (State.best_wave >= 50) sub = 'ember-bearer';
+    else if (State.best_wave >= 30) sub = 'of the Sundered Realms';
+    subEl.textContent = sub;
+  }
   clearChildren(titleStats);
   const lines = [];
   if (State.daily_curse && CURSES[State.daily_curse]) {
