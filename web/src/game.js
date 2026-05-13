@@ -672,6 +672,9 @@ export class Game {
     const def = BOSS_TYPES[id];
     const hpScale = 1 + (this.wave - 1) * 0.18;
     const maxHp = Math.round(def.hp * hpScale);
+    // Cinematic spawn flash + shake.
+    this.flash = Math.max(this.flash, 0.6);
+    this.shakeMag = Math.max(this.shakeMag, 18);
     this.enemies.push({
       id: `boss_${id}`, label: def.label, color: def.color,
       x: this.size.w / 2, y: -def.size,
@@ -790,7 +793,10 @@ export class Game {
     const permCrit = (State.level_perks?.perm_crit || 0) * 0.02;
     let critted = Math.random() < (this.critBonus + bonusCrit() + permCrit + Trinkets.critBonus());
     if (this.frenzy >= this.FRENZY_CAP) { critted = true; this.frenzy = 0; }
-    if (critted) v *= 2;
+    if (critted) {
+      v *= 2;
+      this.shakeMag = Math.max(this.shakeMag, 5);
+    }
     this.lastCritted = critted;
     return v;
   }
