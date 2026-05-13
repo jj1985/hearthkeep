@@ -96,6 +96,7 @@ export class Game {
     this.combatLog = [];
     this.arrows = [];    // { x, y, vx, vy, dmg, life }
     this.powerups = [];  // { x, y, tx, ty, kind, life }
+    this.coins = [];     // visible gold pickups [{ x, y, vx, vy, life }]
     this.wave = 1;
     this.waveKillsTarget = 8;
     this.waveKillsProgress = 0;
@@ -543,6 +544,25 @@ export class Game {
     }
     this.arrows = this.arrows.filter(a => a.life > 0);
 
+    // Coins: small arc, then magnet to hero. Don't grant gold (already
+    // applied at kill time) — these are pure visual feedback.
+    for (const c of this.coins) {
+      c.life -= dt;
+      c.magnetT -= dt;
+      if (c.magnetT > 0) {
+        c.x += c.vx * dt;
+        c.y += c.vy * dt;
+        c.vy += 120 * dt;
+      } else {
+        const dx2 = this.heroPos.x - c.x;
+        const dy2 = this.heroPos.y - c.y;
+        const d2 = Math.hypot(dx2, dy2) || 1;
+        c.x += (dx2 / d2) * 380 * dt;
+        c.y += (dy2 / d2) * 380 * dt;
+        if (d2 < 26) c.life = 0;
+      }
+    }
+    this.coins = this.coins.filter(c => c.life > 0);
     // Power-ups: magnetic pull to hero.
     for (const p of this.powerups) {
       p.life -= dt;
@@ -917,6 +937,13 @@ export class Game {
       const trkGold = 1 + Trinkets.goldBonus();
       const gloryGold = hasGlory('rising') ? 1.05 : 1;
       const gold = Math.max(1, Math.round(e.gold * this.rebirthBonus * this.goldMult * this.comboMult() * permGold * synGold * chal * trkGold * emberGoldMult() * gloryGold));
+      // Spawn a magnet coin sprite for the kill.
+      const aLaunch = -Math.PI / 2 + (Math.random() - 0.5) * 0.8;
+      this.coins.push({
+        x: e.x, y: e.y,
+        vx: Math.cos(aLaunch) * 120, vy: Math.sin(aLaunch) * 120,
+        life: 3.0, magnetT: 0.3,
+      });
       // Coin sparkle on the kill spot — a few gold flecks fanning out.
       for (let i = 0; i < 4; i++) {
         const a = Math.random() * Math.PI * 2;
@@ -1507,6 +1534,17 @@ export class Game {
       ctx.beginPath();
       ctx.moveTo(a.x, a.y);
       ctx.lineTo(a.x - a.vx * 0.04, a.y - a.vy * 0.04);
+      ctx.stroke();
+    }
+
+    // coins
+    for (const c of this.coins) {
+      ctx.fillStyle = '#f5d96e';
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#b08230';
+      ctx.lineWidth = 1;
       ctx.stroke();
     }
 
