@@ -747,7 +747,7 @@ function showStats() {
     `Glory (lifetime 🜂): ${State.lifetime_embers || 0}`,
     `Login streak: ${State.login_streak}`,
     top ? `#1 run: W${top.wave}, ${top.kills} kills (${top.class})` : '',
-    `Trinkets owned: ${Object.keys(State.trinkets || {}).length} / 8`,
+    `Trinkets owned: ${Object.keys(State.trinkets || {}).length} / ${TRINKETS.length}`,
     `Dragonslayer: ${State.dragonslayer ? '⚔ yes' : 'no'}`,
   ].filter(Boolean).join('\n');
   showOverlay('STATS', lines, [{ label: 'Back', cls: 'secondary', cb: () => hideOverlay() }]);
