@@ -100,6 +100,7 @@ export class Game {
     this.powerups = [];  // { x, y, tx, ty, kind, life }
     this.coins = [];     // visible gold pickups [{ x, y, vx, vy, life }]
     this.decals = [];    // ground stains: { x, y, r, color, life, max }
+    this.rings = [];     // expanding shockwave rings: { x, y, r, max, life, max0, color, width }
     this.wave = 1;
     this.waveKillsTarget = 8;
     this.waveKillsProgress = 0;
@@ -592,6 +593,12 @@ export class Game {
     this.fx = this.fx.filter(f => f.life > 0);
     for (const d of this.decals) d.life -= dt;
     this.decals = this.decals.filter(d => d.life > 0);
+    for (const ri of this.rings) {
+      ri.life -= dt;
+      const k = 1 - (ri.life / ri.life0);
+      ri.r = 8 + (ri.max - 8) * k;
+    }
+    this.rings = this.rings.filter(ri => ri.life > 0);
     for (const fl of this.floaters) {
       fl.life -= dt;
       fl.y -= 40 * dt;
@@ -1388,6 +1395,8 @@ export class Game {
         life: 0.45, color: '#d4a24c', size: 10, fade: true,
       });
     }
+    this.rings.push({ x, y, r: 8, max: 220, life: 0.6, life0: 0.6, color: '212,162,76', width: 4 });
+    this.rings.push({ x, y, r: 14, max: 320, life: 0.85, life0: 0.85, color: '255,255,255', width: 2 });
   }
   floater(text, x, y, color = '#e8e2d2', big = false) {
     this.floaters.push({ text, x, y, color, life: big ? 0.9 : 0.6, life0: big ? 0.9 : 0.6, big: !!big });
@@ -1684,6 +1693,15 @@ export class Game {
       ctx.stroke();
     }
 
+    // Shockwave rings (boss kill / big crit) — expand and fade.
+    for (const ri of this.rings) {
+      const a = Math.max(0, ri.life / ri.life0);
+      ctx.strokeStyle = `rgba(${ri.color},${a.toFixed(2)})`;
+      ctx.lineWidth = ri.width * a + 1;
+      ctx.beginPath();
+      ctx.arc(ri.x, ri.y, ri.r, 0, Math.PI * 2);
+      ctx.stroke();
+    }
     // coins — spinning gold disc with rim shine and ground shadow.
     for (const c of this.coins) {
       const tNow = performance.now();
