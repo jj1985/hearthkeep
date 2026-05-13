@@ -1036,6 +1036,18 @@ export class Game {
     const txt = crit ? `-${Math.round(amount)}!` : `-${Math.round(amount)}`;
     const clr = crit ? '#e8d2a0' : (amount < 10 ? '#c8a030' : '#d4582c');
     this.floater(txt, e.x, e.y, clr, crit);
+    // Crit spark burst — 6 cream-gold flecks fanning from the target.
+    if (crit) {
+      for (let i = 0; i < 6; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const s = 80 + Math.random() * 120;
+        this.fx.push({
+          x: e.x, y: e.y,
+          vx: Math.cos(a) * s, vy: Math.sin(a) * s,
+          life: 0.35, color: '#f5e8a8', size: 2 + Math.random() * 2, fade: true,
+        });
+      }
+    }
     // Overkill: kill that dealt 2x+ remaining HP.
     if (e.hp <= 0 && amount >= e.maxHp * 0.5) {
       this.floater('OVERKILL!', e.x, e.y - 24, '#f5e8a8', true);
