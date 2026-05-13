@@ -805,11 +805,30 @@ function showSettings() {
             ]);
         },
       },
+      {
+        label: 'Credits / About',
+        cls: 'secondary',
+        cb: () => showCredits(),
+      },
       { label: 'Back', cls: 'secondary', cb: () => hideOverlay() },
     ];
     showOverlay('SETTINGS', `Volume cycles 0 → 100% in 25% steps.`, choices);
   }
   rebuild();
+}
+
+function showCredits() {
+  const body =
+    `HEARTHKEEP of the Sundered Realms\n` +
+    `Mobile horde-survival roguelike\n\n` +
+    `An indie passion project. Iron Vesper Studios.\n` +
+    `Built with HTML5 Canvas + Capacitor 6.\n\n` +
+    `Every commit hits GitHub Pages and auto-updates the APK on launch.\n` +
+    `Sources, audio, art all CC0 or original.\n\n` +
+    `Thanks for playing.`;
+  showOverlay('CREDITS', body, [
+    { label: 'Back', cls: 'secondary', cb: () => showSettings() },
+  ]);
 }
 
 function toggleCurse() {
