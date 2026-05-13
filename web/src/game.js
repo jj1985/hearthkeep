@@ -1403,6 +1403,19 @@ export class Game {
       this.enemies.length = 0;
       this.iframeT = 2.0;
       this.shakeMag = 20;
+      this.flash = 0.6;
+      this.banner = { text: '✦ SECOND WIND ✦', color: '#d4a24c', t: 2.0, t0: 2.0 };
+      this.rings.push({ x: this.heroPos.x, y: this.heroPos.y, r: 8, max: 260, life: 0.7, life0: 0.7, color: '212,162,76', width: 5 });
+      this.rings.push({ x: this.heroPos.x, y: this.heroPos.y, r: 14, max: 360, life: 1.0, life0: 1.0, color: '255,255,255', width: 2 });
+      for (let i = 0; i < 16; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const s = 80 + Math.random() * 160;
+        this.fx.push({
+          x: this.heroPos.x, y: this.heroPos.y,
+          vx: Math.cos(a) * s, vy: Math.sin(a) * s,
+          life: 0.6, color: '#f5d96e', size: 2 + Math.random() * 3, fade: true,
+        });
+      }
       this.floater('SECOND WIND', this.heroPos.x - 60, this.heroPos.y, '#d4a24c');
       this.log('Revived');
       return;
