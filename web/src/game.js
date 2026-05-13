@@ -1602,6 +1602,36 @@ export class Game {
         this.size.w / 2, 110);
     }
 
+    // Mini-radar at bottom-right showing all enemies relative to hero.
+    if (this.enemies.length > 0) {
+      const mr_size = 80;
+      const mrx = w - mr_size - 16;
+      const mry = h - mr_size - 96;  // above the bottom button bar
+      ctx.fillStyle = 'rgba(11, 10, 15, 0.55)';
+      ctx.fillRect(mrx, mry, mr_size, mr_size);
+      ctx.strokeStyle = 'rgba(212, 162, 76, 0.35)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(mrx, mry, mr_size, mr_size);
+      // Hero dot
+      ctx.fillStyle = colorForClass(this.primaryClass, '#d4a24c');
+      ctx.beginPath();
+      ctx.arc(mrx + mr_size / 2, mry + mr_size / 2, 3, 0, Math.PI * 2);
+      ctx.fill();
+      // Enemy dots — sample each within a 600px radius into the radar.
+      const scale = mr_size / 1200;
+      for (const e of this.enemies) {
+        if (e.dead) continue;
+        const dx = e.x - this.heroPos.x;
+        const dy = e.y - this.heroPos.y;
+        const px = mrx + mr_size / 2 + dx * scale;
+        const py = mry + mr_size / 2 + dy * scale;
+        if (px < mrx || px > mrx + mr_size || py < mry || py > mry + mr_size) continue;
+        ctx.fillStyle = e.boss ? '#d4a24c' : (e.mythic ? '#e8d2a0' : e.color);
+        const ds = e.boss ? 3 : (e.mythic ? 2.5 : 1.5);
+        ctx.fillRect(px - ds / 2, py - ds / 2, ds, ds);
+      }
+    }
+
     // Off-screen enemy arrows — point at threats outside the viewport.
     const mt = 24, mb = 24, ml = 24, mr = 24;  // viewport margin for the marker
     for (const e of this.enemies) {
