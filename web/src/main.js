@@ -465,9 +465,14 @@ function refreshHud() {
   if (game.skillCd > 0) {
     btnSkill.textContent = `${baseLbl} ${game.skillCd.toFixed(1)}s`;
     btnSkill.style.opacity = '0.5';
+    // Cooldown wipe: dark vertical band that shrinks as cd ticks down.
+    const total = Math.max(1.5, 6 - (game._cachedSkillCdReduce || 0));
+    const pct = Math.max(0, Math.min(100, (game.skillCd / total) * 100));
+    btnSkill.style.background = `linear-gradient(to right, var(--surface-bright) ${pct}%, var(--secondary) ${pct}%)`;
   } else {
     btnSkill.textContent = r ? `${baseLbl} R${r}` : baseLbl;
     btnSkill.style.opacity = '';
+    btnSkill.style.background = '';
   }
 }
 
