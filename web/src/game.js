@@ -987,6 +987,11 @@ export class Game {
     const txt = crit ? `-${Math.round(amount)}!` : `-${Math.round(amount)}`;
     const clr = crit ? '#e8d2a0' : (amount < 10 ? '#c8a030' : '#d4582c');
     this.floater(txt, e.x, e.y, clr, crit);
+    // Overkill: kill that dealt 2x+ remaining HP.
+    if (e.hp <= 0 && amount >= e.maxHp * 0.5) {
+      this.floater('OVERKILL!', e.x, e.y - 24, '#f5e8a8', true);
+      this.shakeMag = Math.max(this.shakeMag, 8);
+    }
     if (e.hp <= 0) this._killEnemy(e, true);
   }
 
