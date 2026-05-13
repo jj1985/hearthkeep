@@ -146,6 +146,7 @@ export class Game {
     // Boss telegraph countdown
     this.bossWarn = null; // { t, label }
     this.weather = []; // [{x, y, vy, color, size}]
+    this.bgDots = [];  // long-lived parallax dots
     this.flash = 0;    // 0..1 white-screen flash on big events
     this.timeScale = 1;
     this.timeScaleEndAt = 0;
@@ -508,8 +509,17 @@ export class Game {
         continue;
       }
       // Default chase + bite.
-      e.x += (dx / d) * e.speed * dt;
-      e.y += (dy / d) * e.speed * dt;
+      let mvx = (dx / d) * e.speed * dt;
+      let mvy = (dy / d) * e.speed * dt;
+      // Spider: weave side-to-side toward hero.
+      if (e.id === 'spider') {
+        const px = -dy / d, py = dx / d;
+        const w = Math.sin(performance.now() / 200 + (e.x * 0.01)) * 0.6;
+        mvx += px * e.speed * dt * w;
+        mvy += py * e.speed * dt * w;
+      }
+      e.x += mvx;
+      e.y += mvy;
       if (d < 22 + e.size * 0.4) {
         if (e.boss && e.phase === 'fly') continue; // airborne ignores contact
         let bite = 2 + Math.floor(this.wave / 4) * (e.boss ? 6 : (e.mythic ? 3 : 1));
@@ -1353,6 +1363,25 @@ export class Game {
       ctx.lineTo(w, y);
       ctx.stroke();
     }
+    // Parallax bg dots — slow-drifting, deep behind everything.
+    if (this.bgDots.length === 0) {
+      for (let i = 0; i < 60; i++) {
+        this.bgDots.push({
+          x: Math.random() * w, y: Math.random() * h,
+          vx: -3 - Math.random() * 6, vy: -1 - Math.random() * 2,
+          size: 0.5 + Math.random() * 1.5,
+          alpha: 0.05 + Math.random() * 0.12,
+        });
+      }
+    }
+    for (const d of this.bgDots) {
+      d.x += d.vx * 0.016;  // ~60fps
+      d.y += d.vy * 0.016;
+      if (d.x < -4) d.x = w + 4;
+      if (d.y < -4) d.y = h + 4;
+      ctx.fillStyle = `rgba(232,210,160,${d.alpha})`;
+      ctx.fillRect(d.x, d.y, d.size, d.size);
+    }
     // Per-zone floor decor — fixed-position glyphs sized by viewport.
     this._drawZoneDecor(ctx, w, h);
     // weather
@@ -1592,7 +1621,7 @@ export class Game {
       ctx.fillText(this.chest.t.toFixed(1), this.chest.x, this.chest.y - 22 + bob);
     }
 
-    // boss telegraph
+    // boss telegraph + spawn reticle at the centre
     if (this.bossWarn) {
       const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 100);
       ctx.fillStyle = `rgba(216, 50, 50, ${pulse})`;
@@ -1600,6 +1629,22 @@ export class Game {
       ctx.textAlign = 'center';
       ctx.fillText(`INCOMING: ${this.bossWarn.label}  ${this.bossWarn.t.toFixed(1)}s`,
         this.size.w / 2, 110);
+      // Reticle at the spawn point (top center of arena).
+      const rx = this.size.w / 2;
+      const ry = 140;
+      const rad = 36 + 8 * Math.sin(performance.now() / 80);
+      ctx.strokeStyle = `rgba(216, 50, 50, ${pulse})`;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(rx, ry, rad, 0, Math.PI * 2);
+      ctx.stroke();
+      // Cross-hairs
+      ctx.beginPath();
+      ctx.moveTo(rx - rad - 10, ry); ctx.lineTo(rx - rad + 6, ry);
+      ctx.moveTo(rx + rad + 10, ry); ctx.lineTo(rx + rad - 6, ry);
+      ctx.moveTo(rx, ry - rad - 10); ctx.lineTo(rx, ry - rad + 6);
+      ctx.moveTo(rx, ry + rad + 10); ctx.lineTo(rx, ry + rad - 6);
+      ctx.stroke();
     }
 
     // Mini-radar at bottom-right showing all enemies relative to hero.
