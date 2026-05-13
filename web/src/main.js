@@ -429,6 +429,8 @@ function refreshStatusRow() {
   }
   const syn = game.synergy && game.synergy();
   if (syn) add(`✦ ${syn.label}`);
+  if (game.berserkerT > 0) add(`Berserker ${game.berserkerT.toFixed(1)}s`, 'temp');
+  if (game.quicksilverT > 0) add(`Quicksilver ${game.quicksilverT.toFixed(1)}s`, 'temp');
 }
 setInterval(refreshHud, 100);
 

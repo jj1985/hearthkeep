@@ -108,6 +108,8 @@ export class Game {
     this.attackTimer = 0;
     this.idleTimer = 1;
     this.skillCd = 0;
+    this.berserkerT = 0;       // +60% damage chest buff timer (seconds)
+    this.quicksilverT = 0;     // +50% atk rate chest buff timer (seconds)
     this.heroHp = this.maxHp();
     this.heroMaxHp = this.heroHp;
     this.primaryClass = 'warrior';
@@ -391,6 +393,8 @@ export class Game {
   _update(dt) {
     this.spawnTimer -= dt;
     this.attackTimer -= dt;
+    if (this.berserkerT > 0) this.berserkerT = Math.max(0, this.berserkerT - dt);
+    if (this.quicksilverT > 0) this.quicksilverT = Math.max(0, this.quicksilverT - dt);
     this.idleTimer -= dt;
     if (this.skillCd > 0) this.skillCd -= dt;
     if (this.iframeT > 0) this.iframeT -= dt;
@@ -782,6 +786,7 @@ export class Game {
     if (hasGlory('mythic')) r += 0.2;
     const s = this.synergy();
     if (s?.atk) r += s.atk;
+    if (this.quicksilverT > 0) r *= 1.5;
     return r;
   }
 
@@ -801,6 +806,7 @@ export class Game {
     const s = this.synergy();
     if (s?.dmg) d *= 1 + s.dmg;
     if (this.primaryClass === 'warrior') d += this.warriorRage * 0.5;
+    if (this.berserkerT > 0) d *= 1.6;
     let v = Math.max(1, Math.round(d));
     const permCrit = (State.level_perks?.perm_crit || 0) * 0.02;
     let critted = Math.random() < (this.critBonus + bonusCrit() + permCrit + Trinkets.critBonus());
@@ -1340,20 +1346,30 @@ export class Game {
     this.chest.t -= dt;
     if (this.chest.t <= 0) {
       const roll = Math.random();
-      if (roll < 0.6) {
+      if (roll < 0.45) {
         const g = 150 + this.wave * 10;
         State.gold += g;
         this.floater(`+${g} gold`, this.chest.x, this.chest.y, '#d4a24c');
         this.log(`Chest: +${g} gold`);
-      } else if (roll < 0.9) {
+      } else if (roll < 0.75) {
         grantEmbers(3);
         this.runEmbersEarned += 3;
         this.floater('+3 Ember', this.chest.x, this.chest.y, '#d4582c');
         this.log('Chest: +3 ember');
-      } else {
+      } else if (roll < 0.88) {
         this.heroHp = this.heroMaxHp;
         this.floater('FULL HEAL', this.chest.x, this.chest.y, '#6fa060');
         this.log('Chest: full heal');
+      } else if (roll < 0.96) {
+        // Berserker Vial: +60% damage for 12s.
+        this.berserkerT = 12;
+        this.floater('BERSERKER +60% dmg 12s', this.chest.x - 20, this.chest.y, '#d4582c');
+        this.log('Chest: Berserker Vial');
+      } else {
+        // Quicksilver Draught: +50% attack speed for 10s.
+        this.quicksilverT = 10;
+        this.floater('QUICKSILVER +50% APS 10s', this.chest.x - 24, this.chest.y, '#80c8e0');
+        this.log('Chest: Quicksilver Draught');
       }
       this.shakeMag = 14;
       this.chest = null;
