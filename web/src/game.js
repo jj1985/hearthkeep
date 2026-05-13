@@ -1056,6 +1056,21 @@ export class Game {
       this.flash = Math.max(this.flash, 0.4);
       this.heroMaxHp = this.maxHp();
       this.heroHp = Math.min(this.heroMaxHp, this.heroHp + 10);
+      // Level-up shockwave: push back + small dmg to nearby enemies.
+      this.rings.push({ x: this.heroPos.x, y: this.heroPos.y, r: 12, max: 180, life: 0.6, life0: 0.6, color: '212,162,76', width: 4 });
+      const pushDmg = Math.max(1, Math.round(this.heroDmg() * 0.4));
+      for (const e2 of this.enemies) {
+        if (e2.dead || e2.boss) continue;
+        const dx = e2.x - this.heroPos.x;
+        const dy = e2.y - this.heroPos.y;
+        const dd = Math.hypot(dx, dy);
+        if (dd < 160) {
+          e2.x += (dx / (dd || 1)) * 40;
+          e2.y += (dy / (dd || 1)) * 40;
+          this._damageEnemy(e2, pushDmg);
+        }
+      }
+      this.shakeMag = Math.max(this.shakeMag, 8);
       // Every 5th level → perk pick.
       if (State.hero_level % 5 === 0 && this.onLevelPick) {
         this.onLevelPick(State.hero_level);
