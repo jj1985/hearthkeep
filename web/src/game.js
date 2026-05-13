@@ -47,6 +47,9 @@ const ENEMY_TYPES = {
   hellhound:  { label: 'Hellhound',  color: '#e84c2c', hp: 90,  speed: 165, gold: 18, size: 20, minWave: 40 },
   warlock:    { label: 'Warlock',    color: '#a04ce8', hp: 200, speed: 70,  gold: 60, size: 24, minWave: 44, ranged: true },
   golem:      { label: 'Stone Golem',color: '#9a9a9a', hp: 500, speed: 35,  gold: 150,size: 32, minWave: 48 },
+  cinder_imp: { label: 'Cinder Imp',  color: '#ff7a40', hp: 8,   speed: 150, gold: 3,  size: 14, minWave: 8, explodes: true },
+  wisp:       { label: 'Bone Wisp',   color: '#bcdce8', hp: 20,  speed: 95,  gold: 5,  size: 16, minWave: 17 },
+  knight:     { label: 'Dread Knight',color: '#646464', hp: 320, speed: 60,  gold: 95, size: 26, minWave: 38 },
 };
 
 const ZONES = [

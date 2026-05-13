@@ -369,6 +369,9 @@ const BESTIARY_LORE = {
   hellhound:     'Soulforged hound. Leaves embers wherever it steps.',
   warlock:       'Pact-bound caster. Drains life with each ranged hex.',
   golem:         'Forgehold golem. Walking rune-stone. Hits like a wall.',
+  cinder_imp:    'Cinder Imp. Sprints in, detonates on contact.',
+  wisp:          'Bone Wisp. Lost spirit. Drifts toward warmth — yours.',
+  knight:        'Dread Knight. Cursed plate, undying oath, slow strike.',
   boss_warchief: 'Krrik III, Warchief — goblin king of the southern crags.',
   boss_vyxhasis: 'Vyxhasis the Ember — dragon, scourge of the Emberlands.',
   boss_aethyrnax:'Aethyrnax — ancient sky-wyrm of the void seas.',
@@ -382,6 +385,7 @@ function showBestiary() {
     'skeleton', 'rat', 'goblin', 'goblin_a', 'brute', 'ghoul', 'drake', 'wraith',
     'ogre', 'sapper', 'archer', 'shaman', 'summoner', 'spider', 'witch', 'zealot',
     'reaver', 'lich', 'hellhound', 'warlock', 'golem',
+    'cinder_imp', 'wisp', 'knight',
     'boss_warchief', 'boss_vyxhasis', 'boss_aethyrnax', 'boss_ourzhal',
   ];
   for (const id of order) {
