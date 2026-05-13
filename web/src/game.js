@@ -2296,6 +2296,13 @@ export class Game {
       ctx.font = 'bold 12px system-ui';
       ctx.textAlign = 'center';
       ctx.fillText(ch.t.toFixed(1), ch.x, ch.y - 22 + bob);
+      // Progress arc — fills clockwise as the 3s timer ticks down.
+      const filled = 1 - (ch.t / 3.0);
+      ctx.strokeStyle = `rgba(212,162,76,${(0.4 + 0.4 * filled).toFixed(2)})`;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(ch.x, ch.y + bob, 28, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * filled);
+      ctx.stroke();
     }
 
     // boss telegraph + spawn reticle at the centre
