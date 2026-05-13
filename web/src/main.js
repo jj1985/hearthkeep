@@ -394,6 +394,18 @@ function refreshHud() {
   hpfill.style.width = (100 * game.heroHp / game.heroMaxHp).toFixed(1) + '%';
   log.textContent = game.combatLog.join('\n');
   refreshStatusRow();
+  // Update SKILL button: name + cooldown countdown
+  const k = game.primaryClass;
+  const r = skillRank(k);
+  const skillLabels = { warrior: 'CLEAVE', rogue: 'BLINK', wizard: 'FIREBALL', necromancer: 'REAP', bard: 'ANTHEM' };
+  const baseLbl = skillLabels[k] || 'SKILL';
+  if (game.skillCd > 0) {
+    btnSkill.textContent = `${baseLbl} ${game.skillCd.toFixed(1)}s`;
+    btnSkill.style.opacity = '0.5';
+  } else {
+    btnSkill.textContent = r ? `${baseLbl} R${r}` : baseLbl;
+    btnSkill.style.opacity = '';
+  }
 }
 
 function refreshStatusRow() {
@@ -486,7 +498,8 @@ function showUpgradeShop(reloadOnBack) {
 }
 
 document.getElementById('btn-strike').addEventListener('click', () => game && game.strike());
-document.getElementById('btn-skill').addEventListener('click', () => game && game.skill());
+const btnSkill = document.getElementById('btn-skill');
+btnSkill.addEventListener('click', () => game && game.skill());
 document.getElementById('btn-pause').addEventListener('click', () => {
   if (!game) return;
   game.paused = !game.paused;
