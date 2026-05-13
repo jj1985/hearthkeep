@@ -864,7 +864,9 @@ export class Game {
     }
     const ups = grantXp(1);
     if (ups > 0) {
+      this.banner = { text: `LEVEL ${State.hero_level}!`, color: '#d4a24c', t: 1.6, t0: 1.6 };
       this.floater(`LEVEL ${State.hero_level}`, this.heroPos.x, this.heroPos.y - 20, '#d4a24c');
+      this.flash = Math.max(this.flash, 0.4);
       this.heroMaxHp = this.maxHp();
       this.heroHp = Math.min(this.heroMaxHp, this.heroHp + 10);
       // Every 5th level → perk pick.
