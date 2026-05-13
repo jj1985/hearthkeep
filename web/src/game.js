@@ -2032,12 +2032,15 @@ export class Game {
         ctx.arc(e.x, ey, r, 0, Math.PI * 2);
         ctx.stroke();
       }
-      // hp bar
+      // hp bar — green→yellow→red tint by remaining fraction.
       const barW = e.size;
       const frac = Math.max(0, e.hp / e.maxHp);
       ctx.fillStyle = 'rgba(0,0,0,0.5)';
       ctx.fillRect(e.x - barW / 2, ey - r - 8, barW, 3);
-      ctx.fillStyle = '#d95940';
+      const hpColor = frac > 0.6 ? '#7ac06f'
+                    : frac > 0.3 ? '#d4a04c'
+                                 : '#d95940';
+      ctx.fillStyle = hpColor;
       ctx.fillRect(e.x - barW / 2, ey - r - 8, barW * frac, 3);
       ctx.globalAlpha = 1;
     }
