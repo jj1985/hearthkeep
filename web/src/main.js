@@ -22,6 +22,7 @@ const kills = document.getElementById('kills');
 const gold = document.getElementById('gold');
 const embers = document.getElementById('embers');
 const level = document.getElementById('level');
+const timer = document.getElementById('timer');
 const hpfill = document.getElementById('hpfill');
 const log = document.getElementById('combatlog');
 const overlay = document.getElementById('overlay');
@@ -383,6 +384,13 @@ function refreshHud() {
   gold.textContent = `${State.gold} g`;
   embers.textContent = `${State.embers} 🜂`;
   level.textContent = `L${State.hero_level}`;
+  // Run timer
+  if (game.runStartT) {
+    const sec = Math.floor((performance.now() - game.runStartT) / 1000);
+    const mm = Math.floor(sec / 60);
+    const ss = (sec % 60).toString().padStart(2, '0');
+    timer.textContent = `${mm}:${ss}`;
+  }
   hpfill.style.width = (100 * game.heroHp / game.heroMaxHp).toFixed(1) + '%';
   log.textContent = game.combatLog.join('\n');
   refreshStatusRow();

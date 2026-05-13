@@ -1365,8 +1365,16 @@ export class Game {
       ctx.globalAlpha = 1;
     }
 
-    // arrows + soft trail
+    // arrows + soft trail + glow
     for (const a of this.arrows) {
+      // Outer glow
+      const glow = ctx.createRadialGradient(a.x, a.y, 0, a.x, a.y, 10);
+      glow.addColorStop(0, 'rgba(245, 232, 168, 0.5)');
+      glow.addColorStop(1, 'rgba(245, 232, 168, 0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(a.x, a.y, 10, 0, Math.PI * 2);
+      ctx.fill();
       ctx.lineWidth = 4;
       ctx.strokeStyle = 'rgba(245, 232, 168, 0.30)';
       ctx.beginPath();
