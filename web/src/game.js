@@ -1139,7 +1139,11 @@ export class Game {
     if (this.isTempest()) {
       this.floater('TEMPEST — 2× spawns, ½ HP', this.size.w / 2 - 100, 60, '#d4582c');
       this.log('TEMPEST wave incoming');
+      // Tempest gets its own dramatic screen flash
+      this.flash = Math.max(this.flash, 0.4);
     }
+    // Every 10th wave (just before the boss spawns), big screen pulse
+    if (this.wave % 10 === 0) this.shakeMag = Math.max(this.shakeMag, 8);
     if (this.wave === 10 && !this.secondaryClass && this.onSlotUnlock) this.onSlotUnlock('secondary');
     if (this.wave === 25 && !this.tertiaryClass && this.onSlotUnlock) this.onSlotUnlock('tertiary');
     if (this.wave % 10 === 0) this._spawnBoss();
