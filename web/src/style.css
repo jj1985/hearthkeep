@@ -53,7 +53,7 @@ html, body { width: 100%; height: 100%; background: var(--bg); color: var(--on-s
 #overlay-title { font-size: 22px; color: var(--primary); margin-bottom: 8px; letter-spacing: 1px; }
 #overlay-body { color: var(--muted); margin-bottom: 12px; white-space: pre-line; font-size: 13px; line-height: 1.5; }
 #overlay-choices { display: flex; flex-direction: column; gap: 8px; }
-#overlay-choices button { padding: 13px; border-radius: 10px; border: none; background: var(--primary); color: #1a1208; font-weight: 700; font-size: 13px; cursor: pointer; transition: transform 0.06s; text-align: left; }
+#overlay-choices button { padding: 13px; border-radius: 10px; border: none; background: var(--primary); color: #1a1208; font-weight: 700; font-size: 13px; cursor: pointer; transition: transform 0.06s; text-align: left; white-space: pre-line; line-height: 1.4; }
 #overlay-choices button:active { transform: scale(0.98); }
 #overlay-choices button.secondary { background: var(--surface-bright); color: var(--on-surface); }
 .floater { position: absolute; pointer-events: none; font-weight: 700; font-size: 14px; transition: transform 0.6s ease-out, opacity 0.6s; }
