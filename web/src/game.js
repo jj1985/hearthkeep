@@ -154,6 +154,7 @@ export class Game {
     this.bossWarn = null; // { t, label }
     this.weather = []; // [{x, y, vy, color, size}]
     this.bgDots = [];  // long-lived parallax dots
+    this.fogBlobs = []; // soft drifting fog gradients: { x, y, r, vx, alpha }
     this.flash = 0;    // 0..1 white-screen flash on big events
     this.timeScale = 1;
     this.timeScaleEndAt = 0;
@@ -1481,6 +1482,41 @@ export class Game {
           alpha: 0.05 + Math.random() * 0.12,
         });
       }
+    }
+    if (this.fogBlobs.length === 0) {
+      for (let i = 0; i < 6; i++) {
+        this.fogBlobs.push({
+          x: Math.random() * w, y: Math.random() * h,
+          r: 120 + Math.random() * 180,
+          vx: 4 + Math.random() * 10,
+          alpha: 0.04 + Math.random() * 0.05,
+        });
+      }
+    }
+    // Drift fog blobs across screen; warp x when off-screen.
+    for (const fb of this.fogBlobs) {
+      fb.x += fb.vx * 0.016;
+      if (fb.x - fb.r > w) fb.x = -fb.r;
+      const zoneCol = (() => {
+        const z = zoneForWave(this.wave).name;
+        const tbl = {
+          'Greenmarch': '180,200,150',
+          'Ashen Vale': '160,150,140',
+          'Frostwatch': '180,220,235',
+          'Emberlands': '232,140,80',
+          'The Void':   '160,120,200',
+          'Forgehold':  '240,200,140',
+          'Sunfire':    '255,220,160',
+        };
+        return tbl[z] || '200,200,200';
+      })();
+      const g = ctx.createRadialGradient(fb.x, fb.y, 0, fb.x, fb.y, fb.r);
+      g.addColorStop(0, `rgba(${zoneCol},${fb.alpha.toFixed(3)})`);
+      g.addColorStop(1, `rgba(${zoneCol},0)`);
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(fb.x, fb.y, fb.r, 0, Math.PI * 2);
+      ctx.fill();
     }
     for (const d of this.bgDots) {
       d.x += d.vx * 0.016;  // ~60fps
