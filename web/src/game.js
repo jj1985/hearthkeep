@@ -1393,18 +1393,26 @@ export class Game {
 
   _tickWeather(dt) {
     const cfg = this._zoneWeather();
+    const z = zoneForWave(this.wave).name;
+    // Embers rise (Emberlands / Forgehold / Sunfire); snow / leaves / ash fall elsewhere.
+    const rising = z === 'Emberlands' || z === 'Forgehold' || z === 'Sunfire';
     // Maintain population.
     while (this.weather.length < cfg.density) {
       this.weather.push({
         x: Math.random() * this.size.w,
-        y: -Math.random() * 40,
-        vy: 14 + Math.random() * 30,
+        y: rising ? this.size.h + Math.random() * 40 : -Math.random() * 40,
+        vy: rising ? -(20 + Math.random() * 30) : (14 + Math.random() * 30),
         size: 1 + Math.random() * 2,
+        rising,
       });
     }
     for (const p of this.weather) {
       p.y += p.vy * dt;
-      if (p.y > this.size.h + 8) { p.y = -10; p.x = Math.random() * this.size.w; }
+      if (p.rising) {
+        if (p.y < -10) { p.y = this.size.h + 8; p.x = Math.random() * this.size.w; }
+      } else {
+        if (p.y > this.size.h + 8) { p.y = -10; p.x = Math.random() * this.size.w; }
+      }
     }
     this._weatherColor = cfg.color;
   }
