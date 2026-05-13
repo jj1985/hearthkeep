@@ -464,7 +464,13 @@ function refreshHud() {
     const ss = (sec % 60).toString().padStart(2, '0');
     timer.textContent = `${mm}:${ss}`;
   }
-  hpfill.style.width = (100 * game.heroHp / game.heroMaxHp).toFixed(1) + '%';
+  const hpPct = game.heroHp / Math.max(1, game.heroMaxHp);
+  hpfill.style.width = (100 * hpPct).toFixed(1) + '%';
+  hpfill.style.background = hpPct > 0.5
+    ? 'linear-gradient(90deg, #6fa060, #d4a24c)'
+    : hpPct > 0.2
+      ? 'linear-gradient(90deg, #d4a24c, #d4582c)'
+      : 'linear-gradient(90deg, #d4582c, #a83232)';
   log.textContent = game.combatLog.join('\n');
   refreshStatusRow();
   // Update SKILL button: name + cooldown countdown
