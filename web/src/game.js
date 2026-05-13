@@ -2026,6 +2026,30 @@ export class Game {
     }
     // Class weapon — short line / shape jutting out toward last target.
     this._drawWeapon(hx, hy, hr);
+    // Equipped-trinket orbital glyph — spins around the hero.
+    const trkId = Trinkets.equipped && Trinkets.equipped();
+    if (trkId) {
+      const trkColor = ({
+        krrik_tusk: '#e8e2d2', krrik_banner: '#c8a030',
+        vyx_scale: '#d4582c', vyx_eye: '#e8d2a0',
+        aeth_feather: '#a8d4e8', aeth_crystal: '#80c8e0',
+        mythic_shard: '#e8d2a0', dragon_heart: '#d95940',
+      })[trkId] || '#d4a24c';
+      const ang = performance.now() / 600;
+      const orbitR = hr + 18;
+      const ox = hx + Math.cos(ang) * orbitR;
+      const oy = hy + Math.sin(ang) * orbitR * 0.6;  // squashed for iso feel
+      const tg = ctx.createRadialGradient(ox, oy, 0, ox, oy, 7);
+      tg.addColorStop(0, _lighten(trkColor, 0.45));
+      tg.addColorStop(1, trkColor);
+      ctx.fillStyle = tg;
+      ctx.beginPath();
+      ctx.arc(ox, oy, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
     // Wave-progress ring: fills clockwise as kills approach target.
     const frac = Math.max(0, Math.min(1, this.waveKillsProgress / Math.max(1, this.waveKillsTarget)));
     if (frac > 0) {
