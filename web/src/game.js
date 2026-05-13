@@ -1541,6 +1541,28 @@ export class Game {
         this.size.w / 2, 110);
     }
 
+    // Off-screen enemy arrows — point at threats outside the viewport.
+    const mt = 24, mb = 24, ml = 24, mr = 24;  // viewport margin for the marker
+    for (const e of this.enemies) {
+      if (e.dead) continue;
+      const visible = e.x > -10 && e.x < w + 10 && e.y > -10 && e.y < h + 10;
+      if (visible) continue;
+      // Clamp to inside the viewport edge.
+      const mx = Math.max(ml, Math.min(w - mr, e.x));
+      const my = Math.max(mt, Math.min(h - mb, e.y));
+      const dx = e.x - mx, dy = e.y - my;
+      const ang = Math.atan2(dy, dx);
+      ctx.save();
+      ctx.translate(mx, my);
+      ctx.rotate(ang);
+      ctx.fillStyle = e.boss ? '#d4a24c' : (e.mythic ? '#e8d2a0' : 'rgba(255,255,255,0.7)');
+      ctx.beginPath();
+      ctx.moveTo(10, 0); ctx.lineTo(-4, -5); ctx.lineTo(-4, 5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
     // Boss HP bar at the top of the arena (largest live boss).
     let boss = null;
     for (const e of this.enemies) {
