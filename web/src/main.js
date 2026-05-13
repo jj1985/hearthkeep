@@ -140,6 +140,7 @@ function refreshTitle() {
   lines.push(`Gold: ${State.gold}  ·  Embers: ${State.embers}  ·  Level: ${State.hero_level}`);
   if (State.login_streak > 0) lines.push(`Login streak: ${State.login_streak} day(s)`);
   lines.push(`Unlocked: ${State.unlocked_classes.join(', ')}`);
+  lines.push('Hearthkeep · web build · auto-update from GitHub Pages');
   for (const l of lines) {
     const p = document.createElement('p');
     p.textContent = l;
