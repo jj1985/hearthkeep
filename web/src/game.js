@@ -1,5 +1,5 @@
 // HTML5 horde arena — canvas renderer, ECS-lite update loop.
-import { State, persist, grantXp, checkKillMilestones, recordRun, grantEmbers, tickWeekly, hasGlory, skillRank, colorForClass } from './state.js';
+import { State, persist, grantXp, checkKillMilestones, recordRun, grantEmbers, tickWeekly, hasGlory, skillRank, colorForClass, mulberry32, todaySeedInt, recordDailyRun } from './state.js';
 import { bonusDamage, bonusAtk, bonusRange, bonusHp, bonusCrit, emberDmgMult, emberGoldMult, maxRevives } from './upgrades.js';
 import { synergyFor } from './synergies.js';
 import { Sfx } from './sfx.js';
@@ -116,6 +116,8 @@ export class Game {
     this.speedrun = false;
     this.speedrunDone = false;
     this.hardcore = false;
+    this.dailySeed = false;
+    this.rng = Math.random;
     // Companion (unlocks at first boss kill)
     this.companionOrbitT = 0;
     this.companionAtkT = 1;
@@ -326,6 +328,11 @@ export class Game {
     if (this.hardcore) this.rebirthBonus = 1.0;  // strip rebirth boost
   }
 
+  setDailySeed(on) {
+    this.dailySeed = !!on;
+    this.rng = on ? mulberry32(todaySeedInt()) : Math.random;
+  }
+
   _update(dt) {
     this.spawnTimer -= dt;
     this.attackTimer -= dt;
@@ -527,20 +534,20 @@ export class Game {
       if (this.wave >= def.minWave) pool.push(id);
     }
     if (pool.length === 0) pool.push('skeleton');
-    const id = pool[Math.floor(Math.random() * pool.length)];
+    const id = pool[Math.floor(this.rng() * pool.length)];
     const def = ENEMY_TYPES[id];
-    const isMythic = this.wave >= 5 && Math.random() < (0.03 + this.mythicBonus + Trinkets.mythicBonus());
+    const isMythic = this.wave >= 5 && this.rng() < (0.03 + this.mythicBonus + Trinkets.mythicBonus());
     const sz = isMythic ? def.size * 1.4 : def.size;
     let hpScale = 1 + (this.wave - 1) * 0.18;
     if (this.isTempest()) hpScale *= 0.5;
     const maxHp = Math.round(def.hp * hpScale * (isMythic ? 10 : 1));
-    const edge = Math.floor(Math.random() * 4);
+    const edge = Math.floor(this.rng() * 4);
     let x, y;
     const m = 30;
-    if (edge === 0)      { x = Math.random() * this.size.w; y = -m; }
-    else if (edge === 1) { x = this.size.w + m; y = Math.random() * this.size.h; }
-    else if (edge === 2) { x = Math.random() * this.size.w; y = this.size.h + m; }
-    else                 { x = -m; y = Math.random() * this.size.h; }
+    if (edge === 0)      { x = this.rng() * this.size.w; y = -m; }
+    else if (edge === 1) { x = this.size.w + m; y = this.rng() * this.size.h; }
+    else if (edge === 2) { x = this.rng() * this.size.w; y = this.size.h + m; }
+    else                 { x = -m; y = this.rng() * this.size.h; }
     this.enemies.push({
       id, label: def.label, color: def.color, x, y,
       hp: maxHp, maxHp, speed: def.speed + this.wave * 1.5,
@@ -1040,6 +1047,7 @@ export class Game {
       combo: this.comboPeak, embers: this.runEmbersEarned,
       class: this.primaryClass, when: Date.now(),
     });
+    if (this.dailySeed) recordDailyRun(this.wave);
     persist();
     if (this.onDeath) this.onDeath({
       wave: this.wave, kills: this.killsThisRun,

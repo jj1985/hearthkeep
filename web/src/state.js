@@ -35,7 +35,50 @@ const DEFAULTS = {
   seen_boss_hints: {},   // boss_id -> true once first hint shown
   skins: {},             // class -> [{id}] owned skins
   active_skin: {},       // class -> skin id (default falls back to base color)
+  daily_seed_runs: {},   // 'yyyy-mm-dd' -> best wave for that seed
 };
+
+// Tiny seeded RNG — Mulberry32. Returns a function() -> float in [0,1).
+export function mulberry32(seed) {
+  let t = seed >>> 0;
+  return function () {
+    t = (t + 0x6D2B79F5) >>> 0;
+    let r = Math.imul(t ^ (t >>> 15), 1 | t);
+    r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r;
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+export function todaySeedKey() {
+  const d = new Date();
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(d.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+export function todaySeedInt() {
+  // Hash the date key into a 32-bit integer.
+  const s = todaySeedKey();
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+export function recordDailyRun(wave) {
+  const k = todaySeedKey();
+  if (!State.daily_seed_runs) State.daily_seed_runs = {};
+  const prev = State.daily_seed_runs[k] || 0;
+  if (wave > prev) {
+    State.daily_seed_runs[k] = wave;
+    persist();
+    return true;
+  }
+  return false;
+}
 
 export const SKINS = [
   { id: 'warrior_crimson', klass: 'warrior',     color: '#c03828', label: 'Crimson Plate',  cost: 12 },

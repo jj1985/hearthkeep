@@ -1,5 +1,5 @@
 import { Game, zoneForWave } from './game.js';
-import { State, persist, processDailyLogin, rebirth, canRebirth, grantEmbers, processWeekly, exportSave, importSave, nextKillMilestone, gloryTier, nextGlory, GLORY_TIERS, skillRank, skillNextCost, skillBuy, SKINS, ownsSkin, activeSkinFor, buySkin, equipSkin } from './state.js';
+import { State, persist, processDailyLogin, rebirth, canRebirth, grantEmbers, processWeekly, exportSave, importSave, nextKillMilestone, gloryTier, nextGlory, GLORY_TIERS, skillRank, skillNextCost, skillBuy, SKINS, ownsSkin, activeSkinFor, buySkin, equipSkin, todaySeedKey } from './state.js';
 import { rollPerks, applyPerk } from './perks.js';
 import { UPGRADES, rank, cost, canBuy, buy, currencyOf } from './upgrades.js';
 import * as Ach from './achievements.js';
@@ -96,6 +96,8 @@ function refreshTitle() {
   if (State.curses_cleared > 0) lines.push(`Curses cleared: ${State.curses_cleared}`);
   if ((State.speedrun_best_ms || 0) > 0) lines.push(`Speedrun → W20 best: ${(State.speedrun_best_ms / 1000).toFixed(2)}s`);
   if ((State.hardcore_best_wave || 0) > 0) lines.push(`Hardcore best wave: ${State.hardcore_best_wave}`);
+  const today = State.daily_seed_runs?.[todaySeedKey()] || 0;
+  if (today > 0) lines.push(`Today's seed (${todaySeedKey()}) best: W${today}`);
   // Next-class milestone progress
   const nm = nextKillMilestone();
   if (nm) {
@@ -167,6 +169,7 @@ function startGame(klass, startWave = 1, opts = {}) {
   }
   if (opts.speedrun) game.speedrun = true;
   if (opts.hardcore) game.setHardcore(true);
+  if (opts.dailySeed) game.setDailySeed(true);
   game.onPerkRequest = showPerkPicker;
   game.onBossBoon = showBossBoon;
   game.onMerchant = showMerchant;
@@ -508,6 +511,10 @@ function speedrunStart() {
 function hardcoreStart() {
   showClassPicker((cls) => startGame(cls, 1, { hardcore: true }));
 }
+
+function dailySeedStart() {
+  showClassPicker((cls) => startGame(cls, 1, { dailySeed: true }));
+}
 btnShop.addEventListener('click', () => showUpgradeShop(true));
 
 // Expose Achievements + Bestiary as title-screen extras.
@@ -531,6 +538,7 @@ function ensureExtraTitleButtons() {
   addBtn('btn-trinkets', 'TRINKETS',     showTrinkets);
   addBtn('btn-speedrun', 'SPEEDRUN',     speedrunStart);
   addBtn('btn-hardcore', 'HARDCORE',     hardcoreStart);
+  addBtn('btn-daily',    'DAILY SEED',   dailySeedStart);
   addBtn('btn-stats',    'STATS',        showStats);
   addBtn('btn-glory',    'GLORY',        showGlory);
   addBtn('btn-skills',   'SKILL RANKS',  showSkillRanks);
