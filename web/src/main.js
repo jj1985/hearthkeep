@@ -958,6 +958,38 @@ Wave 50 unlocks REBIRTH (perm +25%).`,
 
 window.addEventListener('beforeunload', () => persist());
 
+// PWA install prompt — stash event, expose an INSTALL button on title.
+let _installPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  _installPrompt = e;
+  ensureInstallBtn();
+});
+window.addEventListener('appinstalled', () => {
+  _installPrompt = null;
+  const b = document.getElementById('btn-install');
+  if (b) b.remove();
+});
+function ensureInstallBtn() {
+  if (!_installPrompt) return;
+  if (document.getElementById('btn-install')) return;
+  const titleActions = document.getElementById('title-actions');
+  if (!titleActions) return;
+  const b = document.createElement('button');
+  b.id = 'btn-install';
+  b.textContent = 'INSTALL APP';
+  b.style.background = 'var(--success)';
+  b.style.color = '#0b0a0f';
+  b.addEventListener('click', async () => {
+    if (!_installPrompt) return;
+    _installPrompt.prompt();
+    const { outcome } = await _installPrompt.userChoice;
+    if (outcome === 'accepted') b.remove();
+    _installPrompt = null;
+  });
+  titleActions.appendChild(b);
+}
+
 // Register the service worker. Cache-first means after first load
 // the game runs entirely offline.
 if ('serviceWorker' in navigator) {
