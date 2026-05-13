@@ -417,7 +417,14 @@ function refreshHud() {
     wave.textContent = `WAVE ${game.wave} · ${z}`;
     wave.style.color = '';
   }
-  kills.textContent = `${State.lifetime_kills} kills`;
+  const wavesToBoss = (10 - (game.wave % 10)) % 10;
+  if (wavesToBoss > 0 && wavesToBoss <= 3) {
+    kills.textContent = `BOSS in ${wavesToBoss}`;
+    kills.style.color = '#d4582c';
+  } else {
+    kills.textContent = `${State.lifetime_kills} kills`;
+    kills.style.color = '';
+  }
   gold.textContent = `${State.gold} g`;
   embers.textContent = `${State.embers} 🜂`;
   level.textContent = `L${State.hero_level}`;
