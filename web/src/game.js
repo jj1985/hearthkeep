@@ -42,6 +42,9 @@ const ENEMY_TYPES = {
   zealot:     { label: 'Zealot',     color: '#e8b85e', hp: 110, speed: 85,  gold: 26, size: 22, minWave: 28 },
   reaver:     { label: 'Reaver',     color: '#a06044', hp: 180, speed: 65,  gold: 40, size: 26, minWave: 32 },
   lich:       { label: 'Lich',       color: '#cbb0e8', hp: 260, speed: 55,  gold: 75, size: 28, minWave: 36, ranged: true, summons: true },
+  hellhound:  { label: 'Hellhound',  color: '#e84c2c', hp: 90,  speed: 165, gold: 18, size: 20, minWave: 40 },
+  warlock:    { label: 'Warlock',    color: '#a04ce8', hp: 200, speed: 70,  gold: 60, size: 24, minWave: 44, ranged: true },
+  golem:      { label: 'Stone Golem',color: '#9a9a9a', hp: 500, speed: 35,  gold: 150,size: 32, minWave: 48 },
 };
 
 const ZONES = [
