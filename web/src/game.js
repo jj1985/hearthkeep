@@ -1684,13 +1684,24 @@ export class Game {
       ctx.stroke();
     }
 
-    // coins
+    // coins — spinning gold disc with rim shine and ground shadow.
     for (const c of this.coins) {
-      ctx.fillStyle = '#f5d96e';
+      const tNow = performance.now();
+      const spin = Math.sin((tNow / 130) + (c.x * 0.01));  // -1..1, drives ellipse squash
+      const w = Math.max(0.35, Math.abs(spin)) * 4.5;
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
       ctx.beginPath();
-      ctx.arc(c.x, c.y, 4, 0, Math.PI * 2);
+      ctx.ellipse(c.x, c.y + 4, 4, 1.6, 0, 0, Math.PI * 2);
       ctx.fill();
-      ctx.strokeStyle = '#b08230';
+      const g = ctx.createLinearGradient(c.x - w, c.y - 4, c.x + w, c.y + 4);
+      g.addColorStop(0, '#fff2a8');
+      g.addColorStop(0.5, '#f5d96e');
+      g.addColorStop(1, '#b08230');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.ellipse(c.x, c.y, w, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#7a5612';
       ctx.lineWidth = 1;
       ctx.stroke();
     }
