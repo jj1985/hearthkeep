@@ -1481,6 +1481,19 @@ export class Game {
         this.log('Chest: Quicksilver Draught');
       }
       this.shakeMag = 14;
+      // Chest open VFX: explosion ring + gold sparkles.
+      this.rings.push({ x: this.chest.x, y: this.chest.y, r: 8, max: 180, life: 0.6, life0: 0.6, color: '212,162,76', width: 3 });
+      for (let i = 0; i < 14; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const s = 60 + Math.random() * 140;
+        this.fx.push({
+          x: this.chest.x, y: this.chest.y,
+          vx: Math.cos(a) * s, vy: Math.sin(a) * s,
+          life: 0.5 + Math.random() * 0.3, color: '#f5d96e',
+          size: 2 + Math.random() * 3, fade: true,
+        });
+      }
+      this.flash = Math.max(this.flash, 0.3);
       this.chest = null;
       this._questTick('chests', 1);
       persist();
