@@ -403,6 +403,30 @@ export class Game {
     if (this.berserkerT > 0) this.berserkerT = Math.max(0, this.berserkerT - dt);
     if (this.quicksilverT > 0) this.quicksilverT = Math.max(0, this.quicksilverT - dt);
     // Periodic dragon flyover — pure ambient flavor.
+    // Void lightning: random brief bolts streaking across the arena.
+    if (zoneForWave(this.wave).name === 'The Void' && Math.random() < 0.004) {
+      const x0 = Math.random() * this.size.w;
+      const y0 = -10;
+      const x1 = x0 + (Math.random() - 0.5) * 200;
+      const y1 = this.size.h + 10;
+      this.voidBolts = this.voidBolts || [];
+      const segs = [];
+      let cx = x0, cy = y0;
+      const steps = 8;
+      for (let i = 1; i <= steps; i++) {
+        const t = i / steps;
+        const tx = x0 + (x1 - x0) * t + (Math.random() - 0.5) * 30;
+        const ty = y0 + (y1 - y0) * t;
+        segs.push([cx, cy, tx, ty]);
+        cx = tx; cy = ty;
+      }
+      this.voidBolts.push({ segs, life: 0.25, life0: 0.25 });
+      this.flash = Math.max(this.flash, 0.15);
+    }
+    if (this.voidBolts) {
+      for (const b of this.voidBolts) b.life -= dt;
+      this.voidBolts = this.voidBolts.filter(b => b.life > 0);
+    }
     if (!this.dragonFlyover && this.wave >= 3 && Math.random() < 0.0012) {
       const speed = 90 + Math.random() * 60;
       const dir = Math.random() < 0.5 ? 1 : -1;
@@ -1658,6 +1682,20 @@ export class Game {
     }
     // Per-zone floor decor — fixed-position glyphs sized by viewport.
     this._drawZoneDecor(ctx, w, h);
+    // Void lightning crackles — drawn over decor.
+    if (this.voidBolts && this.voidBolts.length) {
+      for (const b of this.voidBolts) {
+        const a = Math.max(0, b.life / b.life0);
+        ctx.strokeStyle = `rgba(190,150,255,${(a * 0.85).toFixed(2)})`;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        for (const s of b.segs) {
+          ctx.moveTo(s[0], s[1]);
+          ctx.lineTo(s[2], s[3]);
+        }
+        ctx.stroke();
+      }
+    }
     // Dragon silhouette flyover — distant ambient.
     if (this.dragonFlyover) {
       const dr = this.dragonFlyover;
