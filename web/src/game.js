@@ -79,6 +79,8 @@ const BOSS_TYPES = {
                hint: 'Vyxhasis goes airborne — wait for her to land before swinging.' },
   aethyrnax: { label: 'Aethyrnax',   color: '#66d9f2', hp: 1400, speed: 55,  gold: 500, size: 56,
                hint: 'Aethyrnax alternates charge + fly. Position carefully.' },
+  ourzhal:   { label: 'Ourzhal',     color: '#f08533', hp: 3200, speed: 65,  gold: 1200, size: 68,
+               hint: 'Ourzhal cycles charge + fly + summons. Endgame challenge.' },
 };
 
 export class Game {
@@ -579,7 +581,10 @@ export class Game {
   }
 
   _spawnBoss() {
-    const id = this.wave >= 50 ? 'aethyrnax' : (this.wave >= 30 ? 'vyxhasis' : 'warchief');
+    const id = this.wave >= 70 ? 'ourzhal'
+      : this.wave >= 50 ? 'aethyrnax'
+      : this.wave >= 30 ? 'vyxhasis'
+      : 'warchief';
     this.bossWarn = { t: 3.0, id, label: BOSS_TYPES[id].label };
     this.floater(`INCOMING: ${BOSS_TYPES[id].label}`, this.size.w / 2 - 100, 60, '#d4582c');
     this.log(`Telegraph: ${BOSS_TYPES[id].label} in 3s`);
@@ -646,6 +651,29 @@ export class Game {
         e.speed = e.baseSpeed * 0.6;
         e.alpha = 0.4;
         this.floater('SOARING', e.x, e.y, '#5a8fb3');
+      }
+    } else if (id === 'boss_ourzhal') {
+      // Ourzhal: charge → fly → summon, repeating.
+      const cycle = e.phaseCount % 3;
+      if (cycle === 1) {
+        e.phase = 'charge';
+        e.phaseT = 0.9;
+        e.speed = e.baseSpeed * 5.5;
+        this.floater('CHARGE!', e.x, e.y, '#d4582c');
+      } else if (cycle === 2) {
+        e.phase = 'fly';
+        e.phaseT = 1.6;
+        e.speed = e.baseSpeed * 0.5;
+        e.alpha = 0.35;
+        this.floater('SOARING', e.x, e.y, '#5a8fb3');
+      } else {
+        // Summon 3 skeletons in a triangle near boss
+        for (let i = 0; i < 3; i++) {
+          const a = (i / 3) * Math.PI * 2;
+          this._spawnMinion(e.x + Math.cos(a) * 30, e.y + Math.sin(a) * 30);
+        }
+        this.floater('SUMMON', e.x, e.y, '#b380d9');
+        e.phaseCd = 4.5;
       }
     }
   }
