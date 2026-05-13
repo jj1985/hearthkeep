@@ -12,13 +12,18 @@ export const TRINKETS = [
   { id: 'aeth_crystal', label: 'Aethyrnax Crystal',   desc: '+0.3 atk/sec' },
   { id: 'mythic_shard', label: 'Mythic Shard',        desc: '+2% Mythic chance' },
   { id: 'dragon_heart', label: 'Dragon Heart',        desc: '+20% wave-clear gold' },
+  { id: 'ourz_horn',    label: 'Ourzhal Horn',        desc: '+1 max revive per run' },
+  { id: 'void_sigil',   label: 'Void Sigil',          desc: '+15% damage' },
+  { id: 'sun_token',    label: 'Sunfire Token',       desc: '+0.4 atk/sec' },
+  { id: 'forge_anvil',  label: 'Forge Anvil Sliver',  desc: '+10% max HP' },
 ];
 
 // Map drop pool by boss id.
 export const BOSS_DROPS = {
-  boss_warchief:  ['krrik_tusk', 'krrik_banner'],
-  boss_vyxhasis:  ['vyx_scale', 'vyx_eye'],
-  boss_aethyrnax: ['aeth_feather', 'aeth_crystal'],
+  boss_warchief:  ['krrik_tusk', 'krrik_banner', 'forge_anvil'],
+  boss_vyxhasis:  ['vyx_scale', 'vyx_eye', 'sun_token'],
+  boss_aethyrnax: ['aeth_feather', 'aeth_crystal', 'void_sigil'],
+  boss_ourzhal:   ['ourz_horn', 'void_sigil', 'mythic_shard'],
 };
 
 export function tryDrop(bossId) {
@@ -42,11 +47,24 @@ export function equip(id) {
 }
 
 // Accessors — each returns 0 if the trinket isn't equipped.
-export function dmgBonus()      { return equipped() === 'krrik_tusk'   ? 0.10 : 0; }
+export function dmgBonus()      {
+  if (equipped() === 'krrik_tusk') return 0.10;
+  if (equipped() === 'void_sigil') return 0.15;
+  return 0;
+}
 export function goldBonus()     { return equipped() === 'krrik_banner' ? 0.10 : 0; }
-export function hpBonus()       { return equipped() === 'vyx_scale'    ? 0.15 : 0; }
+export function hpBonus()       {
+  if (equipped() === 'vyx_scale')   return 0.15;
+  if (equipped() === 'forge_anvil') return 0.10;
+  return 0;
+}
 export function critBonus()     { return equipped() === 'vyx_eye'      ? 0.05 : 0; }
 export function rangeBonus()    { return equipped() === 'aeth_feather' ? 50   : 0; }
-export function atkBonus()      { return equipped() === 'aeth_crystal' ? 0.3  : 0; }
+export function atkBonus()      {
+  if (equipped() === 'aeth_crystal') return 0.3;
+  if (equipped() === 'sun_token')    return 0.4;
+  return 0;
+}
 export function mythicBonus()   { return equipped() === 'mythic_shard' ? 0.02 : 0; }
 export function waveBonus()     { return equipped() === 'dragon_heart' ? 0.20 : 0; }
+export function bonusReviveTrinket() { return equipped() === 'ourz_horn' ? 1 : 0; }

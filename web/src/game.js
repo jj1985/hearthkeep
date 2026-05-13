@@ -1397,7 +1397,7 @@ export class Game {
 
   _onDie() {
     // Second Wind: spend a revive if any left (perk + persistent stack).
-    if (this.revivesUsed < maxRevives() + (this.bonusRevives || 0)) {
+    if (this.revivesUsed < maxRevives() + (this.bonusRevives || 0) + Trinkets.bonusReviveTrinket()) {
       this.revivesUsed++;
       this.heroHp = Math.floor(this.heroMaxHp / 2);
       this.enemies.length = 0;
@@ -2243,6 +2243,8 @@ export class Game {
         vyx_scale: '#d4582c', vyx_eye: '#e8d2a0',
         aeth_feather: '#a8d4e8', aeth_crystal: '#80c8e0',
         mythic_shard: '#e8d2a0', dragon_heart: '#d95940',
+        ourz_horn: '#cbb0e8', void_sigil: '#9966c8',
+        sun_token: '#f5d96e', forge_anvil: '#9a9a9a',
       })[trkId] || '#d4a24c';
       const ang = performance.now() / 600;
       const orbitR = hr + 18;
