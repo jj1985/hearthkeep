@@ -1504,6 +1504,78 @@ export class Game {
       ctx.beginPath();
       ctx.arc(e.x, ey, r, 0, Math.PI * 2);
       ctx.fill();
+      // Per-type silhouette tells: tiny features that disambiguate at a glance.
+      const id = e.id;
+      ctx.fillStyle = 'rgba(20,16,10,0.85)';
+      if (id === 'skeleton') {
+        ctx.beginPath();
+        ctx.arc(e.x - r * 0.35, ey - r * 0.1, r * 0.18, 0, Math.PI * 2);
+        ctx.arc(e.x + r * 0.35, ey - r * 0.1, r * 0.18, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (id === 'rat') {
+        ctx.beginPath();
+        ctx.moveTo(e.x - r * 0.45, ey - r * 0.6); ctx.lineTo(e.x - r * 0.15, ey - r * 0.85); ctx.lineTo(e.x - r * 0.05, ey - r * 0.45); ctx.closePath();
+        ctx.moveTo(e.x + r * 0.05, ey - r * 0.45); ctx.lineTo(e.x + r * 0.15, ey - r * 0.85); ctx.lineTo(e.x + r * 0.45, ey - r * 0.6); ctx.closePath();
+        ctx.fill();
+      } else if (id === 'spider') {
+        ctx.strokeStyle = 'rgba(20,10,10,0.9)'; ctx.lineWidth = 1.5;
+        for (let i = 0; i < 4; i++) {
+          const ang = (i / 4) * Math.PI + Math.PI / 8;
+          ctx.beginPath();
+          ctx.moveTo(e.x + Math.cos(ang) * r * 0.7, ey + Math.sin(ang) * r * 0.4);
+          ctx.lineTo(e.x + Math.cos(ang) * r * 1.4, ey + Math.sin(ang) * r * 0.7);
+          ctx.moveTo(e.x - Math.cos(ang) * r * 0.7, ey + Math.sin(ang) * r * 0.4);
+          ctx.lineTo(e.x - Math.cos(ang) * r * 1.4, ey + Math.sin(ang) * r * 0.7);
+          ctx.stroke();
+        }
+      } else if (id === 'shaman' || id === 'witch' || id === 'warlock' || id === 'lich') {
+        ctx.fillStyle = 'rgba(15,10,18,0.9)';
+        ctx.beginPath();
+        ctx.moveTo(e.x - r * 0.5, ey - r * 0.6);
+        ctx.lineTo(e.x, ey - r * 1.3);
+        ctx.lineTo(e.x + r * 0.5, ey - r * 0.6);
+        ctx.closePath();
+        ctx.fill();
+      } else if (id === 'sapper') {
+        const fuse = 0.6 + 0.4 * Math.sin(now / 80);
+        ctx.fillStyle = `rgba(240,140,60,${fuse.toFixed(2)})`;
+        ctx.beginPath();
+        ctx.arc(e.x, ey - r * 1.05, r * 0.18, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#3a2818'; ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(e.x, ey - r); ctx.lineTo(e.x, ey - r * 1.05);
+        ctx.stroke();
+      } else if (id === 'archer' || id === 'goblin_a') {
+        ctx.strokeStyle = 'rgba(40,28,16,0.9)'; ctx.lineWidth = 1.7;
+        ctx.beginPath();
+        ctx.arc(e.x + r * 0.6, ey, r * 0.55, -Math.PI / 2.4, Math.PI / 2.4);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(e.x + r * 0.4, ey - r * 0.3); ctx.lineTo(e.x + r * 0.4, ey + r * 0.3);
+        ctx.stroke();
+      } else if (id === 'brute' || id === 'ogre') {
+        ctx.fillStyle = 'rgba(40,24,12,0.9)';
+        ctx.beginPath();
+        ctx.rect(e.x + r * 0.5, ey - r * 0.2, r * 0.55, r * 0.4);
+        ctx.fill();
+      } else if (id === 'golem') {
+        ctx.fillStyle = 'rgba(255,200,80,0.55)';
+        ctx.beginPath();
+        ctx.rect(e.x - r * 0.25, ey - r * 0.25, r * 0.5, r * 0.5);
+        ctx.fill();
+      } else if (id === 'wraith' || id === 'ghoul') {
+        ctx.fillStyle = 'rgba(220,220,255,0.45)';
+        ctx.beginPath();
+        ctx.arc(e.x, ey - r * 0.7, r * 0.3, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (id === 'drake') {
+        ctx.fillStyle = 'rgba(40,16,10,0.85)';
+        ctx.beginPath();
+        ctx.moveTo(e.x - r * 1.1, ey - r * 0.1); ctx.lineTo(e.x - r * 0.4, ey - r * 0.3); ctx.lineTo(e.x - r * 0.4, ey + r * 0.1); ctx.closePath();
+        ctx.moveTo(e.x + r * 1.1, ey - r * 0.1); ctx.lineTo(e.x + r * 0.4, ey - r * 0.3); ctx.lineTo(e.x + r * 0.4, ey + r * 0.1); ctx.closePath();
+        ctx.fill();
+      }
       if (e.hitFlash > 0) {
         ctx.fillStyle = `rgba(255,255,255,${(e.hitFlash * 6).toFixed(2)})`;
         ctx.beginPath();
