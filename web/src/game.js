@@ -1556,6 +1556,19 @@ export class Game {
       ctx.fillText(this.banner.text, w / 2, y);
     }
 
+    // Low-HP red edge vignette.
+    const hpFrac = this.heroHp / Math.max(1, this.heroMaxHp);
+    if (hpFrac < 0.3 && hpFrac > 0) {
+      const danger = (0.3 - hpFrac) / 0.3;  // 0..1
+      const pulse = 0.4 + 0.4 * Math.sin(performance.now() / 200);
+      const rg = ctx.createRadialGradient(w / 2, h / 2, Math.max(w, h) * 0.25,
+                                          w / 2, h / 2, Math.max(w, h) * 0.7);
+      rg.addColorStop(0, 'rgba(168, 50, 50, 0)');
+      rg.addColorStop(1, `rgba(168, 50, 50, ${(0.4 * danger * pulse).toFixed(3)})`);
+      ctx.fillStyle = rg;
+      ctx.fillRect(0, 0, w, h);
+    }
+
     // White flash overlay (boss kill, big moments)
     if (this.flash > 0) {
       ctx.fillStyle = `rgba(255,255,255,${this.flash.toFixed(3)})`;
