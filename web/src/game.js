@@ -1500,6 +1500,17 @@ export class Game {
     ctx.beginPath();
     ctx.ellipse(hx, hy + hr + 4, hr * 0.95, hr * 0.42, 0, 0, Math.PI * 2);
     ctx.fill();
+    // Hero aura — soft outer ring that grows slightly with wave depth.
+    const auraR = hr + 6 + Math.min(20, this.wave * 0.3);
+    const auraA = 0.18 + 0.08 * Math.sin(performance.now() / 400);
+    const auraColor = colorForClass(this.primaryClass, '#d4a24c');
+    const auraGrad = ctx.createRadialGradient(hx, hy, hr * 0.8, hx, hy, auraR);
+    auraGrad.addColorStop(0, auraColor + Math.round(255 * auraA).toString(16).padStart(2, '0'));
+    auraGrad.addColorStop(1, auraColor + '00');
+    ctx.fillStyle = auraGrad;
+    ctx.beginPath();
+    ctx.arc(hx, hy, auraR, 0, Math.PI * 2);
+    ctx.fill();
 
     // Combo halo — radial gradient that grows with stack count.
     if (this.combo > 1) {
