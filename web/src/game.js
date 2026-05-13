@@ -1826,12 +1826,19 @@ export class Game {
         ctx.fill();
       }
       if (e.mythic) {
-        const t = (performance.now() / 200) % (Math.PI * 2);
-        const a = 0.6 + 0.3 * Math.sin(t);
-        ctx.strokeStyle = `rgba(232,210,160,${a.toFixed(2)})`;
+        // Slowly cycling hue outline for instant readability.
+        const hue = (performance.now() / 12) % 360;
+        ctx.strokeStyle = `hsl(${hue.toFixed(0)},90%,72%)`;
         ctx.lineWidth = 3.5;
         ctx.beginPath();
         ctx.arc(e.x, ey, r, 0, Math.PI * 2);
+        ctx.stroke();
+        // Inner secondary ring offset 180°.
+        const hue2 = (hue + 180) % 360;
+        ctx.strokeStyle = `hsla(${hue2.toFixed(0)},90%,72%,0.5)`;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(e.x, ey, r * 0.7, 0, Math.PI * 2);
         ctx.stroke();
       } else if (e.boss) {
         ctx.strokeStyle = '#d4a24c';
