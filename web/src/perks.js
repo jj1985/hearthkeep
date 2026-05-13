@@ -15,6 +15,11 @@ export const PERKS = [
   { id: 'fortunate',   label: 'Fortunate',     desc: '+3% Mythic chance.',    tags: ['any'],                 kind: 'mythic', value: 0.03 },
   { id: 'aegis',       label: 'Aegis',         desc: '-40% contact damage.',  tags: ['warrior','melee'],     kind: 'aegis', value: 0.40 },
   { id: 'vampiric',    label: 'Vampiric',      desc: 'Heal 3% of damage dealt.', tags: ['necromancer','death'], kind: 'lifesteal', value: 0.03 },
+  { id: 'ironwill',    label: 'Ironwill',      desc: '+30% max HP this run.', tags: ['warrior','any'],       kind: 'hp', value: 0.30 },
+  { id: 'gemcutter',   label: 'Gemcutter',     desc: '+40% gold per kill.',   tags: ['rogue','any'],         kind: 'gold', value: 0.40 },
+  { id: 'tempest_rune',label: 'Tempest Rune',  desc: '+0.6 atk/sec.',         tags: ['wizard','arcane'],     kind: 'atk', value: 0.6 },
+  { id: 'tigerblood',  label: 'Tiger Blood',   desc: 'Heal 5% of dmg dealt.', tags: ['necromancer','any'],   kind: 'lifesteal', value: 0.05 },
+  { id: 'savage',      label: 'Savage',        desc: '+30% dmg + +5% crit.',  tags: ['warrior','rogue'],     kind: 'savage', value: 0.30 },
 ];
 
 export function rollPerks(klass, taken, count = 3) {
@@ -55,5 +60,13 @@ export function applyPerk(game, perk) {
     case 'mythic': game.mythicBonus += v; break;
     case 'aegis': game.contactReduction = Math.min(0.9, game.contactReduction + v); break;
     case 'lifesteal': game.lifesteal = (game.lifesteal || 0) + v; break;
+    case 'hp':
+      game.hpRunMult = (game.hpRunMult || 1) * (1 + v);
+      // Re-derive max HP and top up the missing chunk so the perk feels immediate.
+      const prev = game.heroMaxHp;
+      game.heroMaxHp = game.maxHp();
+      game.heroHp = Math.min(game.heroMaxHp, game.heroHp + Math.max(0, game.heroMaxHp - prev));
+      break;
+    case 'savage': game.dmgMult *= (1 + v); game.critBonus += 0.05; break;
   }
 }

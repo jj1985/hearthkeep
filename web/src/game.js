@@ -110,6 +110,7 @@ export class Game {
     this.skillCd = 0;
     this.berserkerT = 0;       // +60% damage chest buff timer (seconds)
     this.quicksilverT = 0;     // +50% atk rate chest buff timer (seconds)
+    this.hpRunMult = 1;        // perk-driven run-only HP multiplier
     this.heroHp = this.maxHp();
     this.heroMaxHp = this.heroHp;
     this.primaryClass = 'warrior';
@@ -346,6 +347,7 @@ export class Game {
     hp = Math.round(hp * (1 + Trinkets.hpBonus()) * this.classMul('hp'));
     if (hasGlory('ascendant')) hp = Math.round(hp * 1.10);
     if (State.challenge_active && State.daily_curse === 'glass_cannon') hp = Math.max(10, Math.floor(hp / 2));
+    if (this.hpRunMult) hp = Math.round(hp * this.hpRunMult);
     return Math.max(20, hp);
   }
 
